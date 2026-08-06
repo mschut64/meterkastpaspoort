@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open Meterkastpaspoort — specificatie v0.1 (concept)</title>
+<meta name="description" content="Het Open Meterkastpaspoort (MKP) is een open, leveranciersonafhankelijke specificatie voor het vastleggen van de toestand van een meterkast in een QR-code die bij de kast blijft.">
+<style>
+  :root { --ink:#1a1a1a; --muted:#555; --line:#ddd; --accent:#c9a300; --bg:#fdfdfb; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.65 Georgia, 'Times New Roman', serif; color:var(--ink); background:var(--bg); }
+  .wrap { max-width:760px; margin:0 auto; padding:48px 24px 80px; }
+  header { border-bottom:3px double var(--ink); padding-bottom:20px; margin-bottom:32px; }
+  h1 { font-size:30px; margin:0 0 6px; line-height:1.2; }
+  .subtitle { color:var(--muted); font-style:italic; margin:0; }
+  .meta { font-family:system-ui, sans-serif; font-size:13px; color:var(--muted); margin-top:14px; display:flex; flex-wrap:wrap; gap:8px 20px; }
+  .meta b { color:var(--ink); font-weight:600; }
+  .status { display:inline-block; font-family:system-ui,sans-serif; font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; background:#fff3c4; border:1px solid var(--accent); padding:2px 10px; border-radius:3px; margin-bottom:14px; }
+  h2 { font-size:21px; margin:40px 0 12px; border-bottom:1px solid var(--line); padding-bottom:6px; }
+  h3 { font-size:17px; margin:26px 0 8px; }
+  p { margin:0 0 14px; }
+  ul, ol { margin:0 0 14px; padding-left:26px; }
+  li { margin-bottom:6px; }
+  code { font-family:ui-monospace, 'SF Mono', Menlo, monospace; font-size:14px; background:#f1f0ec; padding:1px 5px; border-radius:3px; }
+  pre { background:#f1f0ec; border:1px solid var(--line); border-radius:6px; padding:14px 16px; overflow-x:auto; font-size:13.5px; line-height:1.5; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; width:100%; margin:0 0 16px; font-size:14.5px; }
+  th, td { border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+  th { background:#f5f4f0; font-family:system-ui,sans-serif; font-size:13px; }
+  .opt { color:var(--muted); font-size:12.5px; font-family:system-ui,sans-serif; }
+  footer { margin-top:56px; border-top:1px solid var(--line); padding-top:18px; font-size:13.5px; color:var(--muted); font-family:system-ui,sans-serif; }
+  a { color:#8a6d00; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="status">Versie 0.1 — concept, commentaar welkom</div>
+  <h1>Open Meterkastpaspoort</h1>
+  <p class="subtitle">Een open specificatie voor de toestand van de meterkast, vastgelegd in een QR-code die bij de kast blijft.</p>
+  <div class="meta">
+    <span><b>Status:</b> concept (v0.1)</span>
+    <span><b>Datum:</b> augustus 2026</span>
+    <span><b>Initiatief &amp; auteur:</b> Martin Schut, BlauweVisie B.V. (<a href="https://yourwkb.nl">YourWkb.nl</a>)</span>
+    <span><b>Licentie:</b> <a href="https://creativecommons.org/licenses/by/4.0/deed.nl">CC BY 4.0</a></span>
+  </div>
+</header>
+
+<h2>1. Waarom een meterkastpaspoort</h2>
+<p>De meterkast is het hart van de woning geworden: zonnepanelen, laadpaal, warmtepomp en thuisbatterij komen er allemaal samen. Tegelijk neemt het aantal meterkast-incidenten toe en pleiten deskundigen voor een "APK van de meterkast". Het probleem van elke keuring is echter dat het rapport in een la verdwijnt — terwijl de kennis nodig is <em>bij de kast</em>, op het moment dat de volgende monteur er iets aan wijzigt.</p>
+<p>Het meterkastpaspoort (MKP) draait dat om: de actuele toestand van de kast — aansluiting, capaciteit, aangesloten verbruikers en opwekkers, begrenzingsinstellingen en de wijzigingshistorie — wordt vastgelegd in een QR-code op een sticker aan de binnenzijde van de kastdeur. Elke monteur die de kast opent, scant en weet wat er hangt. Elke monteur die iets wijzigt, schrijft het paspoort bij en plakt een nieuwe sticker.</p>
+
+<h2>2. Ontwerpprincipes</h2>
+<ol>
+  <li><b>De data reist in de QR-code zelf.</b> Het paspoort staat niet in een database maar in de code op de sticker. Scannen werkt daardoor ook in een kelder zonder bereik, en er bestaat geen centraal register dat op adres doorzoekbaar is.</li>
+  <li><b>Privacy door architectuur.</b> De data staat in het URL-<em>fragment</em> (het deel achter <code>#</code>). Fragmenten worden door browsers nooit naar een server verzonden; het paspoort verlaat de meterkast dus alleen als iemand die er fysiek staat het scant.</li>
+  <li><b>Leveranciersonafhankelijk.</b> Ieder softwareproduct mag het formaat lezen en schrijven (zie licentie). Een paspoort gemaakt met de ene applicatie is leesbaar voor de andere.</li>
+  <li><b>Voorwaarts compatibel.</b> Lezers moeten onbekende velden negeren en het versieveld respecteren, zodat oude stickers leesbaar blijven en het formaat kan groeien.</li>
+  <li><b>Opgave, geen garantie.</b> Het paspoort is een opgave van de laatste installateur. Het vervangt geen inspectie en geen vakmanschap; bij twijfel controleert de monteur ter plekke.</li>
+</ol>
+
+<h2>3. Technische drager</h2>
+<p>Een MKP-QR-code codeert een URL van de vorm:</p>
+<pre><code>https://meterkastpaspoort.nl/p#&lt;data&gt;</code></pre>
+<p>waarin <code>&lt;data&gt;</code> het paspoort is: een JSON-object, gecomprimeerd met <b>deflate-raw</b> en gecodeerd als <b>base64url</b>. Het domein leidt door naar een referentie-implementatie; omdat de data in het fragment zit, reist zij automatisch mee met de doorverwijzing en bereikt zij nooit de server. Elke andere implementatie kan dezelfde payload lezen door het fragment te decoderen.</p>
+<p>Richtwaarde: een gevuld paspoort comprimeert tot ± 200–400 bytes en past daarmee ruim in een QR-code die op een sticker van 40–50 mm scherp afdrukbaar is.</p>
+
+<h2>4. Datamodel v0.1</h2>
+<p>Veldnamen zijn kort gehouden om de QR-code compact te houden. Alle velden zijn optioneel tenzij anders vermeld; lezers negeren onbekende velden.</p>
+
+<h3>4.1 Wortelobject</h3>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>v</code></td><td>getal</td><td><b>Verplicht.</b> Specificatieversie, voor dit document <code>1</code>.</td></tr>
+  <tr><td><code>d</code></td><td>tekst</td><td>Datum laatste bijwerking, <code>JJJJ-MM-DD</code>.</td></tr>
+  <tr><td><code>pc</code>, <code>nr</code></td><td>tekst</td><td>Postcode en huisnummer(-toevoeging) van het adres.</td></tr>
+  <tr><td><code>ean</code></td><td>tekst</td><td>EAN-code van de elektriciteitsaansluiting (18 cijfers, NL begint met 87; laatste cijfer is GS1 modulo-10-controlecijfer). Vindbaar via <a href="https://www.eancodeboek.nl">eancodeboek.nl</a>.</td></tr>
+  <tr><td><code>ean2</code></td><td>tekst</td><td>EAN van een eventueel secundair allocatiepunt (bijv. apart bemeten laadpaal).</td></tr>
+  <tr><td><code>bj</code></td><td>tekst</td><td>Bouwjaar of aanlegperiode van de kast, desnoods geschat (<code>"1998"</code>, <code>"±1990"</code>). Relevant voor het normregime van aanleg (rechtens verkregen niveau).</td></tr>
+  <tr><td><code>ha</code></td><td>object</td><td>Hoofdaansluiting — zie 4.2.</td></tr>
+  <tr><td><code>kam</code></td><td>object</td><td>Ontwerpstroom verdeler — zie 4.3.</td></tr>
+  <tr><td><code>grp</code></td><td>lijst</td><td>Afgaande en voedende groepen — zie 4.4.</td></tr>
+  <tr><td><code>lb</code></td><td>object</td><td>Load balancing / vermogenssturing — zie 4.5.</td></tr>
+  <tr><td><code>chk</code></td><td>object</td><td>Laatste belastingcheck — zie 4.6.</td></tr>
+  <tr><td><code>log</code></td><td>lijst</td><td>Installateurs-logboek — zie 4.7.</td></tr>
+</table>
+
+<h3>4.2 Hoofdaansluiting <code>ha</code></h3>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>f</code></td><td>getal</td><td>Aantal fasen: <code>1</code> of <code>3</code>.</td></tr>
+  <tr><td><code>a</code></td><td>getal</td><td>Waarde hoofdzekering in ampère per fase (bijv. <code>25</code>, <code>35</code>).</td></tr>
+  <tr><td><code>hs</code></td><td>getal</td><td>Nominale stroom hoofdschakelaar in ampère, indien afwijkend of bekend.</td></tr>
+</table>
+
+<h3>4.3 Ontwerpstroom verdeler <code>kam</code></h3>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>mm2</code></td><td>getal</td><td>Doorsnede kam/rail in mm² (praktijk: <code>10</code> ≈ max 40 A, <code>16</code> ≈ max 63 A).</td></tr>
+  <tr><td><code>a</code></td><td>getal</td><td>Maximale stroom van de kam in ampère. Onbekend? Conservatief 40 A aanhouden.</td></tr>
+</table>
+<p><b>Toetsregel:</b> de som van de <em>voedende</em> groepen, op het deel van de kam waar hun stromen kunnen cumuleren, mag de kamcapaciteit niet overschrijden. Advies: voedende groepen zo dicht mogelijk bij het voedingspunt plaatsen.</p>
+
+<h3>4.4 Groepen <code>grp[]</code></h3>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>t</code></td><td>tekst</td><td>Type: <code>alg</code> (algemene groep), <code>kook</code>, <code>wp</code> (warmtepomp), <code>lp</code> (laadpaal), <code>pv</code> (PV-omvormer), <code>bat</code> (thuisbatterij), <code>ov</code> (overig).</td></tr>
+  <tr><td><code>rol</code></td><td>tekst</td><td><code>af</code> = afgaande groep (neemt stroom af), <code>voed</code> = voedende groep (levert stroom aan de kam: PV, ontladende batterij).  Een batterij kan beide rollen hebben; noteer de rol met de hoogste stroom of twee regels.</td></tr>
+  <tr><td><code>kw</code></td><td>getal</td><td>Vermogen in kW (bij <code>voed</code>: maximale teruglever-/ontlaadstroom omgerekend).</td></tr>
+  <tr><td><code>f</code></td><td>getal</td><td>Fase(n): <code>1</code>, <code>3</code>, of fasenummer bij 1-fase op een 3-fase-installatie.</td></tr>
+  <tr><td><code>n</code></td><td>tekst</td><td>Vrije korte omschrijving (bijv. <code>"zolder PV 12 panelen"</code>).</td></tr>
+</table>
+
+<h3>4.5 Load balancing <code>lb</code></h3>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>aan</code></td><td>ja/nee</td><td>Is er vermogenssturing actief?</td></tr>
+  <tr><td><code>typ</code></td><td>tekst</td><td><code>stat</code> (statisch: vaste begrenzing) of <code>dyn</code> (dynamisch: meet en regelt live, bijv. via P1).</td></tr>
+  <tr><td><code>max</code></td><td>getal</td><td>Ingestelde grenswaarde in ampère (statisch) of maximaal toegestane huisstroom (dynamisch).</td></tr>
+  <tr><td><code>reg</code></td><td>tekst</td><td>Regisseur: welk systeem stuurt (bijv. <code>"evcc"</code>, <code>"HEMS fabrikant X"</code>, <code>"laadpaal intern"</code>). Meerdere onafhankelijke begrenzers zonder gezamenlijke regisseur verdienen een waarschuwing in de lezende applicatie.</td></tr>
+</table>
+<p><b>Let op:</b> load balancing is een software-instelling, geen veiligheidsmaatregel. De installatie behoort ook bij falende of opgeheven begrenzing veilig te zijn. Zonder aantoonbare gezamenlijke begrenzer is een gelijktijdigheidsfactor van 0,6 over de grote verbruikers een bruikbare conservatieve rekenbasis (richtlijn ontleend aan de belastingsfactoren uit de NEN-EN-IEC 61439-serie).</p>
+
+<h3>4.6 Laatste belastingcheck <code>chk</code></h3>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>r</code></td><td>tekst</td><td>Uitkomst: <code>groen</code>, <code>oranje</code> (begrenzing vereist en vastgelegd) of <code>rood</code> (verzwaring geadviseerd).</td></tr>
+  <tr><td><code>d</code></td><td>tekst</td><td>Datum van de check, <code>JJJJ-MM-DD</code>.</td></tr>
+</table>
+
+<h3>4.7 Installateurs-logboek <code>log[]</code></h3>
+<p>De laatste 5–10 wijzigingen, nieuwste eerst. Oudere regels vervallen om de QR-code compact te houden.</p>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>d</code></td><td>tekst</td><td>Datum, <code>JJJJ-MM-DD</code>.</td></tr>
+  <tr><td><code>b</code></td><td>tekst</td><td>Bedrijfsnaam van de installateur.</td></tr>
+  <tr><td><code>w</code></td><td>tekst</td><td>Korte omschrijving van de wijziging.</td></tr>
+  <tr><td><code>c</code></td><td>tekst</td><td>Optioneel contactgegeven (telefoon/e-mail), uitsluitend met instemming van de betreffende installateur.</td></tr>
+</table>
+
+<h2>5. Voorbeeld</h2>
+<pre><code>{
+  "v": 1, "d": "2026-08-06",
+  "pc": "2801AB", "nr": "12",
+  "ean": "871685900012345678", "bj": "±1995",
+  "ha": { "f": 3, "a": 25 },
+  "kam": { "mm2": 10, "a": 40 },
+  "grp": [
+    { "t": "pv",  "rol": "voed", "kw": 4.2, "f": 1, "n": "12 panelen zuid" },
+    { "t": "lp",  "rol": "af",   "kw": 11,  "f": 3 },
+    { "t": "wp",  "rol": "af",   "kw": 3.5, "f": 1 }
+  ],
+  "lb": { "aan": true, "typ": "dyn", "max": 25, "reg": "HEMS" },
+  "chk": { "r": "oranje", "d": "2026-08-06" },
+  "log": [
+    { "d": "2026-08-06", "b": "Installatiebedrijf Jansen", "w": "Laadpaal 11 kW + belastingcheck" },
+    { "d": "2024-03-11", "b": "PV Totaal", "w": "PV 12 panelen, groep 7" }
+  ]
+}</code></pre>
+<p>Dit object wordt gecomprimeerd (deflate-raw), gecodeerd als base64url en achter <code>https://meterkastpaspoort.nl/p#</code> geplaatst; van die URL wordt de QR-code gegenereerd.</p>
+
+<h2>6. Versiebeheer &amp; bijdragen</h2>
+<p>Wijzigingsvoorstellen op deze concept-specificatie zijn welkom; het veld <code>v</code> wordt verhoogd bij niet-neerwaarts-compatibele wijzigingen. Lezers behoren paspoorten met een hogere versie zo goed mogelijk weer te geven en onbekende velden te negeren. De referentie-implementatie van deze specificatie is <a href="https://yourwkb.nl">YourWkb</a>.</p>
+
+<footer>
+  <p><b>Open Meterkastpaspoort</b> — specificatie v0.1 (concept), augustus 2026.<br>
+  Initiatief en auteur: Martin Schut, BlauweVisie B.V. (<a href="https://yourwkb.nl">YourWkb.nl</a>).<br>
+  Deze specificatie is vrijgegeven onder <a href="https://creativecommons.org/licenses/by/4.0/deed.nl">Creative Commons BY 4.0</a>: iedereen mag haar gebruiken, implementeren en erop voortbouwen, met naamsvermelding. Reacties: via <a href="https://yourwkb.nl">yourwkb.nl</a>.</p>
+</footer>
+</div>
+</body>
+</html>
