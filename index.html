@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Open Meterkastpaspoort — specificatie v0.2 (concept)</title>
-<meta name="description" content="Het Open Meterkastpaspoort (MKP) is een open, leveranciersonafhankelijke specificatie voor het vastleggen van de toestand van een meterkast in een QR-code die bij de kast blijft.">
+<meta name="description" content="Het Open Meterkastpaspoort (MKP) is een open, leveranciersonafhankelijke specificatie voor het vastleggen van de toestand van een meterkast in een QR-code die bij de kast blijft. Versie 0.2 voegt een materiaallijst, fasenummers, erkenningen, ondertekening en een terugroepkanaal toe.">
 <style>
   :root { --ink:#1a1a1a; --muted:#555; --line:#ddd; --accent:#c9a300; --bg:#fdfdfb; }
   * { box-sizing:border-box; }
@@ -39,8 +39,8 @@
   <h1>Open Meterkastpaspoort</h1>
   <p class="subtitle">Een open specificatie voor de toestand van de meterkast, vastgelegd in een QR-code die bij de kast blijft.</p>
   <div class="meta">
-    <span><b>Status:</b> concept (v0.1)</span>
-    <span><b>Datum:</b> augustus 2026</span>
+    <span><b>Status:</b> concept (v0.2)</span>
+    <span><b>Datum:</b> september 2026</span>
     <span><b>Initiatief &amp; auteur:</b> Martin Schut, BlauweVisie B.V. (<a href="https://yourwkb.nl">YourWkb.nl</a>)</span>
     <span><b>Licentie:</b> <a href="https://creativecommons.org/licenses/by/4.0/deed.nl">CC BY 4.0</a></span>
   </div>
@@ -71,7 +71,7 @@
 <h3>4.1 Wortelobject</h3>
 <table>
   <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
-  <tr><td><code>v</code></td><td>getal</td><td><b>Verplicht.</b> Specificatieversie, voor dit document <code>1</code>.</td></tr>
+  <tr><td><code>v</code></td><td>getal</td><td><b>Verplicht.</b> Specificatieversie: <code>2</code> voor dit document, <code>1</code> voor paspoorten volgens v0.1. Een lezer die <code>1</code> aantreft hanteert de oude uitleg van <code>f</code> (zie 4.4).</td></tr>
   <tr><td><code>d</code></td><td>tekst</td><td>Datum laatste bijwerking, <code>JJJJ-MM-DD</code>.</td></tr>
   <tr><td><code>pc</code>, <code>nr</code></td><td>tekst</td><td>Postcode en huisnummer(-toevoeging) van het adres.</td></tr>
   <tr><td><code>ean</code></td><td>tekst</td><td>EAN-code van de elektriciteitsaansluiting (18 cijfers, NL begint met 87; laatste cijfer is GS1 modulo-10-controlecijfer). Vindbaar via <a href="https://www.eancodeboek.nl">eancodeboek.nl</a>.</td></tr>
@@ -156,7 +156,7 @@
   <tr><td><code>erk</code></td><td>tekst</td><td>Erkenning of certificaat van het uitvoerende bedrijf, genoteerd als <code>uitgever:nummer</code> — bijvoorbeeld <code>"installq:14718"</code> of <code>"tlokb:…"</code>. <span class="opt">Nieuw in v0.2.</span> Het paspoort <b>verifieert niets</b>; het maakt de erkenning controleerbaar in het openbare register van die uitgever.</td></tr>
   <tr><td><code>c</code></td><td>tekst</td><td>Optioneel contactgegeven (telefoon/e-mail), uitsluitend met instemming van de betreffende installateur.</td></tr>
   <tr><td><code>sid</code></td><td>tekst</td><td>Sleutel-identificatie van de ondertekenaar, op te zoeken in de index. <span class="opt">Optioneel, nieuw in v0.2.</span></td></tr>
-  <tr><td><code>sig</code></td><td>tekst</td><td>Ed25519-handtekening over <b>deze regel</b>, base64url. <span class="opt">Optioneel, nieuw in v0.2.</span> Zie 7.4: per toevoeging ondertekenen levert een keten op waarin niemand met terugwerkende kracht een eerdere regel kan wijzigen — ook niet als dat bedrijf niet meer bestaat. Kosten: circa 110 tekens per regel, wat de QR-code merkbaar vergroot. Weeg dat af tegen het aantal logboekregels.</td></tr>
+  <tr><td><code>sig</code></td><td>tekst</td><td>Ed25519-handtekening over <b>deze regel</b>, base64url. <span class="opt">Optioneel, nieuw in v0.2.</span> Zie 8.4: per toevoeging ondertekenen levert een keten op waarin niemand met terugwerkende kracht een eerdere regel kan wijzigen — ook niet als dat bedrijf niet meer bestaat. Kosten: circa 110 tekens per regel, wat de QR-code merkbaar vergroot. Weeg dat af tegen het aantal logboekregels.</td></tr>
 </table>
 
 <h2>5. Voorbeeld</h2>
@@ -264,17 +264,47 @@
 <p>Dit object wordt gecomprimeerd (deflate-raw), gecodeerd als base64url en achter <code>https://meterkastpaspoort.nl/p#</code> geplaatst; van die URL wordt de QR-code gegenereerd. Bovenstaand voorbeeld levert een URL van circa 670 tekens op en past in een QR-code van versie 21 bij foutcorrectieniveau M.</p>
 <p><b>Let op de omvang.</b> Elke regel in <code>mat[]</code> maakt de code dichter. Blijft de QR onder de 50 mm slecht leesbaar, neem dan minder materiaal op of verklein het logboek — de leesbaarheid van de sticker gaat vóór de volledigheid van de lijst.</p>
 
-<h2>6. Verlies en herstel</h2>
+<h2>6. Omvang van de QR-code</h2>
+<p>Een paspoort met een materiaallijst wordt groter dan een paspoort zonder. De begrenzing zit niet in de QR-code zelf maar in de <b>sticker</b>: hoe meer modules, hoe kleiner elk blokje. Op een sticker van 50 mm met 2 mm marge is 46 mm bedrukbaar; bij 203 dpi (8 punten per millimeter) wordt een module onder ongeveer <b>3,5 punten</b> onbetrouwbaar om te scannen.</p>
+<p>Gemeten waarden, met per groep één toestel en een logboek van één regel. De JSON groeit stevig, maar comprimeert goed doordat een materiaallijst zeer repetitief is:</p>
+<table>
+  <tr><th>Groepen met materiaal</th><th>JSON</th><th>Na compressie</th><th>Modules</th><th>Punten per module</th><th></th></tr>
+  <tr><td>3</td><td>810 B</td><td>364 B</td><td>89</td><td>4,13</td><td>ruim</td></tr>
+  <tr><td>6</td><td>1278 B</td><td>404 B</td><td>93</td><td>3,96</td><td>ruim</td></tr>
+  <tr><td>12</td><td>2223 B</td><td>479 B</td><td>101</td><td>3,64</td><td>ruim</td></tr>
+  <tr><td>16</td><td>2859 B</td><td>525 B</td><td>105</td><td>3,50</td><td>krap</td></tr>
+  <tr><td>24</td><td>4131 B</td><td>620 B</td><td>113</td><td>3,26</td><td>te dicht</td></tr>
+</table>
+<p><b>Richtlijn:</b> houd een sticker van 50 mm onder de <b>105 modules</b>. Tot ongeveer twaalf groepen met volledige materiaalgegevens is dat ruim haalbaar.</p>
+
+<h3>Wat te doen bij een volle kast</h3>
+<p>Twee maatregelen leveren elk ongeveer even veel op, en ze zijn te combineren:</p>
+<ol>
+  <li><b>Foutcorrectieniveau L in plaats van M.</b> Dat scheelt twee QR-versies: vierentwintig toestellen passen dan nog op 101 modules. Verantwoord voor een sticker aan de binnenzijde van een kastdeur, waar beschadiging weinig voorkomt; op een plek waar de sticker vuil of gekrast kan raken is M de betere keuze.</li>
+  <li><b>Detailvelden weglaten waar ze niet helpen.</b> Laat <code>art</code> en <code>pd</code> weg bij standaardautomaten en volsta met <code>fab</code>, <code>typ</code> en <code>pos</code>; twintig toestellen passen dan op 101 modules bij niveau M. Een veldnotitie gaat vrijwel altijd over een specifieke serie — een aardlekschakelaar, een klemblok — en zelden over de standaardautomaat waarvan er tien in de kast zitten. Neem de volledige gegevens dus op waar ze ertoe doen en houd het elders kort.</li>
+</ol>
+
+<h3>Afkapvolgorde</h3>
+<p>Moet een schrijvende toepassing toch inkorten, dan doet zij dat in deze volgorde, zodat overal dezelfde gegevens als eerste sneuvelen:</p>
+<ol>
+  <li>de oudste regels van <code>log[]</code>, van onderen af;</li>
+  <li><code>art</code>, <code>sn</code> en <code>pd</code> van toestellen die geen <code>art</code> hebben — die matchen toch niet betrouwbaar;</li>
+  <li>hele regels uit <code>mat[]</code>, te beginnen bij toestellen zonder <code>art</code> en zonder <code>sn</code>;</li>
+  <li>als laatste: vrije omschrijvingen (<code>n</code>) inkorten.</li>
+</ol>
+<p>Nooit afkappen op grond van &ldquo;dit veld ken ik niet&rdquo;. Een toepassing die inkort meldt aan de gebruiker welke gegevens niet zijn meegenomen, zodat die het volledige overzicht in het opleverdocument kan opzoeken.</p>
+
+<h2>7. Verlies en herstel</h2>
 <p>Een sticker kan verloren gaan — beschadiging, vervanging van de kastdeur, of brand. Het paspoort is daartegen bestand door <em>gedistribueerde opslag zonder register</em>: dezelfde QR-code staat als uitknippagina in elk opleverdocument, en dat document is bij oplevering aan de bewoner verstrekt (en berust in de administratie van de installateur). Herstel bestaat uit het scannen van de QR uit het meest recente opleverdocument en het printen van een nieuwe sticker. Omdat iedere klus een nieuw document met de actuele paspoortstand oplevert, bestaan er evenveel reservekopieën als er ingrepen zijn geweest — verspreid over bewoner en betrokken installateurs. Een centraal register is daarmee bewust géén onderdeel van deze specificatie: het zou een doorzoekbare koppeling tussen adres en installatiegegevens introduceren (privacy- en inbraakrisico) zonder wezenlijke toevoeging aan de hersteldekking.</p>
 
-<h2 id="veldnotities">7. Veldnotities — het terugroepkanaal</h2>
+<h2 id="veldnotities">8. Veldnotities — het terugroepkanaal</h2>
 <p>Een fabrikant die een probleem ontdekt in een serie aardlekschakelaars of automaten heeft vandaag geen weg naar de kasten waarin dat materiaal hangt. De groothandel weet wie het kocht, niet waar het terechtkwam; de installateur is misschien gestopt of overgenomen. Wat er gebeurt is een persbericht en hopen.</p>
 <p>Het meterkastpaspoort kan dat gat overbruggen — en juist <em>doordat</em> er geen centrale database is. De QR zit op de kastdeur en overleeft de installateur.</p>
 
-<h3>7.1 Hoe het werkt</h3>
+<h3>8.1 Hoe het werkt</h3>
 <p>Elke uitgever publiceert een eigen, ondertekend bestand onder zijn eigen domein. Een lezende toepassing haalt dat op en vergelijkt het <b>op het toestel van de gebruiker</b> met <code>mat[]</code> uit de paspoorten die hij heeft. Er verlaat geen enkel gegeven het toestel: de vergelijking gaat naar de data, niet de data naar de vergelijking. De fabrikant komt dus nooit te weten waar zijn product hangt.</p>
 
-<h3>7.2 Het formaat</h3>
+<h3>8.2 Het formaat</h3>
 <pre><code>{
   "standaard": "meterkastpaspoort-veldnotitie/1.0",
   "uitgever": { "naam": "Voorbeeld Elektro B.V.",
@@ -305,16 +335,16 @@
 }</code></pre>
 <p><code>ernst</code> kent drie waarden: <code>informatie</code>, <code>actie_gewenst</code>, <code>actie_vereist</code>. <code>status</code> kan naar <code>ingetrokken</code>; de notitie blijft dan in het bestand staan zodat een gecachte toepassing hem ook echt kan intrekken. <code>tekst</code> en <code>handeling</code> worden <b>letterlijk</b> getoond.</p>
 
-<h3>7.3 Identificatie — waarom een datumrange niet volstaat</h3>
+<h3>8.3 Identificatie — waarom een datumrange niet volstaat</h3>
 <p>Een echte terugroepactie identificeert zelden op een schone reeks. Een gedocumenteerd voorbeeld: in 2020 werd een serie metersokkels teruggeroepen wegens brandgevaar, herkenbaar aan een datumcode op drie plekken in het formaat <code>@29-WWJJ-DD</code>, waarbij een bereik van weken geraakt was. Dat past in geen enkel gestructureerd veld — en het is precies wat de monteur nodig heeft, want hij staat voor één kast met één exemplaar.</p>
 <p>Daarom bestaat <code>identificatie</code> uit drie vrije regels: <b>waar</b> de code staat, <b>hoe</b> je hem leest, en een <b>toelichting</b> voor het randgeval. Die tekst wordt nooit machinaal vergeleken en altijd woordelijk getoond. Een treffer op type is een aanwijzing; de identificatie maakt er een vaststelling van — door de monteur, niet door de software.</p>
 
-<h3>7.4 Ondertekening</h3>
+<h3>8.4 Ondertekening</h3>
 <p>Drie lagen, drie vragen: de <b>feed</b> wordt ondertekend door de fabrikant (komt deze melding echt van dit merk?), het <b>paspoort</b> door de installateur (is deze data sinds het maken ongewijzigd?), en de <b>index</b> van uitgevers en sleutels door de beheerder van de standaard (is dit werkelijk de officiële lijst?). Die derde wordt vaak vergeten en is onmisbaar: wie de index kan vervangen, voegt een valse uitgever toe en kan daarna elke melding faken.</p>
 <p>De handtekening is <b>asymmetrisch</b> — Ed25519, circa 110 tekens base64 — en nadrukkelijk geen HMAC: wie met een gedeeld geheim kan controleren, kan er ook mee vervalsen, terwijl hier een consument of inspecteur het moet kunnen nakijken.</p>
 <p>Een handtekening bewijst dat de gegevens onveranderd zijn en van de houder van die sleutel komen. Niet dat de installatie deugt en niet dat de sticker op de juiste kast zit. Lezende toepassingen tonen daarom drie toestanden, feitelijk gesteld: <em>ondertekend en geverifieerd</em>, <em>ondertekend maar nog niet te verifiëren</em>, <em>niet ondertekend</em> — nooit &ldquo;ongeldig&rdquo; of &ldquo;goedgekeurd&rdquo;.</p>
 
-<h3>7.5 Vindplaatsen</h3>
+<h3>8.5 Vindplaatsen</h3>
 <p>Om het kanaal zonder centrale regie te laten werken staan feed en index op vaste, voorspelbare plekken:</p>
 <table>
   <tr><th>Wat</th><th>Waar</th></tr>
@@ -335,7 +365,7 @@
 }</code></pre>
 <p>Een lezende toepassing haalt de feeds bij voorkeur op via een <b>eigen tussenstap</b> in plaats van rechtstreeks. Dat is geen technische luxe: bij rechtstreeks ophalen ziet de fabrikant de IP-adressen van installateurs en kan hij dus tellen wie er kijkt. De feeds worden gecacht zodat de controle ook zonder netwerk werkt — een meterkast is vaak een kelder.</p>
 
-<h3>7.6 Neutraliteit</h3>
+<h3>8.6 Neutraliteit</h3>
 <p>Dit kanaal is voor een fabrikant alleen waardevol als het neutraal is; een kanaal dat te koop is, is voor een veiligheidsmelding waardeloos. Daarom horen deze regels bij de standaard:</p>
 <ol>
   <li>Het formaat is vrij en open (CC BY 4.0) en mag door iedereen worden gebruikt, ook buiten YourWkb.</li>
@@ -349,7 +379,7 @@
 </ol>
 <p>Het uitvoeren of administreren van een terugroepactie valt buiten deze standaard. Wij maken vindbaar, meer niet.</p>
 
-<h3>7.7 Vergelijken</h3>
+<h3>8.7 Vergelijken</h3>
 <p>De vergelijking gebeurt op het toestel van de gebruiker, in deze volgorde:</p>
 <ol>
   <li>Op <code>art</code> (artikelnummer) wanneer beide kanten dat hebben — het sterkste aanknopingspunt.</li>
@@ -358,10 +388,10 @@
 </ol>
 <p>De uitkomst is per notitie <b>treffer</b> (product en bereik komen overeen), <b>mogelijk van toepassing</b> (type komt overeen, bereik onbekend of alleen met de hand vast te stellen), of niets. Bij <em>mogelijk van toepassing</em> is de tekst uit <code>identificatie</code> het enige wat de monteur verder helpt; die hoort daarom prominent in beeld.</p>
 
-<h2>8. Versiebeheer &amp; bijdragen</h2>
+<h2>9. Versiebeheer &amp; bijdragen</h2>
 <p>Wijzigingsvoorstellen op deze concept-specificatie zijn welkom; het veld <code>v</code> wordt verhoogd bij niet-neerwaarts-compatibele wijzigingen. Lezers behoren paspoorten met een hogere versie zo goed mogelijk weer te geven en onbekende velden te negeren. De referentie-implementatie van deze specificatie is YourWkb.</p>
 
-<h3>8.1 Wijzigingen in v0.2</h3>
+<h3>9.1 Wijzigingen in v0.2</h3>
 <table>
   <tr><th>Wat</th><th>Waarom</th></tr>
   <tr><td>Nieuw: <code>mat[]</code> met <code>fab</code>, <code>typ</code>, <code>art</code>, <code>sn</code>, <code>pd</code>, <code>pos</code></td><td>Zonder materiaallijst is een veldnotitie van een fabrikant nergens mee te vergelijken. Dit is de drager van het terugroepkanaal.</td></tr>
@@ -369,12 +399,13 @@
   <tr><td>Nieuw: <code>grp[].mat</code></td><td>Koppelt een groep aan het toestel dat hem beveiligt.</td></tr>
   <tr><td>Nieuw: <code>log[].erk</code> als <code>uitgever:nummer</code></td><td>Maakt de erkenning van de uitvoerende installateur controleerbaar in het openbare register van de uitgever. Het paspoort verifieert niets; het maakt controleerbaar.</td></tr>
   <tr><td>Nieuw: <code>log[].sid</code> en <code>log[].sig</code></td><td>Ondertekening per logboekregel in plaats van over het geheel: dan kan niemand met terugwerkende kracht een eerdere regel wijzigen, en blijft de regel van een installateur verifieerbaar ook als dat bedrijf niet meer bestaat.</td></tr>
-  <tr><td>Nieuw: hoofdstuk 7, veldnotities</td><td>Het formaatdeel van het terugroepkanaal hoort in de open standaard, niet in één applicatie. Inclusief vaste vindplaatsen voor feed en index, de ondertekening in drie lagen, en de neutraliteitsregels.</td></tr>
+  <tr><td>Nieuw: hoofdstuk 6, omvang van de QR-code</td><td>Met een materiaallijst wordt de code groter. Vaste grenswaarden en één afkapvolgorde houden implementaties onderling vergelijkbaar.</td></tr>
+  <tr><td>Nieuw: hoofdstuk 8, veldnotities</td><td>Het formaatdeel van het terugroepkanaal hoort in de open standaard, niet in één applicatie. Inclusief vaste vindplaatsen voor feed en index, de ondertekening in drie lagen, en de neutraliteitsregels.</td></tr>
 </table>
 <p><b>Neerwaartse compatibiliteit.</b> Alle toevoegingen zijn optioneel. Een paspoort van v0.1 blijft geldig en leesbaar; alleen <code>f</code> is van betekenis verscherpt, waarbij een lezer bij <code>v: 1</code> de oude uitleg moet blijven hanteren.</p>
 
 <footer>
-  <p><b>Open Meterkastpaspoort</b> — specificatie v0.1 (concept), augustus 2026.<br>
+  <p><b>Open Meterkastpaspoort</b> — specificatie v0.2 (concept), september 2026.<br>
   Initiatief en auteur: Martin Schut, BlauweVisie B.V. (<a href="https://yourwkb.nl">YourWkb.nl</a>).<br>
   Deze specificatie is vrijgegeven onder <a href="https://creativecommons.org/licenses/by/4.0/deed.nl">Creative Commons BY 4.0</a>: iedereen mag haar gebruiken, implementeren en erop voortbouwen, met naamsvermelding. Reacties: via <a href="https://yourwkb.nl">yourwkb.nl</a>.</p>
 </footer>
