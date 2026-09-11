@@ -1,0 +1,21 @@
+{
+  "name": "meterkastpaspoort",
+  "version": "0.2.0",
+  "description": "Referentie-implementatie van het Open Meterkastpaspoort: coderen, decoderen en valideren van het QR-formaat.",
+  "license": "CC-BY-4.0",
+  "type": "module",
+  "main": "mkp.js",
+  "exports": {
+    ".": "./mkp.js"
+  },
+  "files": [
+    "mkp.js"
+  ],
+  "scripts": {
+    "test": "node tests/test-formaat.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mschut64/meterkastpaspoort.git"
+  }
+}
