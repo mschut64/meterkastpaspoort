@@ -1,0 +1,22 @@
+{
+  "standaard": "meterkastpaspoort-veldnotitie-index/1.0",
+  "bijgewerkt": "2026-09-11",
+  "uitgevers": [
+    {
+      "naam": "Voorbeeld Elektro B.V.",
+      "domein": "voorbeeldelektro.nl",
+      "feed": "https://voorbeeldelektro.nl/.well-known/meterkastpaspoort-veldnotities.json",
+      "sleutel_id": "vbe-2026-01",
+      "publieke_sleutel": "hoUORPfRGO8WgzTPdt7r5P_EoAiymE5t95dHdFIJ1AE"
+    }
+  ],
+  "installateurs": [
+    {
+      "naam": "Installatiebedrijf Jansen",
+      "sleutel_id": "jansen-2026-01",
+      "publieke_sleutel": "3nGPr1uTfA_nInv3eF13-8mjxtf2R4WYF_6CxFXXa8Q"
+    }
+  ],
+  "handtekening": "0h5JTQJCOuAQKdEt3W-txmgegaAlnbAKe4u73pal_Fn9CMPs7aIU2LBqCzneW3D56GfhNWCXVBIVjSATS6-FDA",
+  "wortel_publieke_sleutel": "HpAJz53JhmwJJ8CNK01EmwdB-7O31ScoGdIy_ih9-sI"
+}

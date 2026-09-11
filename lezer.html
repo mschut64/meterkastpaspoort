@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paspoortlezer — Open Meterkastpaspoort v0.2</title>
+<style>
+  :root { --ink:#1a1a1a; --muted:#5a5a5a; --line:#ddd; --accent:#c9a300; --bg:#fdfdfb;
+          --rood:#b3261e; --roodbg:#fdeceb; --groen:#1e6b3a; --oranje:#8a5a00; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.6 Georgia,'Times New Roman',serif; color:var(--ink); background:var(--bg); }
+  .wrap { max-width:720px; margin:0 auto; padding:32px 20px 72px; }
+  h1 { font-size:25px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-style:italic; margin:0 0 22px; }
+  h2 { font-size:18px; margin:30px 0 10px; border-bottom:1px solid var(--line); padding-bottom:5px; }
+  table { border-collapse:collapse; width:100%; margin:0 0 14px; font-size:14.5px; }
+  th,td { border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top; }
+  th { background:#f5f4f0; font-family:system-ui,sans-serif; font-size:12.5px; width:34%; }
+  code { font-family:ui-monospace,Menlo,monospace; font-size:13px; background:#f1f0ec; padding:1px 4px; border-radius:3px; }
+  .invoer { font-family:system-ui,sans-serif; font-size:13px; }
+  textarea { width:100%; height:80px; font-family:ui-monospace,Menlo,monospace; font-size:12px;
+             border:1px solid var(--line); border-radius:5px; padding:8px; }
+  button { font-family:system-ui,sans-serif; font-size:14px; padding:9px 16px; border-radius:6px;
+           border:1px solid var(--ink); background:var(--ink); color:#fff; cursor:pointer; margin-top:8px; }
+  .melding { border-left:5px solid var(--rood); background:var(--roodbg); padding:12px 14px; margin:0 0 14px; border-radius:0 5px 5px 0; }
+  .melding h3 { margin:0 0 6px; font-size:16px; color:var(--rood); }
+  .melding .ernst { font-family:system-ui,sans-serif; font-size:11px; font-weight:700; letter-spacing:.06em;
+                    text-transform:uppercase; color:var(--rood); }
+  .melding p { margin:0 0 8px; font-size:14.5px; }
+  .ident { background:#fff; border:1px solid #e3cfcd; border-radius:5px; padding:9px 11px; font-size:13.5px; }
+  .vlag { display:inline-block; font-family:system-ui,sans-serif; font-size:11.5px; font-weight:700;
+          border:1px solid; border-radius:3px; padding:1px 7px; margin-left:6px; }
+  .v-ok { color:var(--groen); border-color:var(--groen); }
+  .v-onbek { color:var(--oranje); border-color:var(--oranje); }
+  .v-geen { color:var(--muted); border-color:var(--muted); }
+  .leeg { color:var(--muted); font-style:italic; }
+  footer { margin-top:44px; border-top:1px solid var(--line); padding-top:14px;
+           font-size:13px; color:var(--muted); font-family:system-ui,sans-serif; }
+  a { color:#8a6d00; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Paspoortlezer</h1>
+<p class="sub">Referentie-implementatie van de Open Meterkastpaspoort-standaard v0.2. Leest alles wat in de QR zit — ook de velden die nieuw zijn in v0.2.</p>
+
+<div id="invoer" class="invoer" style="display:none">
+  <p>Geen paspoort in de adresbalk gevonden. Plak hier de volledige URL uit een QR-code:</p>
+  <textarea id="url" placeholder="https://meterkastpaspoort.nl/p#..."></textarea>
+  <button onclick="lees(document.getElementById('url').value.trim())">Lezen</button>
+</div>
+
+<div id="uit"></div>
+
+<footer>
+  Deze pagina verwerkt alles in de browser. De paspoortdata staat in het URL-fragment en wordt nooit naar een server gestuurd.<br>
+  <a href="/">Open Meterkastpaspoort — specificatie</a> · CC BY 4.0
+</footer>
+</div>
+
+<script>
+const E = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const unb64 = (s) => {
+  s = s.replace(/-/g,'+').replace(/_/g,'/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s); const u = new Uint8Array(bin.length);
+  for (let i=0;i<bin.length;i++) u[i] = bin.charCodeAt(i);
+  return u;
+};
+const canon = (o) => {
+  const sorteer = (x) => Array.isArray(x) ? x.map(sorteer)
+    : (x && typeof x === 'object')
+      ? Object.keys(x).sort().reduce((a,k)=>(a[k]=sorteer(x[k]),a),{})
+      : x;
+  return new TextEncoder().encode(JSON.stringify(sorteer(o)));
+};
+
+// Demo-feed en -index; in een echte toepassing opgehaald van de vindplaatsen uit 7.5.
+let FEED = null, INDEX = null, WORTEL = null;
+
+async function decodeer(frag) {
+  const bytes = unb64(frag);
+  const ds = new DecompressionStream('deflate-raw');
+  const tekst = await new Response(new Blob([bytes]).stream().pipeThrough(ds)).text();
+  return JSON.parse(tekst);
+}
+
+async function verifieer(obj, veld, pubB64) {
+  if (!obj[veld]) return 'geen';
+  if (!pubB64) return 'onbekend';
+  try {
+    const kopie = {...obj}; const sig = kopie[veld]; delete kopie[veld];
+    const key = await crypto.subtle.importKey('raw', unb64(pubB64), {name:'Ed25519'}, false, ['verify']);
+    const ok = await crypto.subtle.verify({name:'Ed25519'}, key, unb64(sig), canon(kopie));
+    return ok ? 'geldig' : 'ongeldig';
+  } catch (e) {
+    return 'onbekend';   // browser kent Ed25519 nog niet — spec: "ondertekend, nog niet te verifiëren"
+  }
+}
+const vlag = (st) => st === 'geldig'  ? '<span class="vlag v-ok">ondertekend en geverifieerd</span>'
+                   : st === 'onbekend'? '<span class="vlag v-onbek">ondertekend, nog niet te verifiëren</span>'
+                   : st === 'ongeldig'? '<span class="vlag v-onbek">handtekening komt niet overeen</span>'
+                   : '<span class="vlag v-geen">niet ondertekend</span>';
+
+const SOORT = {hs:'hoofdschakelaar', als:'aardlekschakelaar', ala:'aardlekautomaat',
+               aut:'installatieautomaat', kam:'kamrail', tr:'transformator', ov:'overig'};
+const TYPE  = {alg:'algemene groep', kook:'kookgroep', wp:'warmtepomp', lp:'laadpaal',
+               pv:'PV-omvormer', bat:'thuisbatterij', ov:'overig'};
+
+function rij(k,v){ return v==null||v==='' ? '' : `<tr><th>${E(k)}</th><td>${v}</td></tr>`; }
+
+async function toonNotities(pas) {
+  if (!FEED || !pas.mat) return '';
+  let indexSt = 'geen';
+  if (INDEX) indexSt = await verifieer(INDEX, 'handtekening', WORTEL);
+  const uitg = INDEX?.uitgevers?.find(u => u.sleutel_id === FEED.uitgever?.sleutel_id);
+  const feedSt = await verifieer(FEED, 'handtekening', uitg?.publieke_sleutel);
+  let blokken = '';
+  for (const n of FEED.notities || []) {
+    if (n.status !== 'actueel') continue;
+    for (const p of n.producten || []) {
+      for (const m of pas.mat) {
+        const opArt = p.artikelnummer && p.artikelnummer === m.art;
+        const opTyp = (p.fabrikant||'').toLowerCase() === (m.fab||'').toLowerCase() && p.type === m.typ;
+        if (!opArt && !opTyp) continue;
+        blokken += `<div class="melding">
+          <div class="ernst">${E((n.ernst||'').replace('_',' '))} · ${opArt ? 'treffer op artikelnummer' : 'mogelijk van toepassing'}</div>
+          <h3>${E(n.titel)}</h3>
+          <p>${E(n.tekst)}</p>
+          <p><b>Toestel in deze kast:</b> ${E(m.fab)} ${E(m.typ)}${m.pos ? ' op positie ' + E(m.pos) : ''}${m.pd ? ' · code ' + E(m.pd) : ''}</p>
+          <div class="ident"><b>Zelf vaststellen of dit exemplaar geraakt is</b><br>
+            ${E(p.identificatie?.waar || '')}<br>${E(p.identificatie?.formaat || '')}<br>
+            <span class="leeg">${E(p.identificatie?.toelichting || '')}</span></div>
+          <p style="margin-top:9px"><b>Handeling:</b> ${E(n.handeling)}</p>
+          <p style="font-size:13px;margin:0">Uitgegeven door ${E(FEED.uitgever?.naam)} ${vlag(feedSt)}
+             · index ${vlag(indexSt)} · <a href="${E(n.bron_url)}">bron</a></p>
+        </div>`;
+      }
+    }
+  }
+  return blokken ? `<h2>Veldnotities</h2>${blokken}` : '';
+}
+
+async function lees(url) {
+  const uit = document.getElementById('uit');
+  try {
+    const frag = url.includes('#') ? url.split('#')[1] : url;
+    const p = await decodeer(frag);
+    let h = `<h2>Kast</h2><table>
+      ${rij('Standaardversie', E(p.v) + (p.v >= 2 ? ' <span class="vlag v-ok">v0.2</span>' : ' <span class="vlag v-geen">v0.1</span>'))}
+      ${rij('Adres', E([p.pc, p.nr].filter(Boolean).join(' ')))}
+      ${rij('Bijgewerkt', E(p.d))}
+      ${rij('EAN-code', E(p.ean))}
+      ${rij('Bouwjaar kast', E(p.bj))}
+      ${rij('Hoofdaansluiting', p.ha ? `${E(p.ha.f)} × ${E(p.ha.a)} A` : '')}
+      ${rij('Kam / verdeler', p.kam ? `${E(p.kam.mm2)} mm² · max ${E(p.kam.a)} A` : '')}
+      ${rij('Load balancing', p.lb ? (p.lb.aan ? `${E(p.lb.typ)} · max ${E(p.lb.max)} A · regisseur ${E(p.lb.reg)}` : 'niet actief') : '')}
+      ${rij('Laatste belastingcheck', p.chk ? `${E(p.chk.r)} (${E(p.chk.d)})` : '')}
+    </table>`;
+
+    if (p.grp?.length) {
+      h += `<h2>Groepen</h2><table><tr><th style="width:22%">Type</th><th style="width:auto">Gegevens</th></tr>`;
+      for (const g of p.grp) {
+        const fase = g.fn ? `fase ${g.fn.join('+')}` : (g.f ? `${g.f}-fase` : '');
+        const mat = g.mat && p.mat ? p.mat.find(m => m.i === g.mat) : null;
+        h += `<tr><th>${E(TYPE[g.t] || g.t)}</th><td>
+          ${[g.kw ? E(g.kw)+' kW' : '', g.rol === 'voed' ? 'voedend' : 'afgaand', fase].filter(Boolean).join(' · ')}
+          ${g.n ? '<br>' + E(g.n) : ''}
+          ${mat ? `<br><span class="leeg">beveiligd door ${E(mat.fab)} ${E(mat.typ)}</span>` : ''}
+        </td></tr>`;
+      }
+      h += `</table>`;
+    }
+
+    if (p.mat?.length) {
+      h += `<h2>Materiaal <span class="vlag v-ok">nieuw in v0.2</span></h2>
+            <table><tr><th style="width:26%">Soort</th><th>Toestel</th></tr>`;
+      for (const m of p.mat) {
+        h += `<tr><th>${E(SOORT[m.s] || m.s)}${m.pos ? '<br><span class="leeg">' + E(m.pos) + '</span>' : ''}</th><td>
+          <b>${E(m.fab)} ${E(m.typ)}</b>
+          ${m.art ? '<br>artikelnummer ' + E(m.art) : ''}
+          ${m.sn ? '<br>serienummer ' + E(m.sn) : ''}
+          ${m.pd ? '<br>productiecode <code>' + E(m.pd) + '</code>' : ''}
+        </td></tr>`;
+      }
+      h += `</table>`;
+    }
+
+    if (p.log?.length) {
+      h += `<h2>Logboek</h2><table><tr><th style="width:26%">Datum</th><th>Wijziging</th></tr>`;
+      for (const r of p.log) {
+        const ins = INDEX?.installateurs?.find(i => i.sleutel_id === r.sid);
+        const st = await verifieer(r, 'sig', ins?.publieke_sleutel);
+        const erk = r.erk ? r.erk.split(':') : null;
+        h += `<tr><th>${E(r.d)}</th><td><b>${E(r.b)}</b><br>${E(r.w)}
+          ${erk ? `<br><span class="leeg">erkenning ${E(erk[0])} ${E(erk[1])} — controleer in het openbare register van ${E(erk[0])}</span>` : ''}
+          ${r.c ? '<br>' + E(r.c) : ''}
+          <br>${vlag(st)}</td></tr>`;
+      }
+      h += `</table>`;
+    }
+
+    h += await toonNotities(p);
+    h += `<p class="leeg" style="font-size:13.5px">Een handtekening toont aan dat de gegevens onveranderd zijn en van de houder van die sleutel komen. Niet dat de installatie deugt, en niet dat de sticker op de juiste kast zit.</p>`;
+    uit.innerHTML = h;
+    document.getElementById('invoer').style.display = 'none';
+  } catch (e) {
+    uit.innerHTML = `<p class="melding">Dit is geen leesbaar meterkastpaspoort: ${E(e.message)}</p>`;
+    document.getElementById('invoer').style.display = 'block';
+  }
+}
+
+(async () => {
+  try {
+    const [f, i] = await Promise.all([
+      fetch('/veldnotities/demo-feed.json').then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/veldnotities/index.json').then(r => r.ok ? r.json() : null).catch(() => null)
+    ]);
+    FEED = f; INDEX = i; WORTEL = i?.wortel_publieke_sleutel || null;
+  } catch (e) { /* demo werkt ook zonder feed */ }
+  const frag = location.hash.slice(1);
+  if (frag) lees(frag);
+  else document.getElementById('invoer').style.display = 'block';
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "standaard": "meterkastpaspoort-veldnotitie/1.0",
+  "uitgever": {
+    "naam": "Voorbeeld Elektro B.V.",
+    "domein": "voorbeeldelektro.nl",
+    "sleutel_id": "vbe-2026-01"
+  },
+  "bijgewerkt": "2026-09-11",
+  "notities": [
+    {
+      "id": "vbe-2026-003",
+      "gepubliceerd": "2026-09-01",
+      "vervalt": null,
+      "status": "actueel",
+      "ernst": "actie_vereist",
+      "producten": [
+        {
+          "fabrikant": "Voorbeeld Elektro",
+          "type": "VBE-ALS-2P-40-30",
+          "artikelnummer": "1234567",
+          "geproduceerd_van": "2024-02",
+          "geproduceerd_tot": "2024-08",
+          "identificatie": {
+            "waar": "Datumcode op het typeplaatje aan de rechterzijde van het toestel en op de verpakking.",
+            "formaat": "@29-WWJJ-DD, waarbij WW de productieweek is en JJ het jaar. Geraakt zijn week 09 tot en met 32 van 2024.",
+            "toelichting": "Staat de code er niet, of valt de week buiten dit bereik, dan valt het exemplaar buiten deze melding."
+          }
+        }
+      ],
+      "titel": "Aardlekschakelaar kan traag uitschakelen bij lage omgevingstemperatuur",
+      "tekst": "Bij een beperkt aantal exemplaren uit de genoemde productieweken kan het uitschakelmechanisme bij temperaturen onder 5 °C langzamer reageren dan de specificatie voorschrijft. De beveiliging blijft functioneren, maar de uitschakeltijd kan buiten de norm vallen.",
+      "handeling": "Laat het toestel vervangen door een erkend installateur. Neem voor kosteloze omruil contact op via veldnotitie@voorbeeldelektro.nl onder vermelding van vbe-2026-003.",
+      "bron_url": "https://voorbeeldelektro.nl/veldnotities/vbe-2026-003"
+    }
+  ],
+  "handtekening": "thpVI1rPmjT7POLHj-ppCY9UJN2uCt5Cl3rAeOxwBrCgHHZNl--zj_CVaevkFbwIjaMUDS5YOtw1Cho4uF6UBw"
+}
