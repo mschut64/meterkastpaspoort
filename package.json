@@ -1,6 +1,6 @@
 {
   "name": "meterkastpaspoort",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Referentie-implementatie van het Open Meterkastpaspoort: coderen, decoderen en valideren van het QR-formaat.",
   "license": "CC-BY-4.0",
   "type": "module",
