@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Erkenningsverklaring controleren — Open Meterkastpaspoort</title>
+<style>
+  :root { --ink:#1a1a1a; --muted:#5a5a5a; --line:#ddd; --bg:#fdfdfb;
+          --ok:#1e6b3a; --okbg:#eef6f0; --waarsch:#8a5a00; --waarschbg:#fdf6e8;
+          --fout:#b3261e; --foutbg:#fdeceb; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.6 Georgia,'Times New Roman',serif; color:var(--ink); background:var(--bg); }
+  .wrap { max-width:620px; margin:0 auto; padding:30px 20px 70px; }
+  h1 { font-size:23px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-style:italic; margin:0 0 22px; font-size:15px; }
+  .oordeel { border-radius:7px; padding:15px 17px; margin:0 0 20px; border-left:6px solid; }
+  .oordeel h2 { font-size:19px; margin:0 0 5px; font-family:system-ui,sans-serif; }
+  .oordeel p { margin:0; font-size:14.5px; }
+  .o-ok { background:var(--okbg); border-color:var(--ok); } .o-ok h2 { color:var(--ok); }
+  .o-w  { background:var(--waarschbg); border-color:var(--waarsch); } .o-w h2 { color:var(--waarsch); }
+  .o-f  { background:var(--foutbg); border-color:var(--fout); } .o-f h2 { color:var(--fout); }
+  table { border-collapse:collapse; width:100%; margin:0 0 18px; font-size:15px; }
+  th,td { border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+  th { background:#f5f4f0; font-family:system-ui,sans-serif; font-size:12.5px; width:36%; }
+  .let { background:#fff; border:1px solid var(--line); border-radius:6px; padding:13px 15px;
+         font-size:14.5px; margin:0 0 18px; }
+  .let b { display:block; margin-bottom:5px; font-family:system-ui,sans-serif; font-size:13px;
+           text-transform:uppercase; letter-spacing:.05em; }
+  code { font-family:ui-monospace,Menlo,monospace; font-size:12.5px; background:#f1f0ec;
+         padding:1px 4px; border-radius:3px; word-break:break-all; }
+  footer { margin-top:38px; border-top:1px solid var(--line); padding-top:13px;
+           font-size:13px; color:var(--muted); font-family:system-ui,sans-serif; }
+  a { color:#8a6d00; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Erkenningsverklaring</h1>
+<p class="sub">Controleert of een erkenning echt door de uitgever is afgegeven en sindsdien niet is gewijzigd.</p>
+<div id="uit"><p class="sub">Geen verklaring in de adresbalk. Scan een QR-code van een offerte of opleverdocument.</p></div>
+<footer>
+  De controle gebeurt in deze pagina zelf, met de openbare sleutel van de uitgever. Er worden geen gegevens verstuurd.<br>
+  <a href="/">Open Meterkastpaspoort — specificatie</a> · CC BY 4.0
+</footer>
+</div>
+<script>
+const E = s => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const unb64 = s => { s = s.replace(/-/g,'+').replace(/_/g,'/'); while (s.length % 4) s += '=';
+  const b = atob(s), u = new Uint8Array(b.length); for (let i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u; };
+
+const VG = { "elektrotechniek":"Elektrotechniek", "zonnestroom":"Zonnestroomsystemen (PV)",
+  "warmtepomp-bovengronds":"Warmtepompinstallaties bovengronds", "gas":"Gastechnische installaties",
+  "water":"Watertechnische installaties", "ventilatie":"Ventilatievoorzieningen",
+  "installatie-inspectie":"Installatie-inspectie" };
+
+function bevoegdheid(t) {
+  const [soort, rest] = t.split(":");
+  if (soort === "zegelrecht") {
+    const d = (rest||"").split("-");
+    const reeks = d.length >= 4 ? `${d[0]}-${d[1]}-${d[2]} t/m ${d[3]}` : rest;
+    return `<b>Zegelrecht</b> — mag verzegelingen verbreken en aanbrengen. Toegewezen reeks: <code>${E(reeks)}</code>`;
+  }
+  if (soort === "co")    return `<b>CO-certificaat</b> (BRL 6000-25), nummer <code>${E(rest)}</code> — wettelijk vereist voor werk aan gasverbrandingsinstallaties.`;
+  if (soort === "fgas")  return `<b>F-gassencertificaat</b>, nummer <code>${E(rest)}</code> — wettelijk vereist voor handelingen met koudemiddel.`;
+  if (soort === "scope") return `<b>Inspectiebevoegdheid</b> scope ${E(rest)}.`;
+  return `${E(soort)} <code>${E(rest||"")}</code>`;
+}
+
+async function verifieer(basis, sig, pub) {
+  try {
+    const k = await crypto.subtle.importKey('raw', unb64(pub), {name:'Ed25519'}, false, ['verify']);
+    return await crypto.subtle.verify({name:'Ed25519'}, k, unb64(sig), new TextEncoder().encode(basis))
+      ? 'geldig' : 'ongeldig';
+  } catch (e) { return 'onbekend'; }
+}
+
+(async () => {
+  const uit = document.getElementById('uit');
+  const qs = location.search.slice(1);
+  if (!qs) return;
+  const p = Object.fromEntries(new URLSearchParams(qs));
+  // De handtekening staat als laatste parameter; ondertekend is alles ervóór.
+  // Zonder &sig= is er niets ondertekend — dan ook niets afknippen.
+  const sig = p.sig;
+  const knip = qs.lastIndexOf('&sig=');
+  const basis = knip >= 0 ? qs.slice(0, knip) : qs;
+
+  let index = null;
+  try { index = await fetch('/veldnotities/index.json').then(r => r.ok ? r.json() : null); } catch(e) {}
+  const uitg = index?.erkenners?.find(u => u.id === p.u && u.sleutel_id === p.sid);
+  // Eerst: is er überhaupt een handtekening? Anders kreeg een onondertekende
+  // verklaring van een bekende uitgever "nog niet te verifiëren" (oranje) in
+  // plaats van "niet ondertekend" (rood) — te mild voor wat er werkelijk staat.
+  const st = !sig ? 'geen' : uitg ? await verifieer(basis, sig, uitg.publieke_sleutel) : 'onbekend';
+
+  const verlopen = p.tot && new Date(p.tot) < new Date();
+  let kop, klasse, tekst;
+  if (st === 'geldig' && !verlopen) {
+    kop = "Echt en geldig"; klasse = "o-ok";
+    tekst = `Deze verklaring is afgegeven door ${E(uitg.naam)} en is sindsdien niet gewijzigd.`;
+  } else if (st === 'geldig' && verlopen) {
+    kop = "Echt, maar verlopen"; klasse = "o-w";
+    tekst = `De verklaring is niet gewijzigd, maar was geldig tot ${E(p.tot)}. Vraag om een actuele verklaring.`;
+  } else if (st === 'onbekend') {
+    kop = "Nog niet te verifiëren"; klasse = "o-w";
+    tekst = "De uitgever of de sleutel staat niet in de index, of deze browser ondersteunt de controle nog niet. De inhoud hieronder is dus niet bevestigd.";
+  } else if (st === 'ongeldig') {
+    kop = "Komt niet overeen"; klasse = "o-f";
+    tekst = "De handtekening hoort niet bij deze gegevens. Er is iets gewijzigd, of de verklaring is niet echt.";
+  } else {
+    kop = "Niet ondertekend"; klasse = "o-f";
+    tekst = "Er is geen handtekening meegestuurd. Deze gegevens zijn door niemand bevestigd.";
+  }
+
+  const vg = (p.vg||"").split(",").filter(Boolean).map(v => VG[v] || v);
+  const bv = (p.bv||"").split(",").filter(Boolean);
+
+  uit.innerHTML = `
+    <div class="oordeel ${klasse}"><h2>${kop}</h2><p>${tekst}</p></div>
+    <table>
+      ${p.b   ? `<tr><th>Bedrijf</th><td><b>${E(p.b)}</b></td></tr>` : ''}
+      ${p.kvk ? `<tr><th>KVK-nummer</th><td>${E(p.kvk)}</td></tr>` : ''}
+      ${p.erk ? `<tr><th>Erkenningsnummer</th><td>${E(p.erk)}</td></tr>` : ''}
+      ${vg.length ? `<tr><th>Erkend voor</th><td>${vg.map(E).join('<br>')}</td></tr>` : ''}
+      ${bv.length ? `<tr><th>Bevoegdheden</th><td>${bv.map(bevoegdheid).join('<br><br>')}</td></tr>` : ''}
+      ${p.tot ? `<tr><th>Geldig tot</th><td>${E(p.tot)}</td></tr>` : ''}
+      ${uitg  ? `<tr><th>Uitgegeven door</th><td>${E(uitg.naam)}</td></tr>` : ''}
+    </table>
+    <div class="let"><b>Let op</b>
+      Vergelijk de bedrijfsnaam en het KVK-nummer hierboven met de offerte of factuur die u heeft gekregen.
+      Deze verklaring bewijst dat de erkenning echt is — niet dat degene die u spreekt dit bedrijf ís.
+      Wijkt de naam af, of wordt u gevraagd contant of naar een rekening op een andere naam te betalen, wees dan op uw hoede.
+    </div>`;
+})();
+</script>
+</body>
+</html>

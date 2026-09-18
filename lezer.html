@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Paspoortlezer — Open Meterkastpaspoort v0.2</title>
+<title>Paspoortlezer — Open Meterkastpaspoort v0.3</title>
 <style>
   :root { --ink:#1a1a1a; --muted:#5a5a5a; --line:#ddd; --accent:#c9a300; --bg:#fdfdfb;
           --rood:#b3261e; --roodbg:#fdeceb; --groen:#1e6b3a; --oranje:#8a5a00; }
@@ -42,7 +42,7 @@
 <body>
 <div class="wrap">
 <h1>Paspoortlezer</h1>
-<p class="sub">Referentie-implementatie van de Open Meterkastpaspoort-standaard v0.2. Leest alles wat in de QR zit — ook de velden die nieuw zijn in v0.2.</p>
+<p class="sub">Referentie-implementatie van de Open Meterkastpaspoort-standaard v0.3. Leest alles wat in de QR zit, inclusief materiaal, fasenummers, erkenning, zegelnummers en de status van de handtekeningen.</p>
 
 <div id="invoer" class="invoer" style="display:none">
   <p>Geen paspoort in de adresbalk gevonden. Plak hier de volledige URL uit een QR-code:</p>
@@ -75,7 +75,7 @@ const canon = (o) => {
   return new TextEncoder().encode(JSON.stringify(sorteer(o)));
 };
 
-// Demo-feed en -index; in een echte toepassing opgehaald van de vindplaatsen uit 7.5.
+// Demo-feed en -index; in een echte toepassing opgehaald van de vindplaatsen uit 8.5.
 let FEED = null, INDEX = null, WORTEL = null;
 
 async function decodeer(frag) {
@@ -147,7 +147,7 @@ async function lees(url) {
     const frag = url.includes('#') ? url.split('#')[1] : url;
     const p = await decodeer(frag);
     let h = `<h2>Kast</h2><table>
-      ${rij('Standaardversie', E(p.v) + (p.v >= 2 ? ' <span class="vlag v-ok">v0.2</span>' : ' <span class="vlag v-geen">v0.1</span>'))}
+      ${rij('Datamodelversie', E(p.v) + (p.v >= 2 ? ' <span class="vlag v-ok">v2 — materiaal, fasenummers, erkenning</span>' : ' <span class="vlag v-geen">v1 — basisgegevens</span>'))}
       ${rij('Adres', E([p.pc, p.nr].filter(Boolean).join(' ')))}
       ${rij('Bijgewerkt', E(p.d))}
       ${rij('EAN-code', E(p.ean))}
@@ -192,8 +192,13 @@ async function lees(url) {
         const ins = INDEX?.installateurs?.find(i => i.sleutel_id === r.sid);
         const st = await verifieer(r, 'sig', ins?.publieke_sleutel);
         const erk = r.erk ? r.erk.split(':') : null;
+        const uitg = erk && INDEX?.erkenners?.find(u => u.id === erk[0]);
+        const zeg = Array.isArray(r.zeg) ? r.zeg : (r.zeg ? [r.zeg] : []);
         h += `<tr><th>${E(r.d)}</th><td><b>${E(r.b)}</b><br>${E(r.w)}
-          ${erk ? `<br><span class="leeg">erkenning ${E(erk[0])} ${E(erk[1])} — controleer in het openbare register van ${E(erk[0])}</span>` : ''}
+          ${erk ? `<br><span class="leeg">erkenning ${E(erk[0])} ${E(erk[1])}${
+              uitg?.opzoek ? ` — <a href="${E(uitg.opzoek.replace('{nummer}', encodeURIComponent(erk[1])))}">controleer bij ${E(uitg.naam)}</a>`
+                           : ` — controleer in het openbare register van ${E(erk[0])}`}</span>` : ''}
+          ${zeg.length ? `<br><span class="leeg">zegel${zeg.length > 1 ? 's' : ''} geplaatst: ${zeg.map(E).join(', ')}</span>` : ''}
           ${r.c ? '<br>' + E(r.c) : ''}
           <br>${vlag(st)}</td></tr>`;
       }

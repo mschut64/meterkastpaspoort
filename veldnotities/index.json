@@ -14,9 +14,27 @@
     {
       "naam": "Installatiebedrijf Jansen",
       "sleutel_id": "jansen-2026-01",
-      "publieke_sleutel": "3nGPr1uTfA_nInv3eF13-8mjxtf2R4WYF_6CxFXXa8Q"
+      "publieke_sleutel": "lShNi54LnAsTBAaR86GFLpuzfZ7HoTTuSURHPBF0geE"
     }
   ],
   "handtekening": "0h5JTQJCOuAQKdEt3W-txmgegaAlnbAKe4u73pal_Fn9CMPs7aIU2LBqCzneW3D56GfhNWCXVBIVjSATS6-FDA",
-  "wortel_publieke_sleutel": "HpAJz53JhmwJJ8CNK01EmwdB-7O31ScoGdIy_ih9-sI"
+  "wortel_publieke_sleutel": "HpAJz53JhmwJJ8CNK01EmwdB-7O31ScoGdIy_ih9-sI",
+  "erkenners": [
+    {
+      "id": "demo",
+      "naam": "Demo-uitgever (in de praktijk: de erkennende instantie)",
+      "domein": "meterkastpaspoort.nl",
+      "sleutel_id": "demo-2026-01",
+      "publieke_sleutel": "oh6hYV4v9AwMUcePWK8u8rcqWx5CfhtBv_eir9TX8qM",
+      "opzoek": "https://meterkastpaspoort.nl/v.html?erk={nummer}"
+    },
+    {
+      "id": "installq",
+      "naam": "InstallQ",
+      "domein": "installq.nl",
+      "opzoek": "https://www.echteinstallateur.nl/",
+      "sleutel_id": null,
+      "publieke_sleutel": null
+    }
+  ]
 }

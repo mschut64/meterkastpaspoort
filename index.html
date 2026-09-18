@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Open Meterkastpaspoort — specificatie v0.2 (concept)</title>
+<title>Open Meterkastpaspoort — specificatie v0.3 (concept)</title>
 <meta name="description" content="Het Open Meterkastpaspoort (MKP) is een open, leveranciersonafhankelijke specificatie voor het vastleggen van de toestand van een meterkast in een QR-code die bij de kast blijft. Versie 0.2 voegt een materiaallijst, fasenummers, erkenningen, ondertekening en een terugroepkanaal toe.">
 <style>
   :root { --ink:#1a1a1a; --muted:#555; --line:#ddd; --accent:#c9a300; --bg:#fdfdfb; }
@@ -35,11 +35,11 @@
 <body>
 <div class="wrap">
 <header>
-  <div class="status">Versie 0.2 — concept, commentaar welkom</div>
+  <div class="status">Versie 0.3 — concept, commentaar welkom</div>
   <h1>Open Meterkastpaspoort</h1>
   <p class="subtitle">Een open specificatie voor de toestand van de meterkast, vastgelegd in een QR-code die bij de kast blijft.</p>
   <div class="meta">
-    <span><b>Status:</b> concept (v0.2)</span>
+    <span><b>Status:</b> concept (v0.3)</span>
     <span><b>Datum:</b> september 2026</span>
     <span><b>Initiatief &amp; auteur:</b> Martin Schut, BlauweVisie B.V. (<a href="https://yourwkb.nl">YourWkb.nl</a>)</span>
     <span><b>Licentie:</b> <a href="https://creativecommons.org/licenses/by/4.0/deed.nl">CC BY 4.0</a></span>
@@ -65,7 +65,7 @@
 <p>waarin <code>&lt;data&gt;</code> het paspoort is: een JSON-object, gecomprimeerd met <b>deflate-raw</b> en gecodeerd als <b>base64url</b>. Het domein leidt door naar een referentie-implementatie; omdat de data in het fragment zit, reist zij automatisch mee met de doorverwijzing en bereikt zij nooit de server. Elke andere implementatie kan dezelfde payload lezen door het fragment te decoderen.</p>
 <p>Richtwaarde: een gevuld paspoort comprimeert tot ± 200–400 bytes en past daarmee ruim in een QR-code die op een sticker van 40–50 mm scherp afdrukbaar is.</p>
 
-<h2>4. Datamodel v0.2</h2>
+<h2>4. Datamodel <span class="opt">documentversie 0.3 · datamodelversie <code>v: 2</code></span></h2>
 <p>Veldnamen zijn kort gehouden om de QR-code compact te houden. Alle velden zijn optioneel tenzij anders vermeld; lezers negeren onbekende velden.</p>
 
 <h3>4.1 Wortelobject</h3>
@@ -155,6 +155,7 @@
   <tr><td><code>w</code></td><td>tekst</td><td>Korte omschrijving van de wijziging.</td></tr>
   <tr><td><code>erk</code></td><td>tekst</td><td>Erkenning of certificaat van het uitvoerende bedrijf, genoteerd als <code>uitgever:nummer</code> — bijvoorbeeld <code>"installq:14718"</code> of <code>"tlokb:…"</code>. <span class="opt">Nieuw in v0.2.</span> Het paspoort <b>verifieert niets</b>; het maakt de erkenning controleerbaar in het openbare register van die uitgever.</td></tr>
   <tr><td><code>c</code></td><td>tekst</td><td>Optioneel contactgegeven (telefoon/e-mail), uitsluitend met instemming van de betreffende installateur.</td></tr>
+  <tr><td><code>zeg</code></td><td>lijst</td><td>Zegelnummers die bij deze handeling zijn geplaatst, bijvoorbeeld <code>["IQ-14718-004217"]</code>. <span class="opt">Optioneel, nieuw in v0.2.</span> Zie hoofdstuk 9.</td></tr>
   <tr><td><code>sid</code></td><td>tekst</td><td>Sleutel-identificatie van de ondertekenaar, op te zoeken in de index. <span class="opt">Optioneel, nieuw in v0.2.</span></td></tr>
   <tr><td><code>sig</code></td><td>tekst</td><td>Ed25519-handtekening over <b>deze regel</b>, base64url. <span class="opt">Optioneel, nieuw in v0.2.</span> Zie 8.4: per toevoeging ondertekenen levert een keten op waarin niemand met terugwerkende kracht een eerdere regel kan wijzigen — ook niet als dat bedrijf niet meer bestaat. Kosten: circa 110 tekens per regel, wat de QR-code merkbaar vergroot. Weeg dat af tegen het aantal logboekregels.</td></tr>
 </table>
@@ -251,7 +252,10 @@
       &quot;d&quot;: &quot;2026-09-11&quot;,
       &quot;b&quot;: &quot;Installatiebedrijf Jansen&quot;,
       &quot;w&quot;: &quot;Laadpaal 11 kW + belastingcheck&quot;,
-      &quot;erk&quot;: &quot;installq:14718&quot;
+      &quot;erk&quot;: &quot;installq:14718&quot;,
+      &quot;zeg&quot;: [
+        &quot;IQ-14718-004217&quot;
+      ]
     },
     {
       &quot;d&quot;: &quot;2024-03-11&quot;,
@@ -388,10 +392,96 @@
 </ol>
 <p>De uitkomst is per notitie <b>treffer</b> (product en bereik komen overeen), <b>mogelijk van toepassing</b> (type komt overeen, bereik onbekend of alleen met de hand vast te stellen), of niets. Bij <em>mogelijk van toepassing</em> is de tekst uit <code>identificatie</code> het enige wat de monteur verder helpt; die hoort daarom prominent in beeld.</p>
 
-<h2>9. Versiebeheer &amp; bijdragen</h2>
+<h2 id="zegels">9. Zegels</h2>
+<p>Sinds 1 mei 2026 kent Nederland een landelijk zegelrecht: erkende installatiebedrijven mogen verzegelingen in de meterkast zelfstandig verbreken en opnieuw aanbrengen. Aan een erkenning hangt daarmee een reeks zegelnummers. Hoe het gebruik van die zegels wordt vastgelegd was bij het opstellen van deze versie nog een open vraag.</p>
+<p>Het paspoort is er de natuurlijke drager voor, om één reden: <b>het zegel en de vastlegging zitten op dezelfde plek</b>. Wie het zegel ziet, ziet de registratie ernaast — zonder register, zonder verbinding.</p>
+
+<h3>9.1 Vastleggen</h3>
+<p>Een geplaatst zegel hoort bij de handeling die eraan voorafging en wordt dus genoteerd in de logboekregel van die handeling, in het veld <code>zeg</code>. Datum en uitvoerend bedrijf staan al in dezelfde regel; is die regel ondertekend (zie 8.4), dan is de zegelregistratie automatisch onvervalsbaar en herleidbaar tot een sleutel.</p>
+
+<h3>9.2 Nummerconventie</h3>
+<p>Aanbevolen opbouw: <code>uitgever-erkenning-volgnummer</code>, bijvoorbeeld <code>IQ-14718-004217</code>.</p>
+<p>Door het erkenningsnummer ín het zegelnummer op te nemen draagt het zegel zijn herkomst met zich mee. Wie het aantreft — de volgende monteur, een netbeheerder, een inspecteur — ziet welk erkend bedrijf het heeft geplaatst, zonder iets op te zoeken. Het zegel wordt daarmee zelf een stuk bewijs in plaats van alleen een afsluiting.</p>
+
+<h3>9.3 Toezicht zonder centraal register</h3>
+<p>De uitgever wil weten hoeveel zegels er in omloop zijn, welke, en door wie ze zijn gebruikt. Dat kan grotendeels zonder ook maar één melding, en het is de moeite waard te onderscheiden wat waarvoor nodig is:</p>
+<table>
+  <tr><th>Vraag</th><th>Antwoord</th></tr>
+  <tr><td>Welke nummers zijn uitgegeven, en aan wie?</td><td>Bekend bij de uitgever zelf — dat is administratie, geen monitoring. Hiermee is elk nummer buiten alle uitgegeven reeksen per definitie vals, en elk nummer uit de reeks van een ander bedrijf onterecht geplaatst.</td></tr>
+  <tr><td>Wordt er gefraudeerd met zegels?</td><td>Zichtbaar in het veld. Iedereen die een meterkast opent kan het nummer lezen en het naast de ondertekende erkenningsverklaring van het bedrijf leggen. Eén melding volstaat; registratie van elk zegel is er niet voor nodig. Zo worden bankbiljetten ook gecontroleerd: niet door elk biljet te registreren, maar doordat vervalsen opvalt zodra iemand kijkt.</td></tr>
+  <tr><td>Hoeveel zegels verbruikt een bedrijf?</td><td>Een periodieke <b>teller</b> volstaat: het aantal verbruikte zegels uit de reeks, zonder nummers en zonder adressen. Een verbruik dat niet strookt met de omvang van het bedrijf, of een nieuwe reeks terwijl de vorige nauwelijks is gebruikt, is dan alsnog een signaal — toezicht op patroon in plaats van op handelingen.</td></tr>
+</table>
+
+<h3>9.4 Wat deze standaard uitdrukkelijk niet ondersteunt</h3>
+<p>Het per zegel melden van nummer én adres aan een centrale partij. Dat levert een landelijk bestand op van wie er wanneer in welke meterkast is geweest. Dat is een ander soort gegevensverzameling dan waar deze standaard voor is gemaakt, en het zou het uitgangspunt uit hoofdstuk 2 ondergraven: de gegevens blijven bij de kast en bij de eigenaar.</p>
+<p>De verleiding is reëel, want zonder adres kan een uitgever niet vaststellen of hetzelfde zegelnummer op twee plaatsen is gebruikt. Dat is een aanvaardbare beperking: dubbelgebruik komt aan het licht op het moment dat iemand de kast opent, en dat is precies het moment waarop het ertoe doet.</p>
+
+<h2 id="erkenningsverklaring">10. Erkenningsverklaring</h2>
+<p>Het veld <code>erk</code> in het logboek noteert de erkenning van de installateur, maar bewijst niets — het is tekst die hij zelf invult. Dat volstond zolang het probleem was dat erkenningen werden <em>verzonnen</em>. Inmiddels is het probleem verschoven: malafide bedrijven gebruiken de naam, en soms het nummer, van een bedrijf dat wél erkend is. Een register dat alleen op naam en adres doorzoekbaar is, bevestigt dan de leugen.</p>
+<p>Dit hoofdstuk beschrijft hoe een uitgever — de erkennende instantie of een certificerende instelling — die erkenning <b>ondertekend</b> kan afgeven, zodat iedereen haar kan controleren zonder register en zonder verbinding.</p>
+
+<h3>10.1 Het moment: bij de offerte, niet bij de oplevering</h3>
+<p>Een opleverdocument ontstaat ná de klus. Dan is er betaald en is de schade geleden. De verklaring hangt daarom aan het <b>bedrijf</b> en niet aan een klus: ze kan mee op de offerte, op het bedrijfsbusje en op de website, en reist daarnaast mee in het paspoort. De controle verschuift zo naar het moment waarop de opdrachtgever nog nee kan zeggen.</p>
+
+<h3>10.2 Leesbaar formaat</h3>
+<p>Anders dan het paspoort wordt de verklaring <b>niet gecomprimeerd</b>. De gegevens moeten met het blote oog te lezen zijn, ook door iemand die alleen de URL in zijn adresbalk ziet staan:</p>
+<pre><code>https://&lt;uitgever&gt;/v?u=demo&amp;kvk=30269985&amp;b=Installatiebedrijf%20Jansen%20B.V.
+  &amp;erk=14718&amp;vg=elektrotechniek,zonnestroom&amp;bv=zegelrecht:IQ-14718-004000-004999
+  &amp;tot=2027-01-01&amp;sid=demo-2026-01&amp;sig=IwC7BsALphvgokU4rQIW6f…</code></pre>
+<table>
+  <tr><th>Veld</th><th>Betekenis</th></tr>
+  <tr><td><code>u</code></td><td>Identificatie van de uitgever, op te zoeken in de index (zie 8.5).</td></tr>
+  <tr><td><code>kvk</code></td><td>KVK-nummer. Het anker van de verklaring: een bedrijfsnaam kan iedereen roepen, een KVK-nummer niet.</td></tr>
+  <tr><td><code>b</code></td><td>Bedrijfsnaam zoals ingeschreven.</td></tr>
+  <tr><td><code>erk</code></td><td>Erkenningsnummer bij deze uitgever.</td></tr>
+  <tr><td><code>vg</code></td><td>Vakgebieden waarvoor erkend, komma-gescheiden.</td></tr>
+  <tr><td><code>bv</code></td><td>Bevoegdheden, als <code>soort:waarde</code> — zie 10.3.</td></tr>
+  <tr><td><code>tot</code></td><td>Geldig tot. Lost intrekken op zonder dat iemand online hoeft te zijn: een ingetrokken erkenning krijgt geen nieuwe verklaring en verloopt vanzelf.</td></tr>
+  <tr><td><code>sid</code></td><td>Sleutel-identificatie van de uitgever.</td></tr>
+  <tr><td><code>sig</code></td><td>Ed25519-handtekening over alle voorgaande parameters in de getoonde volgorde, base64url.</td></tr>
+</table>
+
+<h3>10.3 Bevoegdheden verschillen per vakgebied</h3>
+<p>Het zegelrecht is niet de enige bevoegdheid die aan een erkenning hangt, en het geldt maar voor één vakgebied. Twee andere zijn zelfs zwaarder, want wettelijk in plaats van privaatrechtelijk:</p>
+<table>
+  <tr><th>Vakgebied</th><th>Bevoegdheid</th><th>Aard</th></tr>
+  <tr><td>Elektrotechniek</td><td><code>zegelrecht:&lt;reeks&gt;</code> — verzegelingen verbreken en aanbrengen, met toegewezen nummerreeks</td><td>privaatrechtelijk</td></tr>
+  <tr><td>Gastechnische installaties</td><td><code>co:&lt;nummer&gt;</code> — CO-certificaat (BRL 6000-25)</td><td><b>wettelijk</b></td></tr>
+  <tr><td>Warmtepomp, koeling</td><td><code>fgas:&lt;nummer&gt;</code> — F-gassencertificaat</td><td><b>wettelijk</b></td></tr>
+  <tr><td>Zonnestroom, laadpunten, energieopslag</td><td>geen wettelijke bevoegdheid</td><td>—</td></tr>
+</table>
+<p>Die laatste regel verdient aandacht. Juist bij de vakgebieden waar de energietransitie het hardst groeit — en waar de meeste meldingen over malafide bedrijven vandaan komen — is de erkenning het <b>enige</b> signaal dat er is. Er is geen wettelijk register dat de opdrachtgever kan raadplegen. Een verifieerbare erkenning is daar dus niet nuttig maar noodzakelijk.</p>
+
+<h3>10.4 Meerdere uitgevers</h3>
+<p>Een uitgever kan alleen ondertekenen wat zij zelf afgeeft. Erkenningen komen van de erkennende instantie; het CO-certificaat en het F-gassencertificaat komen van certificerende instellingen. Een installateur draagt daarom mogelijk <b>meerdere verklaringen</b>, elk met de sleutel van hun eigen uitgever ondertekend en elk terug te vinden in de index. Dat sluit aan op de notatie <code>uitgever:nummer</code> die <code>erk</code> in het logboek al gebruikt.</p>
+
+<h3>10.5 Wat de verklaring wel en niet bewijst</h3>
+<p><b>Wel:</b> dat deze erkenning door deze uitgever is afgegeven aan het bedrijf met dit KVK-nummer, en dat er sindsdien niets aan is gewijzigd. Wie één letter verandert, breekt de handtekening.</p>
+<p><b>Niet:</b> dat degene die voor u staat dat bedrijf ís. Een verklaring is een bestand en kan gekopieerd worden. De controle die daarop volgt is menselijk en eenvoudig: <b>komt de bedrijfsnaam en het KVK-nummer in de verklaring overeen met de offerte?</b> Zo niet, dan draagt iemand andermans papieren. Lezende toepassingen tonen die vergelijking daarom expliciet in plaats van alleen een vinkje.</p>
+<p>Deze standaard beschrijft het formaat. Zij verifieert geen erkenningen en geeft er geen af; zij maakt controleerbaar wat de uitgever verklaart.</p>
+
+<h2>11. Versiebeheer &amp; bijdragen</h2>
+<h3>11.1 Twee versienummers</h3>
+<p>Deze specificatie kent twee nummers die niet gelijk oplopen, en dat is opzet:</p>
+<table>
+  <tr><th>Wat</th><th>Nu</th><th>Wanneer hoger</th></tr>
+  <tr><td><b>Documentversie</b> — deze tekst</td><td>0.3</td><td>bij elke inhoudelijke uitbreiding, ook als het datamodel gelijk blijft</td></tr>
+  <tr><td><b>Datamodelversie</b> — het veld <code>v</code> in een paspoort</td><td><code>2</code></td><td>uitsluitend bij een wijziging die oudere lezers zou breken</td></tr>
+</table>
+<p>Een paspoort met <code>v: 2</code> kan dus velden bevatten die in documentversie 0.2 nog niet beschreven waren, zoals <code>zeg</code>. Dat is geen probleem: alle toevoegingen zijn optioneel en een lezer negeert wat hij niet kent. Wie zekerheid wil over welke velden hij kan verwachten, kijkt naar de documentversie; wie wil weten of hij het paspoort überhaupt kan lezen, kijkt naar <code>v</code>.</p>
+
 <p>Wijzigingsvoorstellen op deze concept-specificatie zijn welkom; het veld <code>v</code> wordt verhoogd bij niet-neerwaarts-compatibele wijzigingen. Lezers behoren paspoorten met een hogere versie zo goed mogelijk weer te geven en onbekende velden te negeren. De referentie-implementatie van deze specificatie is YourWkb.</p>
 
-<h3>9.1 Wijzigingen in v0.2</h3>
+<h3>11.2 Wijzigingen in v0.3 <span class="opt">datamodel ongewijzigd</span></h3>
+<table>
+  <tr><th>Wat</th><th>Waarom</th></tr>
+  <tr><td>Nieuw: <code>log[].zeg</code> en hoofdstuk 9, zegels</td><td>Het landelijk zegelrecht hangt aan de erkenning. Het paspoort legt het zegelnummer vast op dezelfde plek als het zegel zelf, zodat toezicht mogelijk is zonder centraal register van meterkasten.</td></tr>
+  <tr><td>Nieuw: hoofdstuk 10, erkenningsverklaring</td><td>Het veld <code>erk</code> noteert een erkenning maar bewijst haar niet. Een ondertekende verklaring maakt dat wél mogelijk — en al bij de offerte, dus vóórdat de opdracht is gegeven. Met de bevoegdheden per vakgebied, die per discipline verschillen en soms ontbreken.</td></tr>
+  <tr><td>Nieuw: hoofdstuk 6, omvang van de QR-code</td><td>Met een materiaallijst wordt de code groter. Vaste grenswaarden en één afkapvolgorde houden implementaties onderling vergelijkbaar.</td></tr>
+  <tr><td>Verduidelijkt: twee versienummers (11.1)</td><td>Documentversie en datamodelversie liepen door elkaar.</td></tr>
+</table>
+
+<h3>11.3 Wijzigingen in v0.2</h3>
 <table>
   <tr><th>Wat</th><th>Waarom</th></tr>
   <tr><td>Nieuw: <code>mat[]</code> met <code>fab</code>, <code>typ</code>, <code>art</code>, <code>sn</code>, <code>pd</code>, <code>pos</code></td><td>Zonder materiaallijst is een veldnotitie van een fabrikant nergens mee te vergelijken. Dit is de drager van het terugroepkanaal.</td></tr>
@@ -405,7 +495,7 @@
 <p><b>Neerwaartse compatibiliteit.</b> Alle toevoegingen zijn optioneel. Een paspoort van v0.1 blijft geldig en leesbaar; alleen <code>f</code> is van betekenis verscherpt, waarbij een lezer bij <code>v: 1</code> de oude uitleg moet blijven hanteren.</p>
 
 <footer>
-  <p><b>Open Meterkastpaspoort</b> — specificatie v0.2 (concept), september 2026.<br>
+  <p><b>Open Meterkastpaspoort</b> — specificatie v0.3 (concept), september 2026.<br>
   Initiatief en auteur: Martin Schut, BlauweVisie B.V. (<a href="https://yourwkb.nl">YourWkb.nl</a>).<br>
   Deze specificatie is vrijgegeven onder <a href="https://creativecommons.org/licenses/by/4.0/deed.nl">Creative Commons BY 4.0</a>: iedereen mag haar gebruiken, implementeren en erop voortbouwen, met naamsvermelding. Reacties: via <a href="https://yourwkb.nl">yourwkb.nl</a>.</p>
 </footer>
