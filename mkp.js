@@ -337,7 +337,7 @@ export const MKP_DEMO_FEED_URL = "https://www.meterkastpaspoort.nl/veldnotities/
 // uit de index zelf haalt, laat de index zijn eigen echtheid bevestigen: wie de
 // index kan vervangen, vervangt dan ook deze sleutel (§8.4, "die derde wordt
 // vaak vergeten").
-export const MKP_WORTEL_SLEUTEL = "HpAJz53JhmwJJ8CNK01EmwdB-7O31ScoGdIy_ih9-sI";
+export const MKP_WORTEL_SLEUTEL = "1lSbZH2ARRsbVri6ML1M-5wce0z0pfsMV_a16UNsY6M";
 
 const _unb64 = (s) => {
   s = String(s).replace(/-/g, "+").replace(/_/g, "/");

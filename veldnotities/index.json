@@ -1,6 +1,6 @@
 {
   "standaard": "meterkastpaspoort-veldnotitie-index/1.0",
-  "bijgewerkt": "2026-09-11",
+  "bijgewerkt": "2026-09-19",
   "uitgevers": [
     {
       "naam": "Voorbeeld Elektro B.V.",
@@ -17,8 +17,6 @@
       "publieke_sleutel": "lShNi54LnAsTBAaR86GFLpuzfZ7HoTTuSURHPBF0geE"
     }
   ],
-  "handtekening": "0h5JTQJCOuAQKdEt3W-txmgegaAlnbAKe4u73pal_Fn9CMPs7aIU2LBqCzneW3D56GfhNWCXVBIVjSATS6-FDA",
-  "wortel_publieke_sleutel": "HpAJz53JhmwJJ8CNK01EmwdB-7O31ScoGdIy_ih9-sI",
   "erkenners": [
     {
       "id": "demo",
@@ -36,5 +34,7 @@
       "sleutel_id": null,
       "publieke_sleutel": null
     }
-  ]
+  ],
+  "handtekening": "EQplaP9ifcWhGYbbKSLAyUaVLdFIBwOXTxsQrkxtoAYjfDyZ2RW9ToXoWPRR3nvcPt93mpfB8lScinadvXWoCA",
+  "wortel_publieke_sleutel": "1lSbZH2ARRsbVri6ML1M-5wce0z0pfsMV_a16UNsY6M"
 }
