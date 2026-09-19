@@ -313,6 +313,65 @@ eq(c9.notities.map((n) => [n.notitie.id, n.feedStatus, n.uitgever]), [["vbe-2026
 const zonder = await mkpControleer(demo);
 eq([zonder.indexStatus, zonder.log[0].handtekening, zonder.notities.length], ["geen", "onbekend", 0], "9.22 offline zonder index: leesbaar, handtekening niet te controleren");
 
+console.log("▶ CATEGORIE 10: materiaal van de app samenvoegen met dat van de bron");
+
+// Kastscan schrijft sinds v0.3.2 zelf mat[] (fab, typ, pos). De bron kan meer
+// weten — artikelnummer, productiecode — en die mag de nieuwe sticker niet kwijt.
+{
+  const bron = {
+    v: 2, d: "2026-05-02", pc: "2801AB", nr: "12",
+    grp: [{ t: "pv", rol: "voed", f: 1, fn: [1], mat: 1 }, { t: "lp", rol: "af", f: 3, fn: [1, 2, 3], mat: 2 }],
+    mat: [
+      { i: 1, s: "ala", fab: "Voorbeeld Elektro", typ: "VBE-ALS-2P-40-30", art: "1234567", pd: "@29-1524-07", pos: "R1-5", xyz: 7 },
+      { i: 2, s: "aut", fab: "ABB", typ: "S203-C16", pos: "R1-9" },
+      { i: 3, s: "als", fab: "Hager", typ: "CDA440D", pos: "R2-1", sn: "A12345" },
+    ],
+    log: [{ d: "2026-05-02", b: "Jansen", w: "groepenkast" }],
+  };
+  // De app ziet op R1-5 hetzelfde toestel (zonder art/pd — kan ze niet lezen),
+  // op R1-9 een ÁNDER toestel, R2-1 ziet ze niet, en R1-1 is nieuw.
+  const nieuw = {
+    v: 2, d: "2026-09-19",
+    grp: [{ t: "pv", rol: "voed", f: 1, fn: [1], mat: 2 }, { t: "lp", rol: "af", f: 3, fn: [1, 2, 3], mat: 3 }],
+    mat: [
+      { i: 1, s: "hs", fab: "Hager", typ: "SBN340", pos: "R1-1" },
+      { i: 2, s: "ala", fab: "voorbeeld elektro", typ: "VBE-ALS-2P-40-30", pos: "R1-5" },
+      { i: 3, s: "aut", fab: "Hager", typ: "MCN316", pos: "R1-9" },
+    ],
+    log: [{ d: "2026-09-19", b: "Kastscan", w: "kast gedocumenteerd" }],
+  };
+  const uit = mkpSamenvoegen(bron, nieuw);
+  const op = (pos) => uit.mat.find((m) => m.pos === pos);
+  eq([op("R1-5").art, op("R1-5").pd, op("R1-5").xyz], ["1234567", "@29-1524-07", 7], "10.1 zelfde toestel op dezelfde plaats: art, pd en onbekende velden blijven");
+  eq(op("R1-5").fab, "voorbeeld elektro", "10.2 wat de app aanlevert wint (hoofdletters telden niet voor de koppeling)");
+  eq([op("R1-9").typ, "art" in op("R1-9")], ["MCN316", false], "10.3 ander toestel op dezelfde plaats: de oude regel vervalt, niets geërfd");
+  eq([op("R2-1") && op("R2-1").sn], ["A12345"], "10.4 een toestel dat de app niet ziet, blijft staan");
+  eq(uit.mat.map((m) => m.i), [1, 2, 3, 4], "10.5 volgnummers opnieuw uitgedeeld, zonder gaten");
+  eq(uit.grp.map((g) => uit.mat.find((m) => m.i === g.mat).pos), ["R1-5", "R1-9"], "10.6 grp[].mat wijst na omnummeren naar het juiste toestel");
+  eq(uit.mat.length, 4, "10.7 geen dubbele regel voor R1-5 of R1-9");
+  eq(mkpVeldnotities(uit, FEED).map((t) => t.treffer), ["artikelnummer"], "10.8 de terugroepactie treft na een nieuwe scan nog steeds op artikelnummer");
+
+  // Groep uit de bron die de app niet aanlevert, met een verwijzing naar een
+  // toestel dat vervalt: de verwijzing gaat weg in plaats van naar iets anders te wijzen.
+  const u2 = mkpSamenvoegen(bron, { ...nieuw, grp: [nieuw.grp[0]] });
+  eq(u2.grp.length, 1, "10.9 (controle) de app levert één groep");
+  const zonderApp = mkpSamenvoegen(bron, { v: 2, d: "2026-09-19", grp: bron.grp });
+  eq(zonderApp.mat, bron.mat, "10.10 zonder eigen materiaallijst van de app blijft die van de bron ongemoeid");
+  const vervalt = mkpSamenvoegen({ ...bron, grp: [{ t: "aut", mat: 2 }] }, { v: 2, mat: [{ i: 1, s: "aut", fab: "Hager", typ: "MCN316", pos: "R1-9" }] });
+  eq("mat" in vervalt.grp[0], false, "10.11 een verwijzing naar een vervangen toestel verdwijnt");
+}
+
+// Afkappen haalt een mat-regel weg: een groep mag er daarna niet meer naar wijzen.
+{
+  const veel = { v: 2, d: "2026-09-19",
+    grp: Array.from({ length: 30 }, (_, k) => ({ t: "alg", rol: "af", f: 1, fn: [1 + (k % 3)], mat: k + 1 })),
+    mat: Array.from({ length: 30 }, (_, k) => ({ i: k + 1, s: "aut", fab: "Hager", typ: "MCN" + ruis(8), pos: `R${1 + Math.floor(k / 12)}-${1 + (k % 12)}` })) };
+  const a = await mkpAfkappen(veel);
+  const bestaat = new Set(a.paspoort.mat.map((m) => m.i));
+  eq([a.weggelaten.matregels > 0, a.paspoort.grp.every((g) => !("mat" in g) || bestaat.has(g.mat))], [true, true],
+     "10.12 na afkappen wijst geen groep naar een weggelaten toestel");
+}
+
 console.log("\n═══════════════════════════════════════════════");
 console.log(`RESULTAAT: ${passed} geslaagd · ${failed} mislukt · ${passed + failed} totaal`);
 console.log("═══════════════════════════════════════════════");
