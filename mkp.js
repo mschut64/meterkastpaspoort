@@ -328,8 +328,10 @@ export async function mkpAfkappen(paspoort, { maxModules = QR_MODULES_GRENS } = 
 // komt — niet dat de installatie deugt, en niet dat de sticker op de juiste kast zit.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const MKP_INDEX_URL = "https://meterkastpaspoort.nl/veldnotities/index.json";
-export const MKP_DEMO_FEED_URL = "https://meterkastpaspoort.nl/veldnotities/demo-feed.json";
+// Rechtstreeks op www: het kale domein stuurt door (308), en die doorverwijzing
+// draagt geen Access-Control-Allow-Origin — een browser blokkeert het ophalen dan.
+export const MKP_INDEX_URL = "https://www.meterkastpaspoort.nl/veldnotities/index.json";
+export const MKP_DEMO_FEED_URL = "https://www.meterkastpaspoort.nl/veldnotities/demo-feed.json";
 
 // De sleutel van de beheerder van de standaard, VASTGEPIND in de code. Wie hem
 // uit de index zelf haalt, laat de index zijn eigen echtheid bevestigen: wie de
