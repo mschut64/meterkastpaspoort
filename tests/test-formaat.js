@@ -17,7 +17,7 @@ import {
   mkpEncode, mkpDecode, mkpUrl, mkpSamenvatting,
   QR_TEKENS_GRENS, qrWaarschuwing,
   mkpSamenvoegen, mkpZegels, mkpAfkappen, qrModules, QR_MODULES_GRENS, QR_NIVEAU,
-  mkpCanon, mkpVerifieer, mkpErkenning, mkpVeldnotities, mkpControleer, MKP_WORTEL_SLEUTEL,
+  mkpCanon, mkpVerifieer, mkpVerifieerIndex, mkpErkenning, mkpVeldnotities, mkpControleer, MKP_WORTEL_SLEUTEL,
 } from "../mkp.js";
 import { readFileSync } from "node:fs";
 
@@ -290,12 +290,22 @@ eq(mkpVeldnotities({ ...demo, mat: undefined }, FEED), [], "9.16 zonder materiaa
   const { subtle } = globalThis.crypto;
   const k = await subtle.generateKey({ name: "Ed25519" }, true, ["sign", "verify"]);
   const pub = Buffer.from(await subtle.exportKey("raw", k.publicKey)).toString("base64url");
-  const nep = { ...INDEX, wortel_publieke_sleutel: pub }; delete nep.handtekening;
+  const nep = { ...INDEX }; delete nep.handtekening; delete nep.wortel_publieke_sleutel;
   nep.handtekening = Buffer.from(await subtle.sign({ name: "Ed25519" }, k.privateKey, mkpCanon(nep))).toString("base64url");
-  eq(await mkpVerifieer(nep, "handtekening", pub), "geldig", "9.17 (controle) de nep-index klopt met zijn eigen sleutel");
+  nep.wortel_publieke_sleutel = pub;
+  eq(await mkpVerifieerIndex(nep, pub), "geldig", "9.17 (controle) de nep-index klopt met zijn eigen sleutel");
   eq((await mkpControleer(demo, { index: nep, feeds: [FEED] })).indexStatus, "ongeldig", "9.18 maar niet met de vastgepinde sleutel van de beheerder");
   eq(MKP_WORTEL_SLEUTEL.length, 43, "9.19 de vastgepinde sleutel is een Ed25519-sleutel (32 bytes)");
 }
+
+// De index zoals hij op 11-09-2026 is gepubliceerd (commit 5b6d305), correct
+// ondertekend door de beheerder — zonder het wortelveld in de ondertekende bytes.
+const INDEX_V02 = {"standaard":"meterkastpaspoort-veldnotitie-index/1.0","bijgewerkt":"2026-09-11","uitgevers":[{"naam":"Voorbeeld Elektro B.V.","domein":"voorbeeldelektro.nl","feed":"https://voorbeeldelektro.nl/.well-known/meterkastpaspoort-veldnotities.json","sleutel_id":"vbe-2026-01","publieke_sleutel":"hoUORPfRGO8WgzTPdt7r5P_EoAiymE5t95dHdFIJ1AE"}],"installateurs":[{"naam":"Installatiebedrijf Jansen","sleutel_id":"jansen-2026-01","publieke_sleutel":"3nGPr1uTfA_nInv3eF13-8mjxtf2R4WYF_6CxFXXa8Q"}],"handtekening":"0h5JTQJCOuAQKdEt3W-txmgegaAlnbAKe4u73pal_Fn9CMPs7aIU2LBqCzneW3D56GfhNWCXVBIVjSATS6-FDA","wortel_publieke_sleutel":"HpAJz53JhmwJJ8CNK01EmwdB-7O31ScoGdIy_ih9-sI"};
+// Met de sleutel van toen, uitdrukkelijk: de vastgepinde sleutel mag daarna wisselen.
+const WORTEL_11_09 = "HpAJz53JhmwJJ8CNK01EmwdB-7O31ScoGdIy_ih9-sI";
+eq(await mkpVerifieerIndex(INDEX_V02, WORTEL_11_09), "geldig", "9.23 de index van 11-09 klopt met de sleutel van de beheerder van toen");
+eq(await mkpVerifieerIndex({ ...INDEX_V02, bijgewerkt: "2026-09-12" }, WORTEL_11_09), "ongeldig", "9.24 één wijziging zonder nieuwe handtekening maakt hem ongeldig");
+eq(await mkpVerifieerIndex({ ...INDEX_V02, wortel_publieke_sleutel: "x" }, WORTEL_11_09), "geldig", "9.25 het wortelveld zelf telt niet mee");
 
 const c9 = await mkpControleer(demo, { index: INDEX, feeds: [FEED, FEED] });
 eq(c9.log.map((l) => [l.handtekening, l.ondertekenaar, l.zegels]), [["geldig", "Installatiebedrijf Jansen", ["IQ-14718-004217"]]], "9.20 alles in één: handtekening, ondertekenaar, zegels");

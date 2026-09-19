@@ -406,11 +406,21 @@ export function mkpVeldnotities(paspoort, feed) {
   return uit;
 }
 
+// De index is ondertekend zonder het veld met de sleutel van de beheerder zelf:
+// die sleutel is geen inhoud van de lijst, en hoort er alleen ter informatie in.
+// (Zo is de index van 11-09-2026 ondertekend; wie dat veld meetelt, keurt een
+// correct ondertekende index af.)
+export async function mkpVerifieerIndex(index, wortel = MKP_WORTEL_SLEUTEL) {
+  if (!index || typeof index !== "object") return "geen";
+  const kopie = { ...index }; delete kopie.wortel_publieke_sleutel;
+  return mkpVerifieer(kopie, "handtekening", wortel);
+}
+
 // Alles in één keer, voor een lezende toepassing. index en feeds zijn wat de app
 // heeft kunnen ophalen (of eerder bewaard); zonder index blijven handtekeningen
 // "onbekend" en is er niets om mee te vergelijken — het paspoort zelf blijft leesbaar.
 export async function mkpControleer(paspoort, { index = null, feeds = [], wortel = MKP_WORTEL_SLEUTEL } = {}) {
-  const indexStatus = index ? await mkpVerifieer(index, "handtekening", wortel) : "geen";
+  const indexStatus = index ? await mkpVerifieerIndex(index, wortel) : "geen";
   const installateurs = index && Array.isArray(index.installateurs) ? index.installateurs : [];
   const uitgevers = index && Array.isArray(index.uitgevers) ? index.uitgevers : [];
 

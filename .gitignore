@@ -1,0 +1,3 @@
+# Privésleutels horen nooit in de repo (scripts/onderteken-index.mjs weigert het ook)
+*.pem
+*.key
