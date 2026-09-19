@@ -17,7 +17,9 @@ import {
   mkpEncode, mkpDecode, mkpUrl, mkpSamenvatting,
   QR_TEKENS_GRENS, qrWaarschuwing,
   mkpSamenvoegen, mkpZegels, mkpAfkappen, qrModules, QR_MODULES_GRENS, QR_NIVEAU,
+  mkpCanon, mkpVerifieer, mkpErkenning, mkpVeldnotities, mkpControleer, MKP_WORTEL_SLEUTEL,
 } from "../mkp.js";
+import { readFileSync } from "node:fs";
 
 let passed = 0, failed = 0;
 const failures = [];
@@ -246,6 +248,60 @@ const pC = { v: 2, d: "2026-09-18", xyz: ruis(3000) };
 const c = await mkpAfkappen(pC);
 eq([c.past, c.paspoort.xyz === pC.xyz], [false, true], "8.19 te groot door een onbekend veld: het veld blijft, de uitkomst zegt 'past niet'");
 eq(/te dicht voor een sticker van 50 mm/.test(c.melding), true, "8.20 en de melding zegt dat ook");
+
+console.log("▶ CATEGORIE 9: controleren — handtekening, erkenning, veldnotities");
+
+// De echte demo: de QR op demo-qr-sticker-lezer.png (Installatiebedrijf Jansen,
+// ondertekend, met erkenning, zegel en een aardlekautomaat uit de terugroepreeks).
+const DEMO_FRAG = "ZVLbbtpAEP0Va17rrXbXF7CfiitQKCkqQU1IUFWt8WKMjW1sAyGIj-ov9Ms6YwKK1JfVXPbMOXN2T7AHX5oQgQ-SS5dxjwkBJpQLqnS56AWY5RVmQmKkVY5htyPcruNxzoW0bMftdLEVrrHz94_wPAezlQL_BEvwLRMwlM7ZhFRtqLjZSPAFb-s2x3pcleDPT9DggHKP4KrIMNwXOsIkPeC1zygShwk8UcBc_DJho_C-OJsXXFbecGr5jhLCfFdwAZnStK5Aeb5GSJy0k2vCZgrBSxVi_FgUVah1Fhn9TKdNVWCnOZbUCfqsdz9l8gezObM4NlTVtB61dpCBZOkXiXY60ma8LRXE8CCYA6Q6aZ1vSXfNjbQXBDeaqeQW-yrcj1gPSHgWkpGKHqOpdvoKiI450FavZDjaoWMs3vW_T5EQFquUQPSURaXytYaP795l3KVbWRG3lvz3I0jcMK8blWWqSXSooypZL41vKq81saLfcK9UVCqVGUIY6ZPxyQh1puomyePFSi9S-j8VioDkMmfrC7sj6O-8kdI5DCesrTDObSk6gJvWCSlZtyzsIojU1Amt9jNdukctR9E42S7yx1wl8fO2eVCjrYgncjjZddOntP86sFxUsB_tgl0YOFUvSMdF8PtubA0cHXve4fllNljNRrmTiZdZ74AOn_8B";
+const demo = await mkpDecode(DEMO_FRAG);
+const INDEX = JSON.parse(readFileSync(new URL("../veldnotities/index.json", import.meta.url)));
+const FEED = JSON.parse(readFileSync(new URL("../veldnotities/demo-feed.json", import.meta.url)));
+const sleutelJansen = INDEX.installateurs.find((i) => i.sleutel_id === "jansen-2026-01").publieke_sleutel;
+const regelJ = demo.log[0];
+
+eq(await mkpVerifieer(regelJ, "sig", sleutelJansen), "geldig", "9.1 de regel van Jansen klopt met zijn sleutel uit de index");
+eq(await mkpVerifieer({ ...regelJ, w: regelJ.w + "." }, "sig", sleutelJansen), "ongeldig", "9.2 één teken gewijzigd breekt de handtekening");
+eq(await mkpVerifieer({ ...regelJ, zeg: ["IQ-14718-004218"] }, "sig", sleutelJansen), "ongeldig", "9.3 een ander zegelnummer ook");
+eq(await mkpVerifieer(regelJ, "sig", null), "onbekend", "9.4 zonder sleutel: ondertekend, niet te controleren");
+eq(await mkpVerifieer({ d: "2026-01-01", b: "X", w: "y" }, "sig", sleutelJansen), "geen", "9.5 zonder handtekening: niet ondertekend");
+eq(await mkpVerifieer(regelJ, "sig", INDEX.uitgevers[0].publieke_sleutel), "ongeldig", "9.6 de sleutel van een ander past niet");
+// Volgorde van de sleutels doet er niet toe: canoniek is gesorteerd.
+const omgedraaid = Object.fromEntries(Object.entries(regelJ).reverse());
+eq(await mkpVerifieer(omgedraaid, "sig", sleutelJansen), "geldig", "9.7 andere veldvolgorde, zelfde handtekening");
+eq(new TextDecoder().decode(mkpCanon({ b: 1, a: { d: 2, c: 3 } })), '{"a":{"c":3,"d":2},"b":1}', "9.8 canoniek: sleutels gesorteerd, ook genest");
+
+eq(mkpErkenning(regelJ, INDEX), { uitgever: "installq", nummer: "14718", naam: "InstallQ", opzoek: "https://www.echteinstallateur.nl/" },
+   "9.9 erkenning uiteengelegd, met de controleplek van de uitgever");
+eq(mkpErkenning({ erk: "demo:14718" }, INDEX).opzoek, "https://meterkastpaspoort.nl/v.html?erk=14718", "9.10 {nummer} in de controleplek wordt ingevuld");
+eq(mkpErkenning({ erk: "kiwa:123" }, INDEX), { uitgever: "kiwa", nummer: "123", naam: "kiwa", opzoek: null }, "9.11 onbekende uitgever: wel tonen, geen link verzinnen");
+eq([mkpErkenning({ erk: "14718" }), mkpErkenning({ erk: "installq:" }), mkpErkenning({})], [null, null, null], "9.12 geen uitgever:nummer, geen erkenning");
+
+const tr = mkpVeldnotities(demo, FEED);
+eq(tr.map((t) => [t.notitie.id, t.treffer, t.toestel.i]), [["vbe-2026-003", "artikelnummer", 1]], "9.13 de terugroepactie treft de aardlekautomaat op artikelnummer, niet de ABB-automaat");
+eq(mkpVeldnotities({ ...demo, mat: [{ i: 1, fab: "voorbeeld elektro", typ: "VBE-ALS-2P-40-30" }] }, FEED).map((t) => t.treffer), ["type"],
+   "9.14 zonder artikelnummer: treffer op fabrikant + type (hoofdletters maken niet uit)");
+eq(mkpVeldnotities(demo, { ...FEED, notities: FEED.notities.map((n) => ({ ...n, status: "ingetrokken" })) }), [], "9.15 een ingetrokken notitie telt niet");
+eq(mkpVeldnotities({ ...demo, mat: undefined }, FEED), [], "9.16 zonder materiaallijst valt er niets te vergelijken");
+
+// De sleutel van de beheerder staat vast in de code; een index die zichzelf
+// een andere wortel geeft, bevestigt daarmee niets.
+{
+  const { subtle } = globalThis.crypto;
+  const k = await subtle.generateKey({ name: "Ed25519" }, true, ["sign", "verify"]);
+  const pub = Buffer.from(await subtle.exportKey("raw", k.publicKey)).toString("base64url");
+  const nep = { ...INDEX, wortel_publieke_sleutel: pub }; delete nep.handtekening;
+  nep.handtekening = Buffer.from(await subtle.sign({ name: "Ed25519" }, k.privateKey, mkpCanon(nep))).toString("base64url");
+  eq(await mkpVerifieer(nep, "handtekening", pub), "geldig", "9.17 (controle) de nep-index klopt met zijn eigen sleutel");
+  eq((await mkpControleer(demo, { index: nep, feeds: [FEED] })).indexStatus, "ongeldig", "9.18 maar niet met de vastgepinde sleutel van de beheerder");
+  eq(MKP_WORTEL_SLEUTEL.length, 43, "9.19 de vastgepinde sleutel is een Ed25519-sleutel (32 bytes)");
+}
+
+const c9 = await mkpControleer(demo, { index: INDEX, feeds: [FEED, FEED] });
+eq(c9.log.map((l) => [l.handtekening, l.ondertekenaar, l.zegels]), [["geldig", "Installatiebedrijf Jansen", ["IQ-14718-004217"]]], "9.20 alles in één: handtekening, ondertekenaar, zegels");
+eq(c9.notities.map((n) => [n.notitie.id, n.feedStatus, n.uitgever]), [["vbe-2026-003", "geldig", "Voorbeeld Elektro B.V."]], "9.21 feed ondertekend, en dezelfde feed twee keer telt één keer");
+const zonder = await mkpControleer(demo);
+eq([zonder.indexStatus, zonder.log[0].handtekening, zonder.notities.length], ["geen", "onbekend", 0], "9.22 offline zonder index: leesbaar, handtekening niet te controleren");
 
 console.log("\n═══════════════════════════════════════════════");
 console.log(`RESULTAAT: ${passed} geslaagd · ${failed} mislukt · ${passed + failed} totaal`);
