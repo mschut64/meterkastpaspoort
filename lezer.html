@@ -58,45 +58,17 @@
 </footer>
 </div>
 
-<script>
+<script type="module">
+// Sinds 19-09-2026 rekent de lezer met de referentie-implementatie zelf (mkp.js):
+// decoderen, handtekeningen, de index, erkenning en veldnotities. Geen eigen
+// kopie meer die kan afwijken van wat YourWkb en Kastscan vaststellen.
+import { mkpDecode, mkpVerifieer, mkpVerifieerIndex, mkpErkenning, mkpVeldnotities, mkpZegels } from '/mkp.js';
+
 const E = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const unb64 = (s) => {
-  s = s.replace(/-/g,'+').replace(/_/g,'/');
-  while (s.length % 4) s += '=';
-  const bin = atob(s); const u = new Uint8Array(bin.length);
-  for (let i=0;i<bin.length;i++) u[i] = bin.charCodeAt(i);
-  return u;
-};
-const canon = (o) => {
-  const sorteer = (x) => Array.isArray(x) ? x.map(sorteer)
-    : (x && typeof x === 'object')
-      ? Object.keys(x).sort().reduce((a,k)=>(a[k]=sorteer(x[k]),a),{})
-      : x;
-  return new TextEncoder().encode(JSON.stringify(sorteer(o)));
-};
+// Demo-feed en -index van deze site. De sleutel van de beheerder komt NIET uit de
+// index zelf maar staat vast in mkp.js (MKP_WORTEL_SLEUTEL), §8.4.
+let FEED = null, INDEX = null;
 
-// Demo-feed en -index; in een echte toepassing opgehaald van de vindplaatsen uit 8.5.
-let FEED = null, INDEX = null, WORTEL = null;
-
-async function decodeer(frag) {
-  const bytes = unb64(frag);
-  const ds = new DecompressionStream('deflate-raw');
-  const tekst = await new Response(new Blob([bytes]).stream().pipeThrough(ds)).text();
-  return JSON.parse(tekst);
-}
-
-async function verifieer(obj, veld, pubB64) {
-  if (!obj[veld]) return 'geen';
-  if (!pubB64) return 'onbekend';
-  try {
-    const kopie = {...obj}; const sig = kopie[veld]; delete kopie[veld];
-    const key = await crypto.subtle.importKey('raw', unb64(pubB64), {name:'Ed25519'}, false, ['verify']);
-    const ok = await crypto.subtle.verify({name:'Ed25519'}, key, unb64(sig), canon(kopie));
-    return ok ? 'geldig' : 'ongeldig';
-  } catch (e) {
-    return 'onbekend';   // browser kent Ed25519 nog niet — spec: "ondertekend, nog niet te verifiëren"
-  }
-}
 const vlag = (st) => st === 'geldig'  ? '<span class="vlag v-ok">ondertekend en geverifieerd</span>'
                    : st === 'onbekend'? '<span class="vlag v-onbek">ondertekend, nog niet te verifiëren</span>'
                    : st === 'ongeldig'? '<span class="vlag v-onbek">handtekening komt niet overeen</span>'
@@ -111,18 +83,12 @@ function rij(k,v){ return v==null||v==='' ? '' : `<tr><th>${E(k)}</th><td>${v}</
 
 async function toonNotities(pas) {
   if (!FEED || !pas.mat) return '';
-  let indexSt = 'geen';
-  if (INDEX) indexSt = await verifieer(INDEX, 'handtekening', WORTEL);
+  const indexSt = INDEX ? await mkpVerifieerIndex(INDEX) : 'geen';
   const uitg = INDEX?.uitgevers?.find(u => u.sleutel_id === FEED.uitgever?.sleutel_id);
-  const feedSt = await verifieer(FEED, 'handtekening', uitg?.publieke_sleutel);
+  const feedSt = await mkpVerifieer(FEED, 'handtekening', uitg?.publieke_sleutel);
   let blokken = '';
-  for (const n of FEED.notities || []) {
-    if (n.status !== 'actueel') continue;
-    for (const p of n.producten || []) {
-      for (const m of pas.mat) {
-        const opArt = p.artikelnummer && p.artikelnummer === m.art;
-        const opTyp = (p.fabrikant||'').toLowerCase() === (m.fab||'').toLowerCase() && p.type === m.typ;
-        if (!opArt && !opTyp) continue;
+  for (const { notitie: n, product: p, toestel: m, treffer } of mkpVeldnotities(pas, FEED)) {
+        const opArt = treffer === 'artikelnummer';
         blokken += `<div class="melding">
           <div class="ernst">${E((n.ernst||'').replace('_',' '))} · ${opArt ? 'treffer op artikelnummer' : 'mogelijk van toepassing'}</div>
           <h3>${E(n.titel)}</h3>
@@ -133,19 +99,18 @@ async function toonNotities(pas) {
             <span class="leeg">${E(p.identificatie?.toelichting || '')}</span></div>
           <p style="margin-top:9px"><b>Handeling:</b> ${E(n.handeling)}</p>
           <p style="font-size:13px;margin:0">Uitgegeven door ${E(FEED.uitgever?.naam)} ${vlag(feedSt)}
-             · index ${vlag(indexSt)} · <a href="${E(n.bron_url)}">bron</a></p>
+             · index ${vlag(indexSt)}${/^https:\/\//.test(n.bron_url || '') ? ` · <a href="${E(n.bron_url)}">bron</a>` : ''}</p>
         </div>`;
-      }
-    }
   }
   return blokken ? `<h2>Veldnotities</h2>${blokken}` : '';
 }
 
+window.lees = lees;
 async function lees(url) {
   const uit = document.getElementById('uit');
   try {
     const frag = url.includes('#') ? url.split('#')[1] : url;
-    const p = await decodeer(frag);
+    const p = await mkpDecode(frag);
     let h = `<h2>Kast</h2><table>
       ${rij('Datamodelversie', E(p.v) + (p.v >= 2 ? ' <span class="vlag v-ok">v2 — materiaal, fasenummers, erkenning</span>' : ' <span class="vlag v-geen">v1 — basisgegevens</span>'))}
       ${rij('Adres', E([p.pc, p.nr].filter(Boolean).join(' ')))}
@@ -190,14 +155,14 @@ async function lees(url) {
       h += `<h2>Logboek</h2><table><tr><th style="width:26%">Datum</th><th>Wijziging</th></tr>`;
       for (const r of p.log) {
         const ins = INDEX?.installateurs?.find(i => i.sleutel_id === r.sid);
-        const st = await verifieer(r, 'sig', ins?.publieke_sleutel);
-        const erk = r.erk ? r.erk.split(':') : null;
-        const uitg = erk && INDEX?.erkenners?.find(u => u.id === erk[0]);
-        const zeg = Array.isArray(r.zeg) ? r.zeg : (r.zeg ? [r.zeg] : []);
+        const st = await mkpVerifieer(r, 'sig', ins?.publieke_sleutel);
+        const erk = mkpErkenning(r, INDEX);
+        const opzoek = erk && /^https:\/\//.test(erk.opzoek || '') ? erk.opzoek : null;
+        const zeg = mkpZegels(r);
         h += `<tr><th>${E(r.d)}</th><td><b>${E(r.b)}</b><br>${E(r.w)}
-          ${erk ? `<br><span class="leeg">erkenning ${E(erk[0])} ${E(erk[1])}${
-              uitg?.opzoek ? ` — <a href="${E(uitg.opzoek.replace('{nummer}', encodeURIComponent(erk[1])))}">controleer bij ${E(uitg.naam)}</a>`
-                           : ` — controleer in het openbare register van ${E(erk[0])}`}</span>` : ''}
+          ${erk ? `<br><span class="leeg">erkenning ${E(erk.naam)} ${E(erk.nummer)}${
+              opzoek ? ` — <a href="${E(opzoek)}">controleer bij ${E(erk.naam)}</a>`
+                     : ` — controleer in het openbare register van ${E(erk.naam)}`}</span>` : ''}
           ${zeg.length ? `<br><span class="leeg">zegel${zeg.length > 1 ? 's' : ''} geplaatst: ${zeg.map(E).join(', ')}</span>` : ''}
           ${r.c ? '<br>' + E(r.c) : ''}
           <br>${vlag(st)}</td></tr>`;
@@ -221,7 +186,7 @@ async function lees(url) {
       fetch('/veldnotities/demo-feed.json').then(r => r.ok ? r.json() : null).catch(() => null),
       fetch('/veldnotities/index.json').then(r => r.ok ? r.json() : null).catch(() => null)
     ]);
-    FEED = f; INDEX = i; WORTEL = i?.wortel_publieke_sleutel || null;
+    FEED = f; INDEX = i;
   } catch (e) { /* demo werkt ook zonder feed */ }
   const frag = location.hash.slice(1);
   if (frag) lees(frag);
