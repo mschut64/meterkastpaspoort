@@ -372,6 +372,38 @@ console.log("▶ CATEGORIE 10: materiaal van de app samenvoegen met dat van de b
      "10.12 na afkappen wijst geen groep naar een weggelaten toestel");
 }
 
+console.log("▶ CATEGORIE 11: grenzen vóór het uitpakken (decompressiebom)");
+{
+  const { MKP_MAX_FRAGMENT, MKP_MAX_UITGEPAKT } = await import("../mkp.js");
+  // Een "paspoort" van 10 MB aan dezelfde letter: deflate maakt daar een
+  // fragment van een paar kilobyte van — precies de bom uit het dreigingsbeeld.
+  const groot = { v: 2, x: "a".repeat(10 * 1024 * 1024) };
+  const bom = await mkpEncode(groot);
+  eq(bom.length < MKP_MAX_FRAGMENT, true, `11.1 de bom past in een gewone link (${bom.length} tekens)`);
+  const t0 = Date.now();
+  let fout = null;
+  try { await mkpDecode(bom); } catch (e) { fout = e; }
+  eq(!!fout && /groter dan 64 kB/.test(fout.message), true, "11.2 ⚓ de bom wordt geweigerd tijdens het uitpakken");
+  eq(Date.now() - t0 < 2000, true, `11.3 en snel — er wordt niet eerst 10 MB uitgepakt (${Date.now() - t0} ms)`);
+  eq(/^geen geldig meterkastpaspoort/.test(fout && fout.message), true, "11.4 met dezelfde foutsoort als elk ander ongeldig paspoort");
+
+  // Precies rond de grens.
+  const net = { v: 2, x: "b".repeat(MKP_MAX_UITGEPAKT - 30) };
+  eq((await mkpDecode(await mkpEncode(net))).x.length, MKP_MAX_UITGEPAKT - 30, "11.5 net onder de grens wordt gewoon gelezen");
+  let over = null;
+  try { await mkpDecode(await mkpEncode({ v: 2, x: "b".repeat(MKP_MAX_UITGEPAKT) })); } catch (e) { over = e; }
+  eq(!!over, true, "11.6 net erboven niet");
+
+  // Een te lang fragment komt niet eens bij het uitpakken.
+  let lang = null;
+  try { await mkpDecode("A".repeat(MKP_MAX_FRAGMENT + 1)); } catch (e) { lang = e; }
+  eq(!!lang && /te lang/.test(lang.message), true, "11.7 een te lang fragment wordt vóór het uitpakken geweigerd");
+
+  // En een echt paspoort zit er ruim onder.
+  const echt = await mkpDecode(DEMO_FRAG);
+  eq(JSON.stringify(echt).length < MKP_MAX_UITGEPAKT / 10, true, "11.8 het demopaspoort gebruikt minder dan een tiende van de ruimte");
+}
+
 console.log("\n═══════════════════════════════════════════════");
 console.log(`RESULTAAT: ${passed} geslaagd · ${failed} mislukt · ${passed + failed} totaal`);
 console.log("═══════════════════════════════════════════════");

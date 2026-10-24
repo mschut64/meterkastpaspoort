@@ -89,12 +89,48 @@ export async function mkpEncode(obj) {
   return _b64urlEnc(gecomprimeerd);
 }
 
+// ─── GRENZEN VÓÓR HET UITPAKKEN (decompressiebom) ────────────────────────────
+//
+// Een paspoort is invoer die volledig door een vreemde wordt bepaald: iemand
+// plakt een eigen sticker op een kast, of stuurt een link. Deflate pakt tot ruim
+// duizend keer uit; een link van één megabyte kan zo een gigabyte worden en de
+// telefoon laten vastlopen. Een QR-sticker draagt hooguit een paar kilobyte, maar
+// een link is onbegrensd. (Dreigingsbeeld 13-10-2026, §3.1.)
+//
+// Twee grenzen, allebei ruim boven elk echt paspoort:
+//   • het fragment zelf: een QR van 105 modules draagt ongeveer 1,9 kB, een
+//     QR in het algemeen hooguit ~4 kB — 16 000 tekens laat ruimte voor links;
+//   • de UITGEPAKTE omvang: 64 kB, gemeten tijdens het uitpakken. Wordt de grens
+//     gepasseerd, dan stopt het uitpakken meteen — niet achteraf meten, want dan
+//     is het geheugen al vol.
+export const MKP_MAX_FRAGMENT = 16000;
+export const MKP_MAX_UITGEPAKT = 64 * 1024;
+
+async function _inflateBegrensd(bytes, max) {
+  const lezer = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader();
+  const delen = [];
+  let totaal = 0;
+  for (;;) {
+    const { done, value } = await lezer.read();
+    if (done) break;
+    totaal += value.length;
+    if (totaal > max) {
+      await lezer.cancel().catch(() => {});
+      throw new Error("geen geldig meterkastpaspoort: uitgepakt groter dan " + Math.round(max / 1024) + " kB");
+    }
+    delen.push(value);
+  }
+  const uit = new Uint8Array(totaal);
+  let i = 0;
+  for (const d of delen) { uit.set(d, i); i += d.length; }
+  return uit;
+}
+
 export async function mkpDecode(fragment) {
-  const bytes = _b64urlDec(String(fragment || "").trim());
-  const ds = new DecompressionStream("deflate-raw");
-  const json = await new Response(
-    new Blob([bytes]).stream().pipeThrough(ds)
-  ).text();
+  const tekst = String(fragment || "").trim();
+  if (tekst.length > MKP_MAX_FRAGMENT) throw new Error("geen geldig meterkastpaspoort: te lang");
+  const bytes = _b64urlDec(tekst);
+  const json = new TextDecoder().decode(await _inflateBegrensd(bytes, MKP_MAX_UITGEPAKT));
   const obj = JSON.parse(json);
   if (!obj || typeof obj.v !== "number") throw new Error("geen geldig meterkastpaspoort");
   return obj;

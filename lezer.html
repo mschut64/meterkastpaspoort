@@ -126,7 +126,9 @@ async function lees(url) {
     if (p.grp?.length) {
       h += `<h2>Groepen</h2><table><tr><th style="width:22%">Type</th><th style="width:auto">Gegevens</th></tr>`;
       for (const g of p.grp) {
-        const fase = g.fn ? `fase ${g.fn.join('+')}` : (g.f ? `${g.f}-fase` : '');
+        // Ook fasenummers zijn invoer van een onbekende: een vervalste sticker kan
+        // er tekst in zetten in plaats van getallen (§3.1). Dus ontsnapt.
+        const fase = Array.isArray(g.fn) ? `fase ${g.fn.map(E).join('+')}` : (g.f ? `${E(g.f)}-fase` : '');
         const mat = g.mat && p.mat ? p.mat.find(m => m.i === g.mat) : null;
         h += `<tr><th>${E(TYPE[g.t] || g.t)}</th><td>
           ${[g.kw ? E(g.kw)+' kW' : '', g.rol === 'voed' ? 'voedend' : 'afgaand', fase].filter(Boolean).join(' · ')}
