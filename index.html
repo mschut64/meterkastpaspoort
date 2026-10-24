@@ -65,6 +65,13 @@
 <p>waarin <code>&lt;data&gt;</code> het paspoort is: een JSON-object, gecomprimeerd met <b>deflate-raw</b> en gecodeerd als <b>base64url</b>. Het domein leidt door naar een referentie-implementatie; omdat de data in het fragment zit, reist zij automatisch mee met de doorverwijzing en bereikt zij nooit de server. Elke andere implementatie kan dezelfde payload lezen door het fragment te decoderen.</p>
 <p>Richtwaarde: een gevuld paspoort comprimeert tot ± 200–400 bytes en past daarmee ruim in een QR-code die op een sticker van 40–50 mm scherp afdrukbaar is.</p>
 
+<h3>3.1 Eisen aan een lezende toepassing <span class="opt">concept-aanvulling, oktober 2026</span></h3>
+<p>Een paspoort is invoer die volledig door een onbekende wordt bepaald: iedereen kan een eigen sticker op een kast plakken of een link versturen. Twee eisen volgen daaruit voor elke toepassing die een paspoort leest — niet alleen voor de referentie-implementatie.</p>
+<ul>
+  <li><b>Tekst ontsnappen vóór weergave (moet).</b> Omschrijvingen, bedrijfsnamen, fabrikant en type, erkenningen, zegelnummers en de teksten van veldnotities worden letterlijk getoond. Een lezende toepassing <b>moet</b> ze daarom als tekst weergeven en nooit als opmaak: in HTML ontsnapt vóór invoegen, in een document dat zij zelf genereert idem. Wie dat nalaat, laat een vreemde bepalen wat er in zijn toepassing gebeurt.</li>
+  <li><b>Begrensd uitpakken (behoort).</b> Deflate kan ruim duizendvoudig uitpakken; een link van één megabyte kan een gigabyte worden. Een lezende toepassing <b>behoort</b> de uitgepakte omvang tijdens het uitpakken te begrenzen en af te breken boven <b>64 kB</b> — ruim boven elk paspoort dat in een QR-code past — en een fragment langer dan 16 000 tekens niet te verwerken. De referentie-implementatie (<code>mkp.js</code>) doet dat.</li>
+</ul>
+
 <h2>4. Datamodel <span class="opt">documentversie 0.3 · datamodelversie <code>v: 2</code></span></h2>
 <p>Veldnamen zijn kort gehouden om de QR-code compact te houden. Alle velden zijn optioneel tenzij anders vermeld; lezers negeren onbekende velden.</p>
 
@@ -479,6 +486,7 @@
   <tr><td>Nieuw: hoofdstuk 10, erkenningsverklaring</td><td>Het veld <code>erk</code> noteert een erkenning maar bewijst haar niet. Een ondertekende verklaring maakt dat wél mogelijk — en al bij de offerte, dus vóórdat de opdracht is gegeven. Met de bevoegdheden per vakgebied, die per discipline verschillen en soms ontbreken.</td></tr>
   <tr><td>Nieuw: hoofdstuk 6, omvang van de QR-code</td><td>Met een materiaallijst wordt de code groter. Vaste grenswaarden en één afkapvolgorde houden implementaties onderling vergelijkbaar.</td></tr>
   <tr><td>Verduidelijkt: twee versienummers (11.1)</td><td>Documentversie en datamodelversie liepen door elkaar.</td></tr>
+  <tr><td>Concept-aanvulling: 3.1, eisen aan een lezende toepassing</td><td>Een paspoort is invoer van een onbekende. Ontsnappen vóór weergave was een eigenschap van de referentie-implementatie en wordt een eis aan elke lezer; begrensd uitpakken voorkomt dat één link een telefoon laat vastlopen. Datamodel ongewijzigd.</td></tr>
 </table>
 
 <h3>11.3 Wijzigingen in v0.2</h3>
