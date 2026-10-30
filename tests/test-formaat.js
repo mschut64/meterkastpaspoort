@@ -404,6 +404,33 @@ console.log("▶ CATEGORIE 11: grenzen vóór het uitpakken (decompressiebom)");
   eq(JSON.stringify(echt).length < MKP_MAX_UITGEPAKT / 10, true, "11.8 het demopaspoort gebruikt minder dan een tiende van de ruimte");
 }
 
+console.log("▶ CATEGORIE 12: meerdere verdeelinrichtingen — voorstel v0.4 (4.9)");
+{
+  // Het voorstel voegt alleen optionele velden toe. Deze tests tonen aan dat de
+  // referentie-implementatie ze nu al ongeschonden laat: heen en terug, bij het
+  // samenvoegen met een nieuwe oplevering, en bij het afkappen van een volle kast.
+  const onder = { v: 2, d: "2026-10-30", pc: "2801AB", nr: "12",
+    vd: { id: "OV1", n: "onderverdeler schuur", rol: "onder", plaats: "schuur achterzijde", inb: "wand" },
+    voed: { vd: "HV", grp: 7, a: 25, mm2: 6, lng: 24 },
+    grp: [{ t: "alg", rol: "af", f: 1, fn: [1], n: "werkbank" }] };
+  const terug = await mkpDecode((await mkpUrl(onder)).slice(MKP_BASIS.length));
+  eq([terug.vd, terug.voed], [onder.vd, onder.voed], "12.1 vd en voed gaan heen en terug zonder verlies");
+  eq(terug.v, 2, "12.2 het datamodel blijft v: 2 — de velden zijn optioneel");
+
+  const hoofd = { v: 2, vd: { id: "HV", n: "hoofdverdeler meterkast", rol: "hoofd" },
+    grp: [{ t: "alg", n: "keuken" }, { t: "ov", n: "onderverdeler schuur", vd: "OV1" }] };
+  const app = { v: 2, d: "2026-11-02", grp: [{ t: "alg", n: "keuken", fn: [2] }, { t: "ov", n: "onderverdeler schuur", fn: [1] }] };
+  const samen = mkpSamenvoegen(hoofd, app);
+  eq([samen.vd, samen.grp[1].vd], [hoofd.vd, "OV1"], "12.3 een app die vd niet kent, laat vd en grp[].vd staan bij een nieuwe oplevering");
+
+  const vol = { ...onder, grp: Array.from({ length: 24 }, (_, i) => ({ t: "alg", n: `groep nummer ${i + 1} met een lange omschrijving`, mat: i + 1 })),
+    mat: Array.from({ length: 24 }, (_, i) => ({ i: i + 1, s: "aut", fab: "Hager", typ: "MCN116", pos: `R${1 + (i >> 3)}-${i % 8}` })),
+    log: Array.from({ length: 6 }, (_, i) => ({ d: "2026-10-30", b: "Bedrijf", w: `regel ${i}` })) };
+  const kort = await mkpAfkappen(vol);
+  eq([kort.paspoort.vd.id, kort.paspoort.vd.rol, kort.paspoort.voed], ["OV1", "onder", onder.voed],
+     "12.4 afkappen laat de verwijzing staan — zonder voed wijst de kast nergens meer naar");
+}
+
 console.log("\n═══════════════════════════════════════════════");
 console.log(`RESULTAAT: ${passed} geslaagd · ${failed} mislukt · ${passed + failed} totaal`);
 console.log("═══════════════════════════════════════════════");

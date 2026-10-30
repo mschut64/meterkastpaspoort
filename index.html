@@ -91,6 +91,8 @@
   <tr><td><code>lb</code></td><td>object</td><td>Load balancing / vermogenssturing — zie 4.6.</td></tr>
   <tr><td><code>chk</code></td><td>object</td><td>Laatste belastingcheck — zie 4.7.</td></tr>
   <tr><td><code>log</code></td><td>lijst</td><td>Installateurs-logboek — zie 4.8.</td></tr>
+  <tr><td><code>vd</code></td><td>object</td><td>Deze verdeelinrichting, bij een installatie met meer dan één kast — zie 4.9. <span class="opt">voorstel v0.4</span></td></tr>
+  <tr><td><code>voed</code></td><td>object</td><td>Waar deze kast aan hangt; alleen bij een onderverdeler — zie 4.9. <span class="opt">voorstel v0.4</span></td></tr>
 </table>
 
 <h3>4.2 Hoofdaansluiting <code>ha</code></h3>
@@ -119,6 +121,7 @@
   <tr><td><code>fn</code></td><td>lijst</td><td>Fasenummer(s) waarop de groep is aangesloten: <code>[1]</code>, <code>[2]</code>, <code>[3]</code> of <code>[1,2,3]</code>. Onmisbaar om de belasting per fase te kunnen bepalen; laat weg als onbekend.</td></tr>
   <tr><td><code>mat</code></td><td>getal</td><td>Verwijzing naar <code>i</code> in <code>mat[]</code>: het beveiligingstoestel dat deze groep beveiligt. <span class="opt">Nieuw in v0.2.</span></td></tr>
   <tr><td><code>n</code></td><td>tekst</td><td>Vrije korte omschrijving (bijv. <code>"zolder PV 12 panelen"</code>).</td></tr>
+  <tr><td><code>vd</code></td><td>tekst</td><td>Deze groep voedt de verdeelinrichting met dit <code>vd.id</code> (bijv. <code>"OV1"</code>): geen eindgroep maar de voeding van een onderverdeler. Zie 4.9. <span class="opt">voorstel v0.4</span></td></tr>
 </table>
 
 <h3>4.5 Materiaal <code>mat[]</code> <span class="opt">nieuw in v0.2</span></h3>
@@ -166,6 +169,68 @@
   <tr><td><code>sid</code></td><td>tekst</td><td>Sleutel-identificatie van de ondertekenaar, op te zoeken in de index. <span class="opt">Optioneel, nieuw in v0.2.</span></td></tr>
   <tr><td><code>sig</code></td><td>tekst</td><td>Ed25519-handtekening over <b>deze regel</b>, base64url. <span class="opt">Optioneel, nieuw in v0.2.</span> Zie 8.4: per toevoeging ondertekenen levert een keten op waarin niemand met terugwerkende kracht een eerdere regel kan wijzigen — ook niet als dat bedrijf niet meer bestaat. Kosten: circa 110 tekens per regel, wat de QR-code merkbaar vergroot. Weeg dat af tegen het aantal logboekregels.</td></tr>
 </table>
+
+<h3 id="verdeelinrichtingen">4.9 Meerdere verdeelinrichtingen <code>vd</code> en <code>voed</code> <span class="opt">voorstel voor v0.4, oktober 2026 — nog niet vastgesteld</span></h3>
+<p>Een installatie heeft niet altijd één kast. Een onderverdeler in de schuur, op zolder of in een bijgebouw hangt aan een groep in de hoofdverdeler. Wie die kast scant, ziet vandaag niet waar hij aan hangt — niet op papier, niet op de sticker.</p>
+<p><b>Uitgangspunt: per verdeelinrichting een eigen paspoort, en elk paspoort weet waar hij aan hangt.</b> Het paspoort hoort fysiek bij de kast: wie de QR in de schuur scant, wil de schuurkast zien, niet een document waarin hij moet zoeken welk deel over deze kast gaat. Tegelijk is het elektrisch één installatie: de onderverdeler is een belasting op zijn voedende groep, en de lusimpedantie bij de onderverdeler bevat de voedingskabel ernaartoe. Daarom draagt elk paspoort de verwijzing, en niet één paspoort de hele installatie.</p>
+<p>Bij een installatie met één kast blijven beide velden weg. Er verandert dan niets.</p>
+
+<h4><code>vd</code> — deze verdeelinrichting</h4>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>id</code></td><td>tekst</td><td>Korte identificatie binnen de installatie: <code>HV</code> · <code>OV1</code> · <code>OV2</code>. Hiernaar verwijzen <code>voed.vd</code> en <code>grp[].vd</code>.</td></tr>
+  <tr><td><code>n</code></td><td>tekst</td><td>Omschrijving: <code>"hoofdverdeler meterkast"</code>, <code>"onderverdeler schuur"</code>.</td></tr>
+  <tr><td><code>rol</code></td><td>tekst</td><td><code>hoofd</code> of <code>onder</code>.</td></tr>
+  <tr><td><code>plaats</code></td><td>tekst</td><td>Waar de kast hangt: <code>"schuur achterzijde"</code>.</td></tr>
+  <tr><td><code>inb</code></td><td>tekst</td><td>Installatiewijze: <code>vrij</code> (vrijstaand) · <code>wand</code> (tegen de wand) · <code>nis</code> (ingebouwd). Bepaalt mee hoeveel warmte de kast kwijt kan (NEN-EN-IEC 61439); die geldt per kast en is niet over kasten op te tellen.</td></tr>
+</table>
+
+<h4><code>voed</code> — waar deze kast aan hangt</h4>
+<p>Alleen bij een onderverdeler.</p>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>vd</code></td><td>tekst</td><td><code>id</code> van de voedende verdeelinrichting. Heeft die kast (nog) geen paspoort, dan een korte omschrijving (<code>"meterkast"</code>) — beter een omschrijving dan niets.</td></tr>
+  <tr><td><code>grp</code></td><td>getal</td><td>Groepsnummer in die verdeelinrichting.</td></tr>
+  <tr><td><code>a</code></td><td>getal</td><td>Beveiligingswaarde van die groep in ampère.</td></tr>
+  <tr><td><code>mm2</code></td><td>getal</td><td>Aderdoorsnede van de voedingskabel.</td></tr>
+  <tr><td><code>lng</code></td><td>getal</td><td>Lengte van de voedingskabel in meters.</td></tr>
+</table>
+<p><code>mm2</code> en <code>lng</code> zijn geen administratie: ze verklaren waarom de lusimpedantie bij de onderverdeler hoger is dan bij de hoofdverdeler. Een lezende toepassing die een meting toetst, behoort ze te tonen bij die meting.</p>
+
+<h4>Voorbeeld</h4>
+<p>In het paspoort van de onderverdeler:</p>
+<pre><code>&quot;vd&quot;:   { &quot;id&quot;: &quot;OV1&quot;, &quot;n&quot;: &quot;onderverdeler schuur&quot;, &quot;rol&quot;: &quot;onder&quot;,
+          &quot;plaats&quot;: &quot;schuur achterzijde&quot;, &quot;inb&quot;: &quot;wand&quot; },
+&quot;voed&quot;: { &quot;vd&quot;: &quot;HV&quot;, &quot;grp&quot;: 7, &quot;a&quot;: 25, &quot;mm2&quot;: 6, &quot;lng&quot;: 24 }</code></pre>
+<p>En in het paspoort van de hoofdverdeler, bij groep 7:</p>
+<pre><code>&quot;vd&quot;:  { &quot;id&quot;: &quot;HV&quot;, &quot;n&quot;: &quot;hoofdverdeler meterkast&quot;, &quot;rol&quot;: &quot;hoofd&quot; },
+&quot;grp&quot;: [ … , { &quot;t&quot;: &quot;ov&quot;, &quot;rol&quot;: &quot;af&quot;, &quot;f&quot;: 1, &quot;fn&quot;: [1], &quot;n&quot;: &quot;onderverdeler schuur&quot;, &quot;vd&quot;: &quot;OV1&quot; } ]</code></pre>
+
+<h4>Wat een lezende toepassing toont</h4>
+<ul>
+  <li>Bij een onderverdeler, bovenaan: <i>gevoed vanaf groep 7 van de hoofdverdeler (HV)</i>, met doorsnede en lengte van de voedingskabel.</li>
+  <li>Bij een groep met <code>vd</code>: <i>voedt onderverdeler schuur (OV1)</i> — zichtbaar dat dit geen gewone eindgroep is.</li>
+  <li>Een lezer leidt uit een verwijzing <b>niets</b> af over de andere kast. Is die kast niet gescand, dan toont hij alleen de verwijzing.</li>
+</ul>
+
+<h4>Regels</h4>
+<ul>
+  <li><b>Aansluitgegevens horen bij de hoofdverdeler.</b> <code>ean</code>, <code>ean2</code> en <code>ha</code> staan in het paspoort met <code>rol: "hoofd"</code>; een onderverdeler laat ze weg.</li>
+  <li><b>Een kast met een eigen aansluiting is geen onderverdeler.</b> Een schuur met een eigen EAN is een tweede hoofdverdeler: <code>rol: "hoofd"</code>, geen <code>voed</code>. Een schuur die vanuit het woonhuis wordt gevoed, is een onderverdeler, ook als hij los staat.</li>
+  <li><b>Meer dan twee niveaus mag.</b> <code>voed.vd</code> kan naar elke <code>id</code> wijzen, ook naar die van een andere onderverdeler.</li>
+  <li><b>Een later bijgeplaatste kast herschrijft geen paspoort.</b> De nieuwe kast krijgt een eigen paspoort met <code>voed</code>; in dat van de hoofdverdeler komt bij de volgende bijwerking <code>grp[].vd</code> en een logboekregel. Bestaande logboekregels blijven zoals ze zijn (4.8).</li>
+  <li><b>Afkappen (hoofdstuk 6).</b> <code>vd.id</code>, <code>vd.rol</code>, <code>voed</code> en <code>grp[].vd</code> worden nooit afgekapt: zonder die velden wijst de kast nergens meer naar. <code>vd.n</code> en <code>vd.plaats</code> vallen onder stap 4, de vrije omschrijvingen.</li>
+</ul>
+
+<h4>Omvang</h4>
+<p>Gemeten met de referentie-implementatie, op het voorbeeld hierboven: <code>vd</code> en <code>voed</code> samen zijn 152 tekens JSON en maken de QR-URL 98 tekens langer. Op een klein paspoort (zes groepen, één logboekregel) gaat de code van 69 naar 77 modules; bij de hoofdverdeler kosten <code>vd</code> en één <code>grp[].vd</code> 46 tekens. Ruim binnen de 105 modules, maar niet gratis: bij een kast die al krap zit, kost een onderverdeler een QR-versie. Wie moet besparen, laat <code>plaats</code> weg.</p>
+
+<h4>Open punten bij dit voorstel</h4>
+<ul>
+  <li>Staan <code>pc</code> en <code>nr</code> ook in het paspoort van een onderverdeler, of alleen bij de hoofdverdeler?</li>
+  <li>Hoe vaak komen installateurs en inspecteurs meerdere verdeelinrichtingen tegen, en wat leggen ze er nu over vast?</li>
+  <li>Samen vast te stellen met de gereserveerde ruimte <code>res[]</code> uit het ontwerpintentie-voorstel.</li>
+</ul>
 
 <h2>5. Voorbeeld</h2>
 <p><b>Zelf bekijken:</b> de <a href="/lezer.html">paspoortlezer</a> is de referentie-implementatie van deze versie. Plak er een QR-URL in — of scan een sticker — en hij toont alle velden, inclusief <code>mat[]</code>, <code>fn</code>, <code>erk</code> en de status van de handtekeningen. Alles gebeurt in de browser; de paspoortdata verlaat het toestel niet.</p>
@@ -479,7 +544,13 @@
 
 <p>Wijzigingsvoorstellen op deze concept-specificatie zijn welkom; het veld <code>v</code> wordt verhoogd bij niet-neerwaarts-compatibele wijzigingen. Lezers behoren paspoorten met een hogere versie zo goed mogelijk weer te geven en onbekende velden te negeren. De referentie-implementatie van deze specificatie is YourWkb.</p>
 
-<h3>11.2 Wijzigingen in v0.3 <span class="opt">datamodel ongewijzigd</span></h3>
+<h3>11.2 Voorgesteld voor v0.4 <span class="opt">concept — nog niet vastgesteld, datamodel blijft <code>v: 2</code></span></h3>
+<table>
+  <tr><th>Wat</th><th>Waarom</th></tr>
+  <tr><td>Voorstel: <code>vd</code>, <code>voed</code> en <code>grp[].vd</code> — meerdere verdeelinrichtingen (4.9)</td><td>Een onderverdeler hangt aan een groep in de hoofdverdeler, maar geen van beide kasten wist dat. Per kast een eigen paspoort dat naar de ander verwijst: de QR blijft bij de kast, en wie in de schuur scant, ziet waar die kast aan hangt. Alle velden optioneel; een lezer die ze niet kent, slaat ze over.</td></tr>
+</table>
+
+<h3>11.3 Wijzigingen in v0.3 <span class="opt">datamodel ongewijzigd</span></h3>
 <table>
   <tr><th>Wat</th><th>Waarom</th></tr>
   <tr><td>Nieuw: <code>log[].zeg</code> en hoofdstuk 9, zegels</td><td>Het landelijk zegelrecht hangt aan de erkenning. Het paspoort legt het zegelnummer vast op dezelfde plek als het zegel zelf, zodat toezicht mogelijk is zonder centraal register van meterkasten.</td></tr>
@@ -489,7 +560,7 @@
   <tr><td>Concept-aanvulling: 3.1, eisen aan een lezende toepassing</td><td>Een paspoort is invoer van een onbekende. Ontsnappen vóór weergave was een eigenschap van de referentie-implementatie en wordt een eis aan elke lezer; begrensd uitpakken voorkomt dat één link een telefoon laat vastlopen. Datamodel ongewijzigd.</td></tr>
 </table>
 
-<h3>11.3 Wijzigingen in v0.2</h3>
+<h3>11.4 Wijzigingen in v0.2</h3>
 <table>
   <tr><th>Wat</th><th>Waarom</th></tr>
   <tr><td>Nieuw: <code>mat[]</code> met <code>fab</code>, <code>typ</code>, <code>art</code>, <code>sn</code>, <code>pd</code>, <code>pos</code></td><td>Zonder materiaallijst is een veldnotitie van een fabrikant nergens mee te vergelijken. Dit is de drager van het terugroepkanaal.</td></tr>
