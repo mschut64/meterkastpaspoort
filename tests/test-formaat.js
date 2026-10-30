@@ -18,6 +18,7 @@ import {
   QR_TEKENS_GRENS, qrWaarschuwing,
   mkpSamenvoegen, mkpZegels, mkpAfkappen, qrModules, QR_MODULES_GRENS, QR_NIVEAU,
   mkpCanon, mkpVerifieer, mkpVerifieerIndex, mkpErkenning, mkpVeldnotities, mkpControleer, MKP_WORTEL_SLEUTEL,
+  mkpVerdeelinrichting,
 } from "../mkp.js";
 import { readFileSync } from "node:fs";
 
@@ -429,6 +430,29 @@ console.log("▶ CATEGORIE 12: meerdere verdeelinrichtingen — voorstel v0.4 (4
   const kort = await mkpAfkappen(vol);
   eq([kort.paspoort.vd.id, kort.paspoort.vd.rol, kort.paspoort.voed], ["OV1", "onder", onder.voed],
      "12.4 afkappen laat de verwijzing staan — zonder voed wijst de kast nergens meer naar");
+}
+
+console.log("▶ CATEGORIE 13: de lezer zegt waar een kast aan hangt (voorstel v0.4)");
+{
+  eq(mkpVerdeelinrichting({ v: 2, grp: [{ t: "alg" }] }), null, "13.1 één kast zonder vd of voed: niets — er verandert niets");
+  const onder = mkpVerdeelinrichting({ v: 2,
+    vd: { id: "OV1", n: "onderverdeler schuur", rol: "onder", plaats: "schuur achterzijde", inb: "wand" },
+    voed: { vd: "HV", grp: 7, a: 25, mm2: 6, lng: 24 } });
+  eq(onder.gevoed, { tekst: "gevoed vanaf groep 7 van verdeelinrichting HV", details: "beveiliging 25 A · voedingskabel 6 mm², 24 m" },
+     "13.2 onderverdeler: gevoed vanaf groep 7, met beveiliging en voedingskabel");
+  eq([onder.rol, onder.kast], ["onderverdeler", "onderverdeler schuur (OV1) · schuur achterzijde · tegen de wand"], "13.3 de kast zelf in één regel");
+  const hoofd = mkpVerdeelinrichting({ v: 2, vd: { id: "HV", rol: "hoofd" }, grp: [{ t: "alg" }, { t: "ov", n: "schuur", vd: "OV1" }] });
+  eq(hoofd.voedt, [{ groep: 1, vd: "OV1", tekst: "voedt verdeelinrichting OV1" }], "13.4 hoofdverdeler: groep 2 voedt OV1");
+  eq(hoofd.kast, "hoofdverdeler (HV)", "13.5 zonder omschrijving de rol als naam");
+  eq(mkpVerdeelinrichting({ voed: { vd: "meterkast woonhuis", grp: 3 } }).gevoed.tekst, "gevoed vanaf groep 3 van meterkast woonhuis",
+     "13.6 voedende kast zonder paspoort: de omschrijving, beter dan niets");
+  const vals = mkpVerdeelinrichting({ voed: { vd: "HV", grp: "<b>7</b>", a: "25 A", mm2: null } });
+  eq(vals.gevoed, { tekst: "gevoed vanaf verdeelinrichting HV", details: "" },
+     "13.7 geen getal waar een getal hoort: weggelaten, niet doorgegeven (§3.1)");
+  eq(mkpVerdeelinrichting({ voed: "HV" }), null, "13.8 voed van het verkeerde type: genegeerd");
+  const lezer = readFileSync(new URL("../lezer.html", import.meta.url), "utf8");
+  eq(/E\(vi\.gevoed\.tekst/.test(lezer) && /E\(vi\.kast\)/.test(lezer) && /E\(voedtBij\.get\(gi\)\)/.test(lezer), true,
+     "13.9 de lezer ontsnapt elke tekst uit de verwijzing vóór weergave");
 }
 
 console.log("\n═══════════════════════════════════════════════");

@@ -34,6 +34,8 @@
   .v-onbek { color:var(--oranje); border-color:var(--oranje); }
   .v-geen { color:var(--muted); border-color:var(--muted); }
   .leeg { color:var(--muted); font-style:italic; }
+  .voeding { border-left:5px solid var(--accent); background:#fbf7e6; padding:10px 14px; margin:0 0 14px; border-radius:0 5px 5px 0; }
+  .voeding b { font-size:16px; }
   footer { margin-top:44px; border-top:1px solid var(--line); padding-top:14px;
            font-size:13px; color:var(--muted); font-family:system-ui,sans-serif; }
   a { color:#8a6d00; }
@@ -62,7 +64,7 @@
 // Sinds 19-09-2026 rekent de lezer met de referentie-implementatie zelf (mkp.js):
 // decoderen, handtekeningen, de index, erkenning en veldnotities. Geen eigen
 // kopie meer die kan afwijken van wat YourWkb en Kastscan vaststellen.
-import { mkpDecode, mkpVerifieer, mkpVerifieerIndex, mkpErkenning, mkpVeldnotities, mkpZegels } from '/mkp.js';
+import { mkpDecode, mkpVerifieer, mkpVerifieerIndex, mkpErkenning, mkpVeldnotities, mkpZegels, mkpVerdeelinrichting } from '/mkp.js';
 
 const E = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Demo-feed en -index van deze site. De sleutel van de beheerder komt NIET uit de
@@ -111,7 +113,15 @@ async function lees(url) {
   try {
     const frag = url.includes('#') ? url.split('#')[1] : url;
     const p = await mkpDecode(frag);
-    let h = `<h2>Kast</h2><table>
+    // Meerdere verdeelinrichtingen (voorstel v0.4, spec 4.9): waar deze kast aan
+    // hangt staat bovenaan — dat is wat een monteur in een schuur het eerst zoekt.
+    const vi = mkpVerdeelinrichting(p);
+    const voedtBij = new Map((vi?.voedt || []).map(x => [x.groep, x.tekst]));
+    let h = vi?.gevoed ? `<div class="voeding"><b>${E(vi.gevoed.tekst[0].toUpperCase() + vi.gevoed.tekst.slice(1))}</b>
+        ${vi.gevoed.details ? `<br>${E(vi.gevoed.details)}` : ''}
+        <br><span class="leeg" style="font-size:13px">De andere kast heeft een eigen paspoort; deze lezer toont alleen de verwijzing.</span></div>` : '';
+    h += `<h2>Kast</h2><table>
+      ${rij('Verdeelinrichting', vi?.kast ? E(vi.kast) + ' <span class="vlag v-onbek">voorstel v0.4</span>' : '')}
       ${rij('Datamodelversie', E(p.v) + (p.v >= 2 ? ' <span class="vlag v-ok">v2 — materiaal, fasenummers, erkenning</span>' : ' <span class="vlag v-geen">v1 — basisgegevens</span>'))}
       ${rij('Adres', E([p.pc, p.nr].filter(Boolean).join(' ')))}
       ${rij('Bijgewerkt', E(p.d))}
@@ -125,7 +135,7 @@ async function lees(url) {
 
     if (p.grp?.length) {
       h += `<h2>Groepen</h2><table><tr><th style="width:22%">Type</th><th style="width:auto">Gegevens</th></tr>`;
-      for (const g of p.grp) {
+      for (const [gi, g] of p.grp.entries()) {
         // Ook fasenummers zijn invoer van een onbekende: een vervalste sticker kan
         // er tekst in zetten in plaats van getallen (§3.1). Dus ontsnapt.
         const fase = Array.isArray(g.fn) ? `fase ${g.fn.map(E).join('+')}` : (g.f ? `${E(g.f)}-fase` : '');
@@ -134,6 +144,7 @@ async function lees(url) {
           ${[g.kw ? E(g.kw)+' kW' : '', g.rol === 'voed' ? 'voedend' : 'afgaand', fase].filter(Boolean).join(' · ')}
           ${g.n ? '<br>' + E(g.n) : ''}
           ${mat ? `<br><span class="leeg">beveiligd door ${E(mat.fab)} ${E(mat.typ)}</span>` : ''}
+          ${voedtBij.has(gi) ? `<br><b>${E(voedtBij.get(gi))}</b> — geen eindgroep` : ''}
         </td></tr>`;
       }
       h += `</table>`;
