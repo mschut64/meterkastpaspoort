@@ -40,8 +40,10 @@ const z2 = mkpZetV04(BASIS, { ind: ontwerp });
 eq(["ind" in z2.paspoort, z2.weggelaten[0].veld, /gemeten/.test(z2.weggelaten[0].reden)], [false, "ind", true], "Z3 een ontworpen indeling komt niet op een sticker (v0.4 §5)");
 eq(mkpZetV04(BASIS, { ind: "kapot!" }).weggelaten[0].veld, "ind", "Z4 een kapot blok gaat niet mee");
 eq(mkpZetV04(BASIS, { frq: "2029-13" }).weggelaten.map((w) => w.veld), ["frq"], "Z5 frq moet JJJJ-MM zijn");
-eq(["ind" in mkpZetV04(z.paspoort, {}).paspoort, "frq" in mkpZetV04(z.paspoort, {}).paspoort], [false, false],
-   "Z6 een oude indeling en oude frq gaan eruit als de schrijver ze niet opnieuw aanlevert");
+eq(["ind" in mkpZetV04(z.paspoort, {}).paspoort, mkpZetV04(z.paspoort, {}).paspoort.frq], [false, "2029-11"],
+   "Z6 een oude indeling gaat eruit; de volgende inspectie blijft staan als er geen nieuwe datum is (een installateur kent hem niet)");
+eq(mkpZetV04(z.paspoort, { frq: "2032-03" }).paspoort.frq, "2032-03", "Z6a een nieuwe datum vervangt de oude");
+eq(mkpZetV04({ ...z.paspoort, frq: "rommel" }, {}).paspoort.frq, undefined, "Z6b een ongeldige oude frq gaat niet mee");
 eq(MKP_SPEC_VERSIE, 2, "Z7 standaard schrijft de codec nog datamodel 2 (besluit 2)");
 
 console.log("▶ L: lezen");

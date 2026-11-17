@@ -47,15 +47,18 @@ export function mkpIndeling(p) {
 
 // Zet een paspoort op v0.4: datamodel 3, met `ind` en `frq` als ze geldig zijn.
 // Een kopie; het origineel blijft ongewijzigd. Wat niet meegaat staat in
-// `weggelaten`, met de reden. `ind` en `frq` die al in het paspoort staan maar
-// hier niet worden aangeleverd, gaan ERUIT: een oude indeling beschrijft een kast
-// die misschien niet meer zo hangt (de schrijver die dit aanroept, beheert ze).
+// `weggelaten`, met de reden.
 //
-//   ind  de tekst van mkpIndelingInpakken (of null: geen indeling)
-//   frq  "JJJJ-MM" (of null)
+//   ind  de tekst van mkpIndelingInpakken, of null. Een `ind` die al in het
+//        paspoort staat en hier niet wordt aangeleverd, gaat ERUIT: een oude
+//        indeling beschrijft een kast die misschien niet meer zo hangt.
+//   frq  "JJJJ-MM", of null. Zonder nieuwe datum BLIJFT een geldige bestaande
+//        staan: een installateur kent de datum van de inspecteur niet en mag hem
+//        dus ook niet wissen (paspoortbehoud; review 17-11-2026).
 export function mkpZetV04(paspoort, { ind = null, frq = null } = {}) {
   const p = _kopie(paspoort) || {};
   const weggelaten = [];
+  const oudeFrq = mkpVolgendeInspectie(p);
   delete p.ind; delete p.frq;
   p.v = Math.max(typeof p.v === "number" ? p.v : 0, MKP_V04_DATAMODEL);
   if (ind) {
@@ -67,8 +70,8 @@ export function mkpZetV04(paspoort, { ind = null, frq = null } = {}) {
   }
   if (frq !== null && frq !== undefined && frq !== "") {
     if (FRQ.test(String(frq))) p.frq = String(frq);
-    else weggelaten.push({ veld: "frq", reden: `"${frq}" is niet JJJJ-MM` });
-  }
+    else { weggelaten.push({ veld: "frq", reden: `"${frq}" is niet JJJJ-MM` }); if (oudeFrq) p.frq = oudeFrq; }
+  } else if (oudeFrq) p.frq = oudeFrq;
   return { paspoort: p, weggelaten };
 }
 
