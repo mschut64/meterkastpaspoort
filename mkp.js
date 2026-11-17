@@ -33,6 +33,8 @@
 //   codec/controleren.js  handtekening, index, erkenning, zegels, veldnotities
 //   codec/versie.js       versieherkenning: datamodel, profiel, onbekende velden
 //   codec/registers.js    uitgevers van erkenningen en certificaten, en hun registers
+//   codec/indeling.js     het indelingsblok (v0.4-voorstel) inpakken en uitpakken
+//   codec/indeling-tabellen.js  de codetabellen van dat blok
 //   codec/teksten.js      Nederlandse zinnen voor een gebruiker — hoort op
 //                         termijn niet in de codec
 //   codec/hulp.js         gedeelde hulpjes (niet geëxporteerd)
@@ -52,3 +54,17 @@ export {
 export { MKP_DATAMODELLEN, MKP_VELDEN, mkpLees, mkpOnbekendePaden } from "./codec/versie.js";
 export { MKP_REGISTERS, mkpRegister } from "./codec/registers.js";
 export { mkpSamenvatting, mkpVerdeelinrichting, qrWaarschuwing } from "./codec/teksten.js";
+// Het indelingsblok (voorstel v0.4, bijgesteld) — nog niet in de QR.
+export { mkpIndelingInpakken, mkpIndelingUitpakken } from "./codec/indeling.js";
+export {
+  INDELING_VERSIE as MKP_INDELING_VERSIE, INDELING_BITS as MKP_INDELING_BITS,
+  INDELING_SOORTEN as MKP_INDELING_SOORTEN, INDELING_VELDEN as MKP_INDELING_VELDEN,
+  INDELING_POLEN as MKP_INDELING_POLEN, INDELING_STROMEN as MKP_INDELING_STROMEN,
+  INDELING_KARAKTERISTIEKEN as MKP_INDELING_KARAKTERISTIEKEN,
+  INDELING_AANSPREEKSTROMEN as MKP_INDELING_AANSPREEKSTROMEN,
+  INDELING_AARDLEKTYPEN as MKP_INDELING_AARDLEKTYPEN,
+  INDELING_STATUS as MKP_INDELING_STATUS, INDELING_WARMTEROUTE as MKP_INDELING_WARMTEROUTE,
+  INDELING_GROEP_MAX as MKP_INDELING_GROEP_MAX, INDELING_BREEDTE_MAX as MKP_INDELING_BREEDTE_MAX,
+  INDELING_LENGTE_MAX as MKP_INDELING_LENGTE_MAX, INDELING_AANTAL_MAX as MKP_INDELING_AANTAL_MAX,
+  INDELING_MPR_MAX as MKP_INDELING_MPR_MAX, INDELING_NAAM_MAX as MKP_INDELING_NAAM_MAX,
+} from "./codec/indeling-tabellen.js";
