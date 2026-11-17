@@ -3,6 +3,7 @@
 //
 // Een toestel is een gewoon object met leesbare velden, bijvoorbeeld
 //   { soort: "automaat", breedte: 1, polen: "1P+N", In: 16, kar: "B", groep: 3 }
+// Polen: "2P" en "4P" worden bij het inpakken 1P+N en 3P+N; uitpakken geeft altijd de vorm met +N.
 // Welke velden een soort draagt staat in INDELING_VELDEN. Een veld dat ontbreekt
 // (of null is, of selectief: false) is "niet vastgelegd" en komt bij het
 // uitpakken niet terug. Een waarde die niet in de tabel staat geeft een fout;
@@ -10,9 +11,9 @@
 
 import {
   INDELING_VERSIE, INDELING_BITS, INDELING_SOORTEN, INDELING_VELDEN, INDELING_POLEN,
-  INDELING_STROMEN, INDELING_KARAKTERISTIEKEN, INDELING_AANSPREEKSTROMEN, INDELING_AARDLEKTYPEN,
+  INDELING_POLEN_ALIAS, INDELING_STROMEN, INDELING_KARAKTERISTIEKEN, INDELING_AANSPREEKSTROMEN, INDELING_AARDLEKTYPEN,
   INDELING_STATUS, INDELING_WARMTEROUTE, INDELING_GROEP_MAX, INDELING_BREEDTE_MAX,
-  INDELING_LENGTE_MAX, INDELING_AANTAL_MAX, INDELING_MPR_MAX, INDELING_NAAM_MAX,
+  INDELING_AANTAL_MAX, INDELING_MPR_MAX, INDELING_NAAM_MAX,
 } from "./indeling-tabellen.js";
 
 // ─── fouten ──────────────────────────────────────────────────────────────────
@@ -94,12 +95,13 @@ function codeVan(veld, w, waar) {
     if (typeof w !== "boolean") throw fout(`${waar}: selectief ${toon(w)} is geen true of false`, { veld, waarde: w });
     return w ? 1 : 0;
   }
-  if (veld === "groep" || veld === "lengte") {
-    const max = veld === "groep" ? INDELING_GROEP_MAX : INDELING_LENGTE_MAX;
-    if (!Number.isInteger(w) || w < 1 || w > max)
-      throw fout(`${waar}: ${veld} ${toon(w)} ligt niet tussen 1 en ${max}`, { veld, waarde: w });
+  if (veld === "groep") {
+    if (!Number.isInteger(w) || w < 1 || w > INDELING_GROEP_MAX)
+      throw fout(`${waar}: groep ${toon(w)} ligt niet tussen 1 en ${INDELING_GROEP_MAX}`, { veld, waarde: w });
     return w;
   }
+  // 2P en 4P zijn schrijfwijzen van 1P+N en 3P+N (besluit 17-11-2026).
+  if (veld === "polen" && Object.hasOwn(INDELING_POLEN_ALIAS, w)) w = INDELING_POLEN_ALIAS[w];
   const code = TABEL[veld].indexOf(w);
   if (code < 1) throw fout(`${waar}: ${veld} ${toon(w)} staat niet in de tabel`, { veld, waarde: w });
   return code;
@@ -109,7 +111,7 @@ function waardeVan(veld, code, waar) {
   if (veld === "breedte") return code + 1;
   if (veld === "selectief") return code === 1 ? true : undefined;
   if (code === 0) return undefined;
-  if (veld === "groep" || veld === "lengte") return code;
+  if (veld === "groep") return code;
   const w = TABEL[veld][code];
   if (w === null || w === undefined) throw fout(`${waar}: onbekende code ${code} voor ${veld}`, { veld, waarde: code });
   return w;
@@ -151,6 +153,8 @@ export function mkpIndelingInpakken(indeling) {
   toestellen.forEach((t, i) => {
     const waar = `toestel ${i + 1}`;
     if (!t || typeof t !== "object" || Array.isArray(t)) throw fout(`${waar} is geen object`, { toestel: i, veld: "toestel", waarde: t });
+    if (t.soort === "kamrail")
+      throw fout(`${waar}: een kamrail staat niet in de indeling; leg hem één keer per kast vast in het paspoortveld "kam" (de kamrail is overal in de kast hetzelfde)`, { toestel: i, veld: "soort", waarde: t.soort });
     const code = typeof t.soort === "string" ? INDELING_SOORTEN.indexOf(t.soort) : -1;
     if (code < 0) throw fout(`${waar}: soort ${toon(t.soort)} staat niet in de tabel`, { toestel: i, veld: "soort", waarde: t.soort });
     const velden = INDELING_VELDEN[t.soort];

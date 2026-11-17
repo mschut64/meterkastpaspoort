@@ -11,7 +11,7 @@ const {
   MKP_INDELING_POLEN, MKP_INDELING_STROMEN, MKP_INDELING_KARAKTERISTIEKEN,
   MKP_INDELING_AANSPREEKSTROMEN, MKP_INDELING_AARDLEKTYPEN, MKP_INDELING_STATUS,
   MKP_INDELING_WARMTEROUTE, MKP_INDELING_GROEP_MAX, MKP_INDELING_BREEDTE_MAX,
-  MKP_INDELING_LENGTE_MAX, MKP_INDELING_AANTAL_MAX, MKP_INDELING_MPR_MAX, MKP_INDELING_NAAM_MAX,
+  MKP_INDELING_AANTAL_MAX, MKP_INDELING_MPR_MAX, MKP_INDELING_NAAM_MAX,
 } = M;
 
 let passed = 0, failed = 0;
@@ -50,7 +50,6 @@ const kop = ({ v = 1, st = 0, wr = 0, mpr = 0, n = 1, nm = 0, res = 0 } = {}) =>
 const aut = (In, groep, kar = "B", polen = "1P+N", breedte = 1) => ({ soort: "automaat", breedte, polen, In, kar, groep });
 const al = (In = 40, idn = 30, lek = "A", polen = "1P+N", breedte = 2) => ({ soort: "aardlek", breedte, polen, In, idn, lek });
 const sep = { soort: "railscheiding" };
-const kam = (lengte, polen = "1P+N", In = 63) => ({ soort: "kamrail", polen, In, lengte });
 
 // A — het voorbeeld uit v0.4 §4.6: 20 toestellen op 3 rails (dus 2 railscheidingen).
 const A = { st: "gemeten", wr: "beproefd", mpr: 12, toestellen: [
@@ -58,20 +57,20 @@ const A = { st: "gemeten", wr: "beproefd", mpr: 12, toestellen: [
   sep, aut(16, 6), aut(16, 7), aut(20, 8), al(), aut(16, 9), aut(16, 10), aut(16, 11),
   sep, al(40, 30, "B"), aut(16, 12, "C"), aut(16, 13), { soort: "beltrafo", breedte: 2 }, { soort: "leeg", breedte: 2 },
 ] };
-// B — woning, 3 rails van 12 modules, 16 groepen, kamrails en één eigen naam.
+// B — woning, 3 rails van 12 modules, 16 groepen en één eigen naam (zonder kamrails: die staan niet in de indeling).
 let g = 0; const n = () => ++g;
 const B = { st: "gemeten", wr: "beproefd", mpr: 12, toestellen: [
   { soort: "hoofdschakelaar", breedte: 2, polen: "1P+N", In: 40 },
-  al(), kam(4), aut(16, n()), aut(16, n()), aut(16, n()), aut(16, n()), al(), kam(2), aut(16, n()), aut(16, n()),
-  sep, aut(16, n()), aut(16, n()), aut(16, n()), aut(16, n()), al(), kam(5), aut(16, n()), aut(20, n()), aut(16, n()), aut(16, n()), { soort: "leeg", breedte: 2 },
-  sep, al(40, 30, "B"), kam(1), aut(16, n(), "C"),
+  al(), aut(16, n()), aut(16, n()), aut(16, n()), aut(16, n()), al(), aut(16, n()), aut(16, n()),
+  sep, aut(16, n()), aut(16, n()), aut(16, n()), aut(16, n()), al(), aut(16, n()), aut(20, n()), aut(16, n()), aut(16, n()), { soort: "leeg", breedte: 2 },
+  sep, al(40, 30, "B"), aut(16, n(), "C"),
   { soort: "aardlekautomaat", breedte: 2, polen: "1P+N", In: 16, kar: "B", idn: 30, lek: "A", groep: n() },
   { soort: "beltrafo", breedte: 2 }, { soort: "schakeltoestel", breedte: 1 }, { soort: "kwh-meter", breedte: 2 },
   { soort: "overig", breedte: 1, naam: "Wifi-module" }, { soort: "leeg", breedte: 2 },
 ] };
-// C — bedrijfsverdeler 3×80 A, 5 rails van 24, 8 aardlekken 4P met kamrail, 40 groepen.
+// C — bedrijfsverdeler 3×80 A, 5 rails van 24, 8 aardlekken 3P+N, 40 groepen (zonder kamrails).
 g = 0;
-const Ct = [{ soort: "hoofdschakelaar", breedte: 4, polen: "4P", In: 80 }, { soort: "overspanning", breedte: 4, polen: "3P+N" },
+const Ct = [{ soort: "hoofdschakelaar", breedte: 4, polen: "3P+N", In: 80 }, { soort: "overspanning", breedte: 4, polen: "3P+N" },
   { soort: "kwh-meter", breedte: 4, polen: "3P+N" }, { soort: "schakeltoestel", breedte: 1 }, { soort: "schakeltoestel", breedte: 1 }];
 {
   let mod = 14;
@@ -80,8 +79,7 @@ const Ct = [{ soort: "hoofdschakelaar", breedte: 4, polen: "4P", In: 80 }, { soo
     Ct.push(t); mod += br;
   };
   for (let a = 0; a < 8; a++) {
-    plaats(al(40, 30, a === 7 ? "B" : "A", "4P", 4), 4);
-    plaats(kam(7, "3P+N", 63), 0);
+    plaats(al(40, 30, a === 7 ? "B" : "A", "3P+N", 4), 4);
     for (let i = 0; i < 4; i++) plaats(aut(16, n()), 1);
     plaats(aut(20, n(), "C", "3P+N", 3), 3);
   }
@@ -106,16 +104,19 @@ for (const [t, b] of [[MKP_INDELING_POLEN, "polen"], [MKP_INDELING_STROMEN, "In"
 eq([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15].map((c) => MKP_INDELING_SOORTEN[c]),
   ["leeg", "hoofdschakelaar", "automaat", "aardlek", "aardlekautomaat", "overspanning", "beltrafo", "schakeltoestel", "kwh-meter", "pv-scheider", "lastscheider", "overig", "railscheiding"],
   "T1.9 de codes van v0.4 zijn ongewijzigd");
-eq([MKP_INDELING_SOORTEN[12], MKP_INDELING_SOORTEN[13]], ["smeltveiligheid", "kamrail"], "T1.10 smeltveiligheid en kamrail erbij");
+eq([MKP_INDELING_SOORTEN[12], MKP_INDELING_SOORTEN[13]], ["smeltveiligheid", null], "T1.10 smeltveiligheid erbij; code 13 (was kamrail) gereserveerd");
+eq(MKP_INDELING_SOORTEN.includes("kamrail") || "kamrail" in MKP_INDELING_VELDEN || "lengte" in MKP_INDELING_BITS, false, "T1.10b geen kamrail en geen lengteveld meer in de tabellen");
+eq(MKP_INDELING_POLEN, [null, "1P", "1P+N", "3P", "3P+N", null, null, null], "T1.10c polen: geen 2P en 4P; codes 5–7 gereserveerd");
+eq(MKP_INDELING_BITS.polen, 3, "T1.10d polen blijft 3 bits (vijf waarden plus niet vastgelegd)");
 eq(MKP_INDELING_SOORTEN.filter(Boolean).every((s) => Array.isArray(MKP_INDELING_VELDEN[s])) && Array.isArray(MKP_INDELING_VELDEN.gereserveerd), true, "T1.11 elke soort heeft een veldenlijst");
 // v0.4 §4.2 en de automaatmaten van de motor zitten er allebei in.
 eq([2, 4, 6, 10, 13, 16, 20, 25, 32, 35, 40, 50, 63, 80, 100, 125].every((a) => MKP_INDELING_STROMEN.includes(a)), true, "T1.12 stromen dekken v0.4 en de motor (6–125 A)");
 eq(MKP_INDELING_KARAKTERISTIEKEN.includes("gG") && MKP_INDELING_AANSPREEKSTROMEN.includes(10) && MKP_INDELING_AARDLEKTYPEN.includes("F"), true, "T1.13 gG, 10 mA en type F erbij");
-eq([MKP_INDELING_GROEP_MAX, MKP_INDELING_BREEDTE_MAX, MKP_INDELING_LENGTE_MAX, MKP_INDELING_AANTAL_MAX, MKP_INDELING_MPR_MAX, MKP_INDELING_NAAM_MAX],
-  [127, 8, 63, 1023, 255, 30], "T1.14 de grenzen");
+eq([MKP_INDELING_GROEP_MAX, MKP_INDELING_BREEDTE_MAX, MKP_INDELING_AANTAL_MAX, MKP_INDELING_MPR_MAX, MKP_INDELING_NAAM_MAX],
+  [127, 8, 1023, 255, 30], "T1.14 de grenzen");
 
 console.log("▶ INDELING 2: de drie voorbeelden, heen en terug, met vastgelegde grootte");
-for (const [naam, ind, bytes, tekens] of [["A v0.4-voorbeeld", A, 64, 86], ["B woning", B, 101, 135], ["C bedrijfsverdeler", C, 190, 254]]) {
+for (const [naam, ind, bytes, tekens] of [["A v0.4-voorbeeld", A, 64, 86], ["B woning", B, 92, 123], ["C bedrijfsverdeler", C, 171, 228]]) {
   const r = heenTerug(ind);
   eq(r.uitBytes, r.verwacht, `V ${naam}: heen en terug via bytes`);
   eq(r.uitTekst, r.verwacht, `V ${naam}: heen en terug via tekst`);
@@ -129,6 +130,16 @@ const rond = (t, kopje = {}) => uit(pak({ st: "gemeten", ...kopje, toestellen: [
 const minimaal = (s) => (MKP_INDELING_VELDEN[s].includes("breedte") ? { soort: s, breedte: 1 } : { soort: s });
 for (const s of MKP_INDELING_SOORTEN.filter(Boolean)) eq(rond(minimaal(s)), minimaal(s), `W soort ${s}`);
 for (const p of MKP_INDELING_POLEN.filter(Boolean)) eq(rond({ soort: "automaat", breedte: 1, polen: p }).polen, p, `W polen ${p}`);
+// 2P en 4P zijn schrijfwijzen: erin als 2P/4P, eruit altijd als 1P+N/3P+N, en byte voor byte gelijk aan de +N-vorm.
+for (const [schrijf, terug] of [["2P", "1P+N"], ["4P", "3P+N"]]) {
+  eq(rond({ soort: "aardlek", breedte: 2, polen: schrijf }).polen, terug, `W polen ${schrijf} komt terug als ${terug}`);
+  const x = pak({ st: "gemeten", toestellen: [{ soort: "aardlek", breedte: 2, polen: schrijf, In: 40 }] });
+  const y = pak({ st: "gemeten", toestellen: [{ soort: "aardlek", breedte: 2, polen: terug, In: 40 }] });
+  eq(x.tekst, y.tekst, `W polen ${schrijf} geeft dezelfde bytes als ${terug}`);
+}
+geeftFout(() => pak({ st: "gemeten", toestellen: [{ soort: "automaat", breedte: 1, polen: "3P+N+PE" }] }), "polen", "3P+N+PE", "W polen 3P+N+PE blijft een fout");
+geeftFout(() => pak({ st: "gemeten", toestellen: [{ soort: "automaat", breedte: 1, polen: "6P" }] }), "polen", "6P", "W polen 6P blijft een fout");
+for (const code of [5, 6, 7]) geeftFout(() => uit(bits(...kop(), [2, 5], [0, 3], [code, 3], [0, 5], [0, 3], [0, 7])), "polen", code, `W polencode ${code} (was 2P/4P) is gereserveerd`);
 for (const a of MKP_INDELING_STROMEN.filter((x) => x !== null)) eq(rond({ soort: "automaat", breedte: 1, In: a }).In, a, `W In ${a}`);
 for (const k of MKP_INDELING_KARAKTERISTIEKEN.filter(Boolean)) eq(rond({ soort: "smeltveiligheid", breedte: 1, kar: k }).kar, k, `W kar ${k}`);
 for (const i of MKP_INDELING_AANSPREEKSTROMEN.filter(Boolean)) eq(rond({ soort: "aardlek", breedte: 2, idn: i }).idn, i, `W idn ${i}`);
@@ -143,7 +154,7 @@ eq(rond({ soort: "aardlekautomaat", breedte: 1, polen: null, In: null, kar: null
 eq(rond({ soort: "aardlekautomaat", breedte: 2, polen: "1P+N", In: 16, kar: "C", idn: 30, lek: "A", selectief: true, groep: 9 }),
   { soort: "aardlekautomaat", breedte: 2, polen: "1P+N", In: 16, kar: "C", idn: 30, lek: "A", selectief: true, groep: 9 }, "W aardlekautomaat met alle velden");
 // Bits per soort: wat het voorstel belooft.
-for (const [s, b] of [["railscheiding", 5], ["leeg", 8], ["hoofdschakelaar", 16], ["automaat", 26], ["aardlek", 23], ["aardlekautomaat", 33], ["beltrafo", 11], ["kamrail", 19]]) {
+for (const [s, b] of [["railscheiding", 5], ["leeg", 8], ["hoofdschakelaar", 16], ["automaat", 26], ["aardlek", 23], ["aardlekautomaat", 33], ["beltrafo", 11]]) {
   const som = MKP_INDELING_BITS.soort + MKP_INDELING_VELDEN[s].reduce((x, v) => x + MKP_INDELING_BITS[v], 0);
   eq(som, b, `W ${s} kost ${b} bits`);
 }
@@ -155,7 +166,6 @@ console.log("▶ INDELING 4: de grenzen");
   eq(uit(leeg.tekst), { versie: 1, st: "gemeten", wr: "onbekend", toestellen: [] }, "G0 nul toestellen terug");
   eq(rond({ soort: "automaat", breedte: 1, groep: MKP_INDELING_GROEP_MAX }).groep, 127, "G1 hoogste groepsnummer 127");
   eq(rond({ soort: "aardlekautomaat", breedte: MKP_INDELING_BREEDTE_MAX }).breedte, 8, "G2 breedste module (8)");
-  eq(rond({ soort: "kamrail", lengte: MKP_INDELING_LENGTE_MAX }).lengte, 63, "G3 langste kamrail (63)");
   eq(uit(pak({ st: "gemeten", mpr: 255, toestellen: [] }).tekst).mpr, 255, "G4 mpr 255");
   const vol = { st: "gemeten", toestellen: Array.from({ length: MKP_INDELING_AANTAL_MAX }, () => sep) };
   const p = pak(vol);
@@ -183,7 +193,12 @@ geeftFout(P({ soort: "aardlek", breedte: 2, idn: 25 }), "idn", 25, "F10 aanspree
 geeftFout(P({ soort: "aardlek", breedte: 2, lek: "B+" }), "lek", "B+", "F11 aardlektype B+");
 geeftFout(P({ soort: "aardlek", breedte: 2, selectief: "ja" }), "selectief", "ja", "F12 selectief geen boolean");
 for (const gr of [0, 128, 1.5]) geeftFout(P({ soort: "automaat", breedte: 1, groep: gr }), "groep", gr, `F13 groep ${gr}`);
-geeftFout(P({ soort: "kamrail", lengte: 64 }), "lengte", 64, "F14 kamrail 64 modules");
+geeftFout(P({ soort: "kamrail", polen: "1P+N", In: 63, lengte: 4 }), "soort", undefined, "F14 kamrail wordt geweigerd");
+geeftFout(P({ soort: "kamrail" }), "soort", undefined, "F14b kamrail zonder velden ook");
+{
+  const e = fout(P({ soort: "kamrail" }));
+  eq([e.toestel, e.waarde, e.message.includes('"kam"'), e.message.includes("één keer per kast")], [0, "kamrail", true, true], "F14c de fout verwijst naar het veld per kast");
+}
 geeftFout(P({ soort: "overig", breedte: 1, naam: "x".repeat(31) }), "naam", undefined, "F15 naam van 31 bytes");
 geeftFout(P({ soort: "overig", breedte: 1, naam: 5 }), "naam", 5, "F16 naam geen tekst");
 geeftFout(P({ soort: "automaat", breedte: 1, idn: 30 }), "idn", 30, "F17 veld dat niet bij de soort hoort");
@@ -255,7 +270,7 @@ for (const v of [2, 7, 15]) {
 }
 
 console.log("▶ INDELING 8: een gereserveerde soort is te lezen (volle veldenset)");
-for (const code of [14, 16, 31]) {
+for (const code of [13, 14, 16, 31]) {
   const b = bits(...kop(), [code, 5], [1, 3], [2, 3], [9, 5], [2, 3], [2, 3], [2, 3], [1, 1], [5, 7]);
   eq(uit(b).toestellen, [{ soort: "gereserveerd", code, breedte: 2, polen: "1P+N", In: 16, kar: "C", idn: 30, lek: "A", selectief: true, groep: 5 }], `R1 soort ${code}`);
 }
@@ -277,8 +292,7 @@ console.log("▶ INDELING 9: de ingang");
   eq(imp.length > 0 && imp.filter((x) => !(x in M)), [], "E2 wat lezer.html importeert bestaat");
   const nieuw = ["mkpIndelingInpakken", "mkpIndelingUitpakken", "MKP_INDELING_VERSIE", "MKP_INDELING_BITS", "MKP_INDELING_SOORTEN", "MKP_INDELING_VELDEN",
     "MKP_INDELING_POLEN", "MKP_INDELING_STROMEN", "MKP_INDELING_KARAKTERISTIEKEN", "MKP_INDELING_AANSPREEKSTROMEN", "MKP_INDELING_AARDLEKTYPEN",
-    "MKP_INDELING_STATUS", "MKP_INDELING_WARMTEROUTE", "MKP_INDELING_GROEP_MAX", "MKP_INDELING_BREEDTE_MAX", "MKP_INDELING_LENGTE_MAX",
-    "MKP_INDELING_AANTAL_MAX", "MKP_INDELING_MPR_MAX", "MKP_INDELING_NAAM_MAX"];
+    "MKP_INDELING_STATUS", "MKP_INDELING_WARMTEROUTE", "MKP_INDELING_GROEP_MAX", "MKP_INDELING_BREEDTE_MAX", "MKP_INDELING_AANTAL_MAX", "MKP_INDELING_MPR_MAX", "MKP_INDELING_NAAM_MAX"];
   eq(nieuw.filter((x) => !(x in M)), [], "E3 de nieuwe namen bestaan");
   eq(Object.keys(M).length, oud.length + nieuw.length, "E4 er is niets anders bijgekomen of weggevallen");
 }

@@ -4,7 +4,7 @@ Status: **voorstel**, 17-11-2026. Gebouwd als pure functies in `codec/indeling.j
 
 Bronnen: *Meterkastpaspoort v0.4 — fysieke indeling in de QR* (15-11-2026, Drive) en *Paspoort-codec en v0.4 — besluiten* (17-11-2026). Wat de apps nu kennen: `yourwkb-core` (`toestellen.js`, `mkp-materiaal.js`, `kabel.js › AUTOMAAT_MATEN`) en de veldapp (`rails.js`, `indeling.js`, `basis.jsx`).
 
-Markering: **[B-eigenaar]** = keuze die de eigenaar moet bevestigen, **[B-vakman]** = keuze voor een inspecteur, **[v0.4?]** = v0.4 is hier onduidelijk of tegenstrijdig.
+Markering: **[B-eigenaar]** = keuze die de eigenaar nog moet bevestigen, **[B-vakman]** = keuze voor een inspecteur, **[v0.4?]** = v0.4 is hier onduidelijk of tegenstrijdig. Wat de eigenaar op 17-11-2026 heeft besloten staat zonder markering en is verzameld in §8; het blok is nog nergens uitgegeven, dus de versie blijft 1.
 
 ---
 
@@ -36,7 +36,6 @@ Elk toestel begint met `soort` (5 bits). Daarna volgen **alleen de velden die bi
 | leeg (0) | br | 8 | 1 |
 | beltrafo (6), schakeltoestel (7), kwh-meter (8), overspanning (5), overig (11) | br, pol | 11 | 1,4 |
 | hoofdschakelaar (1), pv-scheider (9), lastscheider (10) | br, pol, In | 16 | 2 |
-| kamrail (13) | pol, In, lengte | 19 | 2,4 |
 | aardlek (3) | br, pol, In, idn, lek, sel | 23 | 2,9 |
 | automaat (2), smeltveiligheid (12) | br, pol, In, kar, grp | 26 | 3,25 |
 | aardlekautomaat (4), en elke gereserveerde soort | br, pol, In, kar, idn, lek, sel, grp | 33 | 4,1 |
@@ -45,31 +44,30 @@ Elk toestel begint met `soort` (5 bits). Daarna volgen **alleen de velden die bi
 |---|---|---|
 | `soort` | 5 | §2 |
 | `br` | 3 | breedte in modules 1–8 (opgeslagen als br − 1). Verplicht. |
-| `pol` | 3 | 0 niet vastgelegd · 1P · 1P+N · 2P · 3P · 3P+N · 4P · (7 gereserveerd) |
+| `pol` | 3 | 0 niet vastgelegd · 1P · 1P+N · 3P · 3P+N · (5–7 gereserveerd). Inpakken neemt ook "2P" (= 1P+N) en "4P" (= 3P+N) aan; uitpakken geeft altijd de vorm met +N. |
 | `In` | 5 | §3 |
 | `kar` | 3 | 0 niet vastgelegd · B · C · D · gG · (5–7 gereserveerd) |
 | `idn` | 3 | 0 niet vastgelegd · 10 · 30 · 100 · 300 · 500 mA · (6–7 gereserveerd) |
 | `lek` | 3 | 0 niet vastgelegd · AC · A · F · B · (5–7 gereserveerd) |
 | `sel` | 1 | selectief (S) |
 | `grp` | 7 | groepsnummer 1–127; 0 = geen groep / niet vastgelegd |
-| `lengte` | 6 | kamrail: aantal modules dat hij verbindt, 1–63; 0 = niet vastgelegd |
 
-**Waarom per soort en niet vast 3 byte zoals v0.4** **[B-eigenaar]**: met alle uitbreidingen (§2–§5) wordt een vast record 33 bits, dus 5 byte als het byte-uitgelijnd blijft. Een railscheiding of lege plek draagt dan 4 byte nullen. Per soort kost de woning uit §6 101 byte en de bedrijfsverdeler 190; met een vast record van 33 bits zou dat 141 en 289 byte zijn (bit-gepakt), of 169 en 349 (5 byte per record). De prijs: een lezer heeft de veldentabel nodig — maar die heeft hij voor de waarden toch al.
+**Waarom per soort en niet vast 3 byte zoals v0.4** **[B-eigenaar]**: met alle uitbreidingen (§2–§5) wordt een vast record 33 bits, dus 5 byte als het byte-uitgelijnd blijft. Een railscheiding of lege plek draagt dan 4 byte nullen. Per soort kost de woning uit §6 92 byte en de bedrijfsverdeler 171; met een vast record van 33 bits zou dat 124 en 256 byte zijn (bit-gepakt, zonder namenlijst), of 149 en 309 (5 byte per record). De prijs: een lezer heeft de veldentabel nodig — maar die heeft hij voor de waarden toch al.
 
 ### 1.3 Volgorde en plaats
 
-Zoals v0.4 §4.4: toestellen staan van links naar rechts, rail voor rail; de plaats volgt uit de som van de breedtes; een railscheiding begint een nieuwe rail. Een **lege plek** is een toestel van soort `leeg` (max 8 breed; een groter gat = twee records). Een **kamrail neemt geen plaats in**: hij staat vóór de eerste module die hij verbindt en `lengte` zegt hoeveel modules hij overspant. **[B-vakman]** (Of een kamrail per aardlekblok in de QR moet, of dat `kam` in de kop van het paspoort genoeg is: een woning met vier kamrails kost 9 byte extra.)
+Zoals v0.4 §4.4: toestellen staan van links naar rechts, rail voor rail; de plaats volgt uit de som van de breedtes; een railscheiding begint een nieuwe rail. Een **lege plek** is een toestel van soort `leeg` (max 8 breed; een groter gat = twee records). **De kamrail staat niet in de indeling.** Hij wordt één keer per kast vastgelegd in het paspoortveld `kam` (buiten dit blok) en is overal in de kast hetzelfde; besloten op 17-11-2026. Soortcode 13 (in een eerder concept `kamrail`) blijft **gereserveerd en wordt niet hergebruikt**, zodat codes stabiel blijven. Inpakken weigert een toestel van soort `kamrail` met een fout die naar het veld per kast verwijst. Uitpakken volgt de regel van §1.5 voor een gereserveerde soort: code 13 wordt gelezen als `{ soort: "gereserveerd", code: 13, … }` met de volle veldenset (33 bits), en de plaatsen erachter kloppen.
 
 ### 1.4 "Overig" met een eigen naam
 
 Tekst past niet in een bitrecord. Na de toestellen (op een bytegrens) volgt, als `namen` = 1, **per toestel van soort `overig`, op volgorde**: één lengtebyte (0–30) en de naam in UTF-8 (hooguit 30 byte, net als `mat[].fab/typ`). Geen verwijzingsveld in het record: de n-de naam hoort bij de n-de "overig". Kosten: 1 byte + de naam per overig-toestel; zonder namen 0 byte (de schrijver zet `namen` = 0 als er geen enkele naam is). **[B-eigenaar]** v0.4 §4.3 zegt dat de naam "alleen in profiel volledig" staat; dit voorstel laat de keuze aan het profiel: de kern mag de namenlijst weglaten, de soort blijft dan `overig`.
 
-De apps kennen bij "overig" nu vooral: beltrafo, kWh-meter, schakelklok, overspanningsbeveiliging, relais (`OVERIG_NAMEN`). Die hebben op schakelklok na al een eigen soort; schakelklok valt onder `schakeltoestel` **[B-vakman]**. Een eigen naam is dus de uitzondering.
+De apps kennen bij "overig" nu vooral: beltrafo, kWh-meter, schakelklok, overspanningsbeveiliging, relais (`OVERIG_NAMEN`). Die hebben op schakelklok na al een eigen soort; schakelklok valt onder `schakeltoestel`. Een eigen naam is dus de uitzondering.
 
 ### 1.5 Versie en overslaan
 
 - De eerste 4 bits zijn altijd de blokversie. Een lezer die de versie niet kent, leest verder niets en meldt **overgeslagen** met het versienummer (`{ overgeslagen: true, versie }`), zonder fout. Versie 0 bestaat niet en is een fout.
-- **Nieuwe soorten kunnen erbij zonder nieuwe versie**: een gereserveerde soortcode (14, 16–31) draagt de volle veldenset (33 bits). Een lezer van versie 1 leest zo'n toestel dus gewoon, als `{ soort: "gereserveerd", code, … }`, en de plaatsen erachter kloppen. Een nieuwe soort die andere velden nodig heeft, is een nieuwe versie. **[B-eigenaar]**
+- **Nieuwe soorten kunnen erbij zonder nieuwe versie**: een gereserveerde soortcode (13, 14, 16–31) draagt de volle veldenset (33 bits). Een lezer van versie 1 leest zo'n toestel dus gewoon, als `{ soort: "gereserveerd", code, … }`, en de plaatsen erachter kloppen. Een nieuwe soort die andere velden nodig heeft, is een nieuwe versie. **[B-eigenaar]**
 - **Nieuwe waarden in een tabel** (een stroom, een karakteristiek) zijn een nieuwe blokversie; een lezer van versie 1 weigert een gereserveerde waardecode. Reden: een onbekende waarde half tonen is erger dan het blok overslaan.
 - Het blok reist als losse tekst (§6), dus de lengte ervan is altijd bekend; een lengteveld in de kop is daarom niet nodig.
 
@@ -89,7 +87,7 @@ De apps kennen bij "overig" nu vooral: beltrafo, kWh-meter, schakelklok, overspa
 
 ## 2. De soorten (5 bits)
 
-Codes 0–11 en 15 zijn die van v0.4 §4.3, ongewijzigd. Nieuw: **12 smeltveiligheid** (met `kar` = gG; de motor schreef een stop tot nu als `ov`, dus als "overig") en **13 kamrail** (spec v0.3 kent `mat[].s = "kam"` al). 14 en 16–31 gereserveerd. Van 4 naar 5 bits omdat er met smeltveiligheid en kamrail in 4 bits nog één code vrij zou zijn; het beheer van de typelijst (v0.4 §8) wordt dan meteen een versiekwestie. Kosten: 1 bit per toestel.
+Codes 0–11 en 15 zijn die van v0.4 §4.3, ongewijzigd. Nieuw: **12 smeltveiligheid** (met `kar` = gG; de motor schreef een stop tot nu als `ov`, dus als "overig"). **13 is gereserveerd** (was kamrail, zie §1.3), net als 14 en 16–31. Van 4 naar 5 bits omdat er met smeltveiligheid in 4 bits nog maar enkele codes vrij zouden zijn; het beheer van de typelijst (v0.4 §8) wordt dan meteen een versiekwestie. Kosten: 1 bit per toestel.
 
 ## 3. Nominale stroom (5 bits)
 
@@ -97,15 +95,15 @@ Codes 0–11 en 15 zijn die van v0.4 §4.3, ongewijzigd. Nieuw: **12 smeltveilig
 
 - Uit v0.4: alles (2, 4, 6, 10, 13, 16, 20, 25, 32, 35, 40, 50, 63, 80, 100).
 - Uit de motor (`AUTOMAAT_MATEN` 6–125): 125 erbij.
-- Erbij **[B-vakman]**: 1, 3, 8 (kleine automaten voor stuurstroom en bel), 160, 200, 250 (hoofdschakelaar en lastscheider van een bedrijfsverdeler; zonder die waarden is een 3×160 A-aansluiting niet te beschrijven).
+- Erbij (besloten 17-11-2026): 1, 3, 8 (kleine automaten voor stuurstroom en bel), 160, 200, 250 (hoofdschakelaar en lastscheider van een bedrijfsverdeler; zonder die waarden is een 3×160 A-aansluiting niet te beschrijven).
 - Eraf: niets. 35 blijft (smeltpatroon). Niet opgenomen: 0,5 en 1,6 A.
 
 ## 4. Aardlek en polen
 
-- `idn`: 10 mA erbij (badkamer, besluit 7) en 500 mA (de app kent hem, `RCD_MA`).
-- `lek`: F erbij (besluit 7). B+ niet: de app kent hem niet.
-- `sel`: 1 bit; de veldapp heeft `ag.selectief` sinds 10-11-2026 (500 ms in plaats van 300 ms). v0.4 noemt het niet. Alleen bij aardlek en aardlekautomaat.
-- `pol`: 3 bits in plaats van 2. v0.4 kent geen "niet vastgelegd" (een gescande kast weet de polen vaak niet) en geen 2P/4P naast 1P+N/3P+N; de veldapp kent beide (`POLEN_GROEP`, `POLEN_AARDLEK`). **[B-vakman]** of 2P ≠ 1P+N en 4P ≠ 3P+N in het paspoort het onderscheid waard is; de app telt ze op papier nu als hetzelfde getal.
+- `idn`: 10 mA erbij (badkamer, besluit 7) en 500 mA (de app kent hem, `RCD_MA`); besloten 17-11-2026.
+- `lek`: F erbij (besluit 7); besloten 17-11-2026. B+ niet: de app kent hem niet.
+- `sel`: 1 bit, besloten 17-11-2026; de veldapp heeft `ag.selectief` sinds 10-11-2026 (500 ms in plaats van 300 ms). v0.4 noemt het niet. Alleen bij aardlek en aardlekautomaat.
+- `pol`: de lijst is 1P, 1P+N, 3P, 3P+N, plus 0 = niet vastgelegd (v0.4 kent dat niet; een gescande kast weet de polen vaak niet). **2P en 4P zijn geen aparte waarden** (besloten 17-11-2026): 2P geldt als 1P+N en 4P als 3P+N. De veldapp schrijft bij aardlekschakelaars "2P" en "4P" (`POLEN_AARDLEK`); inpakken accepteert die schrijfwijzen en zet ze om (`INDELING_POLEN_ALIAS`). **Uitpakken geeft altijd de vorm met +N terug**, dus inpakken en weer uitpakken van "4P" levert "3P+N". Het veld blijft 3 bits (vijf waarden plus "niet vastgelegd" passen niet in 2); de codes 5, 6 en 7 zijn gereserveerd en een lezer weigert ze. De drie voorbeelden zijn daarom even groot als met aparte 2P/4P-waarden.
 
 ## 5. Groepsnummer (7 bits)
 
@@ -119,13 +117,13 @@ Codes 0–11 en 15 zijn die van v0.4 §4.3, ongewijzigd. Nieuw: **12 smeltveilig
 
 | Geval | Toestellen | Groepen | Rails | Byte | Tekst (base64url) |
 |---|---|---|---|---|---|
-| v0.4-voorbeeld §4.6: 20 toestellen op 3 rails | 20 + 2 railscheidingen | 13 | 3 | **64** (v0.4: 68) | 86 |
-| Woning, 3 rails × 12, 16 groepen, 4 kamrails, 1 eigen naam | 33 | 16 | 3 | **101** (zonder kamrails 92) | 135 |
-| Bedrijfsverdeler 3×80 A, 5 rails × 24, 8 aardlekken 4P, 40 groepen, 8 kamrails | 69 | 40 | 5 | **190** (zonder kamrails 171) | 254 |
+| v0.4-voorbeeld §4.6: 20 toestellen op 3 rails | 20 + 2 railscheidingen | 13 | 3 | **64** (v0.4: 68; ongewijzigd) | 86 (ongewijzigd) |
+| Woning, 3 rails × 12, 16 groepen, 1 eigen naam | 29 | 16 | 3 | **92** (was 101 met 4 kamrails) | **123** (was 135) |
+| Bedrijfsverdeler 3×80 A, 5 rails × 24, 8 aardlekken, 40 groepen | 61 | 40 | 5 | **171** (was 190 met 8 kamrails) | **228** (was 254) |
 
-Samenstelling staat letterlijk in `tests/test-indeling.js` (A, B, C); de groottes zijn daar vastgelegd.
+De kamrails zijn uit de voorbeelden gehaald (ze staan niet meer in de indeling, §1.3): de woning scheelt 9 byte en 12 tekens, de bedrijfsverdeler 19 byte en 26 tekens; de bedrijfsverdeler heeft zijn aardlekken nu als 3P+N (was "4P", een andere code maar even breed, dus niet van invloed op de grootte). Samenstelling staat letterlijk in `tests/test-indeling.js` (A, B, C); de groottes zijn daar vastgelegd.
 
-### 6.2 De kern als geheel — haalt hij 500?
+### 6.2 De kern als geheel — haalt hij 500? (gemeten 17-11-2026, met de blokken van vóór het schrappen van de kamrails)
 
 Gemeten met de bestaande codec: volledige URL `https://meterkastpaspoort.nl/p#…` in tekens (= bytes in de QR), QR op niveau M. "Vast" = `v d pc nr ean bj ha kam vd` + datum volgende inspectie (besluit 5); `grp[]` zonder namen; logregel met bedrijf, werk en `erk`; `ind` als tekstveld in de JSON. Geen `mat[]`.
 
@@ -147,7 +145,7 @@ Gemeten met de bestaande codec: volledige URL `https://meterkastpaspoort.nl/p#�
 
 Ter vergelijking: het ondertekende demopaspoort van de standaard (Jansen) is vandaag al 711 tekens (101 modules).
 
-**Voorstel voor het budget** **[B-eigenaar]**: de bestaande grens van hoofdstuk 6 (105 modules ≈ 779 tekens) als harde grens voor de kern, ±600 als streefwaarde. Daarbinnen past een woning of een bedrijfsverdeler met indeling en **één** ondertekende logregel (673 resp. 770); een tweede ondertekende regel past er bij een woning met indeling al niet meer bij (±823). Besluit 3 (wat een voorganger tekende blijft geldig) en `ind` in de kern botsen dus zodra er een tweede klus op de kast komt. Wordt het te groot, dan valt in de kern eerst de namenlijst van `ind`, dan de kamrails, dan oudere logregels (met behoud van hun handtekening elders), en pas daarna `ind` zelf. Wie strikt 500 wil, moet `ind` uit de kern halen of de handtekening per regel uit de QR.
+**Budget:** besloten, zie §9. Gemeten met de oude blokken (met kamrails; de nieuwe blokken zijn 12 resp. 26 tekens korter als losse tekst, de kern niet opnieuw doorgemeten): daarbinnen past een woning of een bedrijfsverdeler met indeling en **één** ondertekende logregel (673 resp. 770); een tweede ondertekende regel past er bij een woning met indeling al niet meer bij (±823). Besluit 3 (wat een voorganger tekende blijft geldig) en `ind` in de kern botsen dus zodra er een tweede klus op de kast komt. Wat er bij een volle sticker als eerste wijkt is besloten in §9.
 
 ## 7. Waar v0.4 onduidelijk of tegenstrijdig is
 
@@ -166,14 +164,29 @@ Ter vergelijking: het ondertekende demopaspoort van de standaard (Jansen) is van
 | | Keuze | Wie |
 |---|---|---|
 | 1 | Record per soort in plaats van vast 3 byte | eigenaar |
-| 2 | Soort 5 bits; smeltveiligheid 12, kamrail 13; schakelklok onder schakeltoestel | vakman |
-| 3 | Kamrail als record zonder breedte, met lengte; per aardlekblok in de QR? | vakman |
-| 4 | Stromen erbij: 1, 3, 8, 125, 160, 200, 250 A | vakman |
-| 5 | Polen 3 bits met 2P en 4P apart | vakman |
-| 6 | 500 mA, type F, selectief-bit | vakman |
+| 2 | Soort 5 bits; smeltveiligheid 12 | vakman |
 | 7 | Groepsnummer 7 bits = plaats in `grp[]` | eigenaar |
 | 8 | Namenlijst in het blok, optioneel per profiel | eigenaar |
 | 9 | Nieuwe soort zonder versie, nieuwe tabelwaarde = nieuwe versie | eigenaar |
 | 10 | `st` verplicht bij schrijven; `mpr` 0 = onbekend | eigenaar |
-| 11 | Budget: 500 niet haalbaar; voorstel 105 modules hard, ±600 streef | eigenaar |
 | 12 | `ind` als JSON-tekstveld of als los fragmentdeel | eigenaar |
+
+De nummers hierboven zijn die van het eerdere overzicht (3–6 en 11 zijn besloten, zie hieronder).
+
+**Besloten op 17-11-2026** (door de eigenaar; staat zonder markering in de tekst hierboven):
+
+| | Besluit | Waar verwerkt |
+|---|---|---|
+| 3 | Geen kamrail per aardlekblok; één keer per kast in het paspoortveld `kam`. Soortcode 13 gereserveerd, inpakken weigert, uitpakken leest hem als gereserveerde soort | §1.2, §1.3, §2, code, tests |
+| 5 | Polen: 1P, 1P+N, 3P, 3P+N; 2P en 4P zijn schrijfwijzen van 1P+N en 3P+N; veld blijft 3 bits | §1.2, §4, code, tests |
+| 2 | Schakelklok valt onder schakeltoestel | §1.4 |
+| 4 | Stromen erbij: 1, 3, 8, 160, 200, 250 A (125 uit de motor) | §3 |
+| 6 | 10 mA, 500 mA, type F en het selectief-bit blijven | §4 |
+| 11 | Budget: 500 byte vervalt als hard getal | §9 |
+| — | Bij een volle sticker gaan oude handtekeningen eerst weg | §9 |
+
+## 9. Budget en wat wijkt op een volle sticker (besloten 17-11-2026, nog geen code)
+
+- **Het budget van 500 byte vervalt als hard getal.** De harde grens blijft de bestaande grens van 105 QR-modules (ongeveer 780 tekens, `QR_MODULES_GRENS`). **600 tekens is de streefwaarde.**
+- **Als de sticker vol is, gaan oude handtekeningen als eerste weg:** de sticker houdt de indeling en de handtekening van de **laatste klus**. Eerdere logregels blijven staan, zonder handtekening. Daarmee vervalt het voorstel uit de eerste versie van §6.2 (eerst de namenlijst, dan kamrails, dan oudere logregels met behoud van handtekening); de indeling zelf blijft het langst.
+- Gevolg voor de afkapregel (`mkpAfkappen`): nog niet aangepast; dit is een besluit, geen code.
