@@ -13,7 +13,7 @@
     "codec/"
   ],
   "scripts": {
-    "test": "node tests/test-formaat.js && node tests/test-fixtures.js"
+    "test": "node tests/test-formaat.js && node tests/test-fixtures.js && node tests/test-registers.js"
   },
   "repository": {
     "type": "git",
