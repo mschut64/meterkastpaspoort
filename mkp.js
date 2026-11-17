@@ -31,6 +31,7 @@
 //   codec/qr.js           omvang van een QR en de grens
 //   codec/afkappen.js     inkorten tot het op de sticker past
 //   codec/controleren.js  handtekening, index, erkenning, zegels, veldnotities
+//   codec/versie.js       versieherkenning: datamodel, profiel, onbekende velden
 //   codec/registers.js    uitgevers van erkenningen en certificaten, en hun registers
 //   codec/teksten.js      Nederlandse zinnen voor een gebruiker — hoort op
 //                         termijn niet in de codec
@@ -48,5 +49,6 @@ export {
   MKP_INDEX_URL, MKP_DEMO_FEED_URL, MKP_WORTEL_SLEUTEL,
   mkpZegels, mkpCanon, mkpVerifieer, mkpErkenning, mkpVeldnotities, mkpVerifieerIndex, mkpControleer,
 } from "./codec/controleren.js";
+export { MKP_DATAMODELLEN, MKP_VELDEN, mkpLees, mkpOnbekendePaden } from "./codec/versie.js";
 export { MKP_REGISTERS, mkpRegister } from "./codec/registers.js";
 export { mkpSamenvatting, mkpVerdeelinrichting, qrWaarschuwing } from "./codec/teksten.js";

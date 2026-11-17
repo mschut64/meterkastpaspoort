@@ -1,0 +1,56 @@
+{
+  "omschrijving": "Verzonnen hoger datamodel (v: 9) met een onbekend blok 'toekomst'. Een lezer weigert het niet maar leest het zo goed mogelijk (spec 11.1).",
+  "fragment": "ZY7LTsMwFER_pTrrW1Sn4nV35SNgEWXhYCeFOL6ViVogyr-jVCyQ2I1GM3Nm5ow-CgGl2lV3W-e27h7h9Lo6Dzt3eELIBcVVCEePznSoEzy6v12EvpzQemZC8alHKJZW3SG_0S6jtWuE4YJWN3sho7yY5cGPsbA0wmRxsPFjWgGf19YXWnOO5dtyjnnTJhtoFiFZfwX-e92iPJuVNsYU2hjK2_v64YL-mTlaH8sm-MmPFmJiaZYf",
+  "paspoort": {
+    "v": 9,
+    "d": "2026-11-17",
+    "pc": "2801AB",
+    "nr": "12",
+    "ha": {
+      "f": 1,
+      "a": 35
+    },
+    "grp": [
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 2.3,
+        "n": "Woonkamer"
+      }
+    ],
+    "toekomst": {
+      "x": 1,
+      "y": [
+        "verzonnen blok"
+      ]
+    },
+    "log": [
+      {
+        "d": "2026-11-17",
+        "b": "Voorbeeldbedrijf",
+        "w": "verzonnen hoger datamodel"
+      }
+    ]
+  },
+  "verwacht": {
+    "modules": 65,
+    "samenvatting": "2801AB 12 · 1×35A · 1 groepen · laatst: Voorbeeldbedrijf (2026-11-17)",
+    "verdeelinrichting": null,
+    "controle": {
+      "indexStatus": "geldig",
+      "log": [
+        {
+          "handtekening": "geen",
+          "ondertekenaar": null,
+          "erkenning": null,
+          "zegels": []
+        }
+      ],
+      "notities": []
+    }
+  }
+}
