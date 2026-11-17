@@ -12,7 +12,7 @@
     "mkp.js"
   ],
   "scripts": {
-    "test": "node tests/test-formaat.js"
+    "test": "node tests/test-formaat.js && node tests/test-fixtures.js"
   },
   "repository": {
     "type": "git",

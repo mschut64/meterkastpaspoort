@@ -1,0 +1,79 @@
+{
+  "omschrijving": "Hoofdverdeler HV waarvan groep 2 de onderverdeler OV1 voedt (grp[].vd, voorstel v0.4).",
+  "fragment": "ZZA7b8MwDIT_SnAzU1hyX-DWTgU6dPMSeLAj-VG5psE4zmDovxeq2wBF1iO_uyNXLGBLcGDYzD7uTbbPMxCmY1KeM_PyCsKoYBgLQleBVzTgnFCB7UMkLC5pffJ4K9I2GJ1I4xavzg9ed19-9hqq0wyCyvA3RyS0OoEPK2Ywgki4blQNKAUZQjOCD7YkhAv46e5-i3gXCa2KnxBp42W5ofNf2pClvNxAGZ3Xa7fTsTufFdsZ-CgMYkkYpP2pdfOYGoxCRGvvB1d7p_1nirqAsYh3_dju_vkjlvEb",
+  "paspoort": {
+    "v": 2,
+    "d": "2026-10-30",
+    "pc": "2801AB",
+    "nr": "12",
+    "ha": {
+      "f": 3,
+      "a": 25
+    },
+    "vd": {
+      "id": "HV",
+      "n": "hoofdverdeler meterkast",
+      "rol": "hoofd"
+    },
+    "grp": [
+      {
+        "t": "kook",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "kw": 7.4,
+        "n": "Kookgroep"
+      },
+      {
+        "t": "ov",
+        "rol": "af",
+        "f": 3,
+        "fn": [
+          1,
+          2,
+          3
+        ],
+        "n": "onderverdeler schuur",
+        "vd": "OV1"
+      }
+    ],
+    "log": [
+      {
+        "d": "2026-10-30",
+        "b": "Voorbeeldbedrijf",
+        "w": "voeding onderverdeler"
+      }
+    ]
+  },
+  "verwacht": {
+    "modules": 69,
+    "samenvatting": "2801AB 12 · 3×25A · 2 groepen · laatst: Voorbeeldbedrijf (2026-10-30)",
+    "verdeelinrichting": {
+      "id": "HV",
+      "rol": "hoofdverdeler",
+      "kast": "hoofdverdeler meterkast (HV)",
+      "gevoed": null,
+      "voedt": [
+        {
+          "groep": 1,
+          "vd": "OV1",
+          "tekst": "voedt verdeelinrichting OV1"
+        }
+      ]
+    },
+    "controle": {
+      "indexStatus": "geldig",
+      "log": [
+        {
+          "handtekening": "geen",
+          "ondertekenaar": null,
+          "erkenning": null,
+          "zegels": []
+        }
+      ],
+      "notities": []
+    }
+  }
+}

@@ -1,0 +1,269 @@
+{
+  "omschrijving": "Vol paspoort op de grens van 105 modules (hoofdstuk 6), demo-adres, met de ondertekende regel van Jansen onderaan het logboek.",
+  "fragment": "pZVdb9owFIb_CnpvZyYf59t3ZVrXjg2pldZPocmASdMEB5JQ1iH---S06U2Y1ix31pGfx-eVju09niAFwwISggt_SDSkAAzrua2EnE5GYDAFJEiAQSsDiTAgP_QizjkJx_X8IATDg4LcYwnpMChI4R0YUrWyxdVKQBKv6y4_MMTFGvJ-jwoSKovBUOSZXS_BrIIYlgbynqYM6Q5SfHQY7MlfilyvBzTY5blJ1UoXYFipCpIO7N86cVwn2jrxHp1zXOe0dc57dH8J67Z1bo-wXlvn9Qjrt3V-j7BBWxf0CBu2dWGPsFFbF_UIS_zIHPMecenYxaDD9HV5v0dSO0qr3FbWqWaQOFNxDVTPa0h8_zQh8u0jkNuNlzQk2KaS-qnoyoqGdbqzTsO63Vm3Yb3urNewfnfWb9igOxs0bNidDRs26s5GDWvf6M7Dwd_o_xktgp3PLI_r-Wx9RNZxlefFTOtsMdOLInm0d2EHidjOvDaDWfIY63WmVFVWdStvEh5Z_4vk3JSVyjJVJfpVM_iqTKnNq-2bUou1Upm9ROn14MNgpjNVVomJ5w96ntq_r0ghkbx4NpLcgOy_91vb1nF-MawrQ85dQQGmDGViO3msTxm-NGS7KZMYEj_Spf-sxXgxSTZzc2VUEt9uqks13lB8Ic4vtmF6nX7-der4Jp4_jbej7WzkFSejdJKPfp5NnFNPx1G0u727OX24GRsvo7ubkx0O08Mf",
+  "paspoort": {
+    "v": 2,
+    "d": "2026-11-17",
+    "pc": "2801AB",
+    "nr": "12",
+    "ean": "871685900012345678",
+    "ha": {
+      "f": 3,
+      "a": 25
+    },
+    "kam": {
+      "mm2": 10,
+      "a": 40
+    },
+    "grp": [
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 2.3,
+        "n": "Groep 1 woonkamer",
+        "mat": 1
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "kw": 2.3,
+        "n": "Groep 2 woonkamer",
+        "mat": 2
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "kw": 2.3,
+        "n": "Groep 3 woonkamer",
+        "mat": 3
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 2.3,
+        "n": "Groep 4 woonkamer",
+        "mat": 4
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "kw": 2.3,
+        "n": "Groep 5 woonkamer",
+        "mat": 5
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "kw": 2.3,
+        "n": "Groep 6 woonkamer",
+        "mat": 6
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 2.3,
+        "n": "Groep 7 woonkamer",
+        "mat": 7
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "kw": 2.3,
+        "n": "Groep 8 woonkamer",
+        "mat": 8
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "kw": 2.3,
+        "n": "Groep 9 woonkamer",
+        "mat": 9
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 2.3,
+        "n": "Groep 10 woonkamer",
+        "mat": 10
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "kw": 2.3,
+        "n": "Groep 11 woonkamer",
+        "mat": 11
+      }
+    ],
+    "mat": [
+      {
+        "i": 1,
+        "s": "aut",
+        "fab": "Hager",
+        "typ": "MCN116",
+        "pos": "R1-1"
+      },
+      {
+        "i": 2,
+        "s": "aut",
+        "fab": "Hager",
+        "typ": "MCN116",
+        "pos": "R1-2"
+      },
+      {
+        "i": 3,
+        "s": "aut",
+        "fab": "Hager",
+        "typ": "MCN116",
+        "pos": "R1-3"
+      },
+      {
+        "i": 4,
+        "s": "aut",
+        "fab": "Hager",
+        "typ": "MCN116",
+        "pos": "R1-4"
+      },
+      {
+        "i": 5,
+        "s": "aut",
+        "fab": "Hager",
+        "typ": "MCN116",
+        "pos": "R1-5"
+      },
+      {
+        "i": 6,
+        "s": "aut",
+        "fab": "Hager",
+        "typ": "MCN116",
+        "pos": "R1-6"
+      },
+      {
+        "i": 7,
+        "s": "aut",
+        "fab": "Hager",
+        "typ": "MCN116",
+        "pos": "R1-7"
+      },
+      {
+        "i": 8,
+        "s": "aut",
+        "fab": "Hager",
+        "typ": "MCN116",
+        "pos": "R1-8"
+      },
+      {
+        "i": 9,
+        "s": "aut",
+        "fab": "Hager",
+        "typ": "MCN116",
+        "pos": "R1-9"
+      },
+      {
+        "i": 10,
+        "s": "aut",
+        "fab": "Hager",
+        "typ": "MCN116",
+        "pos": "R1-10"
+      },
+      {
+        "i": 11,
+        "s": "aut",
+        "fab": "Hager",
+        "typ": "MCN116",
+        "pos": "R1-11"
+      }
+    ],
+    "log": [
+      {
+        "d": "2026-11-17",
+        "b": "Voorbeeldbedrijf",
+        "w": "groepen bijgeplaatst"
+      },
+      {
+        "d": "2026-09-11",
+        "b": "Installatiebedrijf Jansen",
+        "w": "Laadpaal 11 kW + belastingcheck",
+        "erk": "installq:14718",
+        "zeg": [
+          "IQ-14718-004217"
+        ],
+        "sid": "jansen-2026-01",
+        "sig": "Ukf6ye2KdNiqcnVnaigYqtRaKq1gQ2IQu8kWkExF36ngcvKuBubB5rABkNoB_HN3F5eg99wYZXFhXKn5l1ZXAw"
+      }
+    ]
+  },
+  "verwacht": {
+    "modules": 105,
+    "samenvatting": "2801AB 12 · 3×25A · kam 40A · 11 groepen · laatst: Voorbeeldbedrijf (2026-11-17)",
+    "verdeelinrichting": null,
+    "controle": {
+      "indexStatus": "geldig",
+      "log": [
+        {
+          "handtekening": "geen",
+          "ondertekenaar": null,
+          "erkenning": null,
+          "zegels": []
+        },
+        {
+          "handtekening": "geldig",
+          "ondertekenaar": "Installatiebedrijf Jansen",
+          "erkenning": {
+            "uitgever": "installq",
+            "nummer": "14718",
+            "naam": "InstallQ",
+            "opzoek": "https://www.echteinstallateur.nl/"
+          },
+          "zegels": [
+            "IQ-14718-004217"
+          ]
+        }
+      ],
+      "notities": []
+    }
+  }
+}

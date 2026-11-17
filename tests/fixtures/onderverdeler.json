@@ -1,0 +1,80 @@
+{
+  "omschrijving": "Onderverdeler OV1 met vd en voed (voorstel v0.4, spec 4.9).",
+  "fragment": "ZZCxbsJAEER_Bb16kXxHQqLtkipdOhrk4swdxnDY1mFsKcj_HhmHNLQ7-2Z250aPWsGj2MyulyZbrjKEdjdN3jPz8YlQJxRjEXqP3qim_e-NmSSUpvYh9SH5EENaXHaH6zUhpCY-xMkxOtddUGZ94XaHLqSf6ugDQlUXKIOrPaPQN-GeM6XxtUEoU4u-CQ61r8L5bNG1EOsStS_j38L2RofiYvkf7_YIe9QI-xrdmny-eQjpVLj6xCgzFNsnZvVgxMoqF04DaszMR-d861xkzIXYlPfwpxqnpzZNk4oQoi-CT9Vx8h6eSivD3E_HmI-_",
+  "paspoort": {
+    "v": 2,
+    "d": "2026-10-30",
+    "pc": "2801AB",
+    "nr": "12",
+    "vd": {
+      "id": "OV1",
+      "n": "onderverdeler schuur",
+      "rol": "onder",
+      "plaats": "schuur achterzijde",
+      "inb": "wand"
+    },
+    "voed": {
+      "vd": "HV",
+      "grp": 7,
+      "a": 25,
+      "mm2": 6,
+      "lng": 24
+    },
+    "grp": [
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "n": "werkbank"
+      },
+      {
+        "t": "lp",
+        "rol": "af",
+        "f": 3,
+        "fn": [
+          1,
+          2,
+          3
+        ],
+        "kw": 11,
+        "n": "laadpaal"
+      }
+    ],
+    "log": [
+      {
+        "d": "2026-10-30",
+        "b": "Voorbeeldbedrijf",
+        "w": "onderverdeler geplaatst"
+      }
+    ]
+  },
+  "verwacht": {
+    "modules": 73,
+    "samenvatting": "2801AB 12 · 2 groepen · laatst: Voorbeeldbedrijf (2026-10-30)",
+    "verdeelinrichting": {
+      "id": "OV1",
+      "rol": "onderverdeler",
+      "kast": "onderverdeler schuur (OV1) · schuur achterzijde · tegen de wand",
+      "gevoed": {
+        "tekst": "gevoed vanaf groep 7 van verdeelinrichting HV",
+        "details": "beveiliging 25 A · voedingskabel 6 mm², 24 m"
+      },
+      "voedt": []
+    },
+    "controle": {
+      "indexStatus": "geldig",
+      "log": [
+        {
+          "handtekening": "geen",
+          "ondertekenaar": null,
+          "erkenning": null,
+          "zegels": []
+        }
+      ],
+      "notities": []
+    }
+  }
+}

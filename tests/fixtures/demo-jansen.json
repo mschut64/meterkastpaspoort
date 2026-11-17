@@ -1,0 +1,116 @@
+{
+  "omschrijving": "Het ondertekende demopaspoort van de standaard (Installatiebedrijf Jansen, demo-qr-sticker): erkenning, zegel, materiaal uit de terugroepreeks.",
+  "fragment": "ZVLbbtpAEP0Va17rrXbXF7CfiitQKCkqQU1IUFWt8WKMjW1sAyGIj-ov9Ms6YwKK1JfVXPbMOXN2T7AHX5oQgQ-SS5dxjwkBJpQLqnS56AWY5RVmQmKkVY5htyPcruNxzoW0bMftdLEVrrHz94_wPAezlQL_BEvwLRMwlM7ZhFRtqLjZSPAFb-s2x3pcleDPT9DggHKP4KrIMNwXOsIkPeC1zygShwk8UcBc_DJho_C-OJsXXFbecGr5jhLCfFdwAZnStK5Aeb5GSJy0k2vCZgrBSxVi_FgUVah1Fhn9TKdNVWCnOZbUCfqsdz9l8gezObM4NlTVtB61dpCBZOkXiXY60ma8LRXE8CCYA6Q6aZ1vSXfNjbQXBDeaqeQW-yrcj1gPSHgWkpGKHqOpdvoKiI450FavZDjaoWMs3vW_T5EQFquUQPSURaXytYaP795l3KVbWRG3lvz3I0jcMK8blWWqSXSooypZL41vKq81saLfcK9UVCqVGUIY6ZPxyQh1puomyePFSi9S-j8VioDkMmfrC7sj6O-8kdI5DCesrTDObSk6gJvWCSlZtyzsIojU1Amt9jNdukctR9E42S7yx1wl8fO2eVCjrYgncjjZddOntP86sFxUsB_tgl0YOFUvSMdF8PtubA0cHXve4fllNljNRrmTiZdZ74AOn_8B",
+  "paspoort": {
+    "v": 2,
+    "d": "2026-09-11",
+    "pc": "2801AB",
+    "nr": "12",
+    "ean": "871685900012345678",
+    "bj": "±1995",
+    "ha": {
+      "f": 3,
+      "a": 25
+    },
+    "kam": {
+      "mm2": 10,
+      "a": 40
+    },
+    "grp": [
+      {
+        "t": "pv",
+        "rol": "voed",
+        "kw": 4.2,
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "mat": 1
+      },
+      {
+        "t": "lp",
+        "rol": "af",
+        "kw": 11,
+        "f": 3,
+        "fn": [
+          1,
+          2,
+          3
+        ],
+        "mat": 2
+      }
+    ],
+    "mat": [
+      {
+        "i": 1,
+        "s": "ala",
+        "fab": "Voorbeeld Elektro",
+        "typ": "VBE-ALS-2P-40-30",
+        "art": "1234567",
+        "pd": "@29-1524-07",
+        "pos": "R1-5"
+      },
+      {
+        "i": 2,
+        "s": "aut",
+        "fab": "ABB",
+        "typ": "S203-C16",
+        "pos": "R1-9"
+      }
+    ],
+    "lb": {
+      "aan": true,
+      "typ": "dyn",
+      "max": 25,
+      "reg": "HEMS"
+    },
+    "chk": {
+      "r": "oranje",
+      "d": "2026-08-06"
+    },
+    "log": [
+      {
+        "d": "2026-09-11",
+        "b": "Installatiebedrijf Jansen",
+        "w": "Laadpaal 11 kW + belastingcheck",
+        "erk": "installq:14718",
+        "zeg": [
+          "IQ-14718-004217"
+        ],
+        "sid": "jansen-2026-01",
+        "sig": "Ukf6ye2KdNiqcnVnaigYqtRaKq1gQ2IQu8kWkExF36ngcvKuBubB5rABkNoB_HN3F5eg99wYZXFhXKn5l1ZXAw"
+      }
+    ]
+  },
+  "verwacht": {
+    "modules": 101,
+    "samenvatting": "2801AB 12 · 3×25A · kam 40A · aanleg ±1995 · 2 groepen · laatst: Installatiebedrijf Jansen (2026-09-11)",
+    "verdeelinrichting": null,
+    "controle": {
+      "indexStatus": "geldig",
+      "log": [
+        {
+          "handtekening": "geldig",
+          "ondertekenaar": "Installatiebedrijf Jansen",
+          "erkenning": {
+            "uitgever": "installq",
+            "nummer": "14718",
+            "naam": "InstallQ",
+            "opzoek": "https://www.echteinstallateur.nl/"
+          },
+          "zegels": [
+            "IQ-14718-004217"
+          ]
+        }
+      ],
+      "notities": [
+        {
+          "id": "vbe-2026-003",
+          "treffer": "artikelnummer",
+          "toestel": 1,
+          "feedStatus": "geldig"
+        }
+      ]
+    }
+  }
+}

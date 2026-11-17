@@ -1,0 +1,75 @@
+{
+  "omschrijving": "Onbekende velden op elke diepte, een los zegelnummer en een erkenning van een onbekende uitgever.",
+  "fragment": "ZZDBTsMwDIZfZfrPLmrSbmy-DXaAIxc4TDuk1CujXVOlZWWr-u7IZUggcohkW_n-Lx5wAltCDoaN7SKKV5FZgtC8amcZm_UdCHUAw1gQPs8XsLEJ4c2BB-zBCcGB7fw6RCG1tN3M15mUUuezk1Q5RsLRdeDtgAPYEPYuA-PBFRJA6M4NGPebdZrGGxBc6P7UbQ3G2tgknavcVTeNjNHSt9P0R-923BGK0ExpyukbEIKvwHB7kEqrQQ3eJjtC2YMXNyuChry4cOyk8Ud9MymbK7YLH6LkyhcT-d_O9EPP3odMpMozycPhXdN6NfhNvUgBxuNTFOv5vlVeQglGeeidbhjjbvwC",
+  "paspoort": {
+    "v": 2,
+    "d": "2026-09-18",
+    "pc": "2801AB",
+    "nr": "12",
+    "xyz": 123,
+    "ha": {
+      "f": 3,
+      "a": 25,
+      "xyz": "genest onbekend veld"
+    },
+    "mat": [
+      {
+        "i": 1,
+        "fab": "Hager",
+        "typ": "CDA440D",
+        "art": "CDA440D",
+        "sn": "A12345",
+        "pd": "2024-11",
+        "pos": "A1",
+        "xyz": 7
+      }
+    ],
+    "grp": [
+      {
+        "t": "wp",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "kw": 6.9,
+        "n": "Warmtepomp",
+        "mat": 1,
+        "xyz": true
+      }
+    ],
+    "log": [
+      {
+        "d": "2026-09-18",
+        "b": "Voorbeeldbedrijf",
+        "w": "warmtepomp",
+        "zeg": "IQ-00000-000001",
+        "erk": "kiwa:123"
+      }
+    ]
+  },
+  "verwacht": {
+    "modules": 77,
+    "samenvatting": "2801AB 12 · 3×25A · 1 groepen · laatst: Voorbeeldbedrijf (2026-09-18)",
+    "verdeelinrichting": null,
+    "controle": {
+      "indexStatus": "geldig",
+      "log": [
+        {
+          "handtekening": "geen",
+          "ondertekenaar": null,
+          "erkenning": {
+            "uitgever": "kiwa",
+            "nummer": "123",
+            "naam": "kiwa",
+            "opzoek": null
+          },
+          "zegels": [
+            "IQ-00000-000001"
+          ]
+        }
+      ],
+      "notities": []
+    }
+  }
+}
