@@ -33,6 +33,7 @@
 //   codec/profielen.js    kern / inspectie / volledig, en de maat van de sticker
 //   codec/controleren.js  handtekening, index, erkenning, zegels, veldnotities
 //   codec/versie.js       versieherkenning: datamodel, profiel, onbekende velden
+//   codec/materiaal.js    de soortcodes van mat[] en de plaats ("R1-5") lezen en schrijven
 //   codec/registers.js    uitgevers van erkenningen en certificaten, en hun registers
 //   codec/indeling.js     het indelingsblok (v0.4-voorstel) inpakken en uitpakken
 //   codec/indeling-tabellen.js  de codetabellen van dat blok
@@ -56,6 +57,7 @@ export {
 } from "./codec/controleren.js";
 export { MKP_DATAMODELLEN, MKP_VELDEN, mkpLees, mkpOnbekendePaden } from "./codec/versie.js";
 export { MKP_REGISTERS, mkpRegister } from "./codec/registers.js";
+export { MKP_MAT_SOORTEN, mkpPlaatsLezen, mkpPlaatsTekst } from "./codec/materiaal.js";
 export { mkpSamenvatting, mkpVerdeelinrichting, qrWaarschuwing } from "./codec/teksten.js";
 // Het indelingsblok (voorstel v0.4, bijgesteld) — nog niet in de QR.
 export { mkpIndelingInpakken, mkpIndelingUitpakken } from "./codec/indeling.js";

@@ -97,6 +97,18 @@ eq(c === null || JSON.stringify(c).includes("ongeldig") === false, true, "H6 een
   eq("sig" in v.paspoort.log[0], true, "H10 de nieuwste regel houdt zijn handtekening");
 }
 
+console.log("▶ M: de materiaallijst — soortcodes en plaats (spec 4.5)");
+{
+  const { MKP_MAT_SOORTEN, mkpPlaatsLezen, mkpPlaatsTekst } = await import("../mkp.js");
+  eq(Object.keys(MKP_MAT_SOORTEN), ["hs", "als", "ala", "aut", "kam", "tr", "ov"], "M1 de soortcodes van spec 4.5");
+  eq(mkpPlaatsLezen("R1-5"), { verdeler: 1, rail: 1, positie: 5 }, "M2 R1-5");
+  eq(mkpPlaatsLezen(" V2-R3-12 "), { verdeler: 2, rail: 3, positie: 12 }, "M3 met verdeler en spaties");
+  eq([mkpPlaatsLezen(""), mkpPlaatsLezen(null), mkpPlaatsLezen("R1"), mkpPlaatsLezen("R0-1"), mkpPlaatsLezen("R1-0"), mkpPlaatsLezen("r1-5")], [null, null, null, null, null, null], "M4 onleesbaar of nul: null, geen gok");
+  eq([mkpPlaatsTekst({ rail: 1, positie: 5 }), mkpPlaatsTekst({ verdeler: 2, rail: 1, positie: 5 }), mkpPlaatsTekst({ rail: 1, positie: 0 }), mkpPlaatsTekst({ rail: 1.5, positie: 2 })],
+     ["R1-5", "V2-R1-5", null, null], "M5 schrijven, en geen verzonnen plaats");
+  eq(mkpPlaatsLezen(mkpPlaatsTekst({ verdeler: 3, rail: 2, positie: 7 })), { verdeler: 3, rail: 2, positie: 7 }, "M6 heen en terug");
+}
+
 console.log(`\nRESULTAAT: ${passed} geslaagd · ${failed} mislukt · ${passed + failed} totaal`);
 for (const f of failures) console.log("  " + f);
 process.exit(failed ? 1 : 0);
