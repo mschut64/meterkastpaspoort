@@ -297,9 +297,11 @@ console.log("▶ INDELING 9: de ingang");
   // De profielen en de maat van de sticker (besluiten 17-11-2026), getest in test-profielen.js.
   const materiaal = ["MKP_MAT_SOORTEN", "mkpPlaatsLezen", "mkpPlaatsTekst"];
   eq(materiaal.filter((x) => !(x in M)), [], "E3b de namen van de materiaallijst bestaan");
+  const v04 = ["MKP_V04_DATAMODEL", "mkpVolgendeInspectie", "mkpIndeling", "mkpZetV04", "mkpZonderIndeling"];
+  eq(v04.filter((x) => !(x in M)), [], "E3c de namen van v0.4 bestaan");
   const profielen = ["MKP_PROFIELEN", "MKP_PROFIEL_VELDEN", "MKP_STREEF_TEKENS", "mkpProfielVan", "mkpProfiel", "mkpGrootte"];
   eq(profielen.filter((x) => !(x in M)), [], "E3a de namen van de profielen bestaan");
-  eq(Object.keys(M).length, oud.length + nieuw.length + profielen.length + materiaal.length, "E4 er is niets anders bijgekomen of weggevallen");
+  eq(Object.keys(M).length, oud.length + nieuw.length + profielen.length + materiaal.length + v04.length, "E4 er is niets anders bijgekomen of weggevallen");
 }
 
 console.log("\n═══════════════════════════════════════════════");

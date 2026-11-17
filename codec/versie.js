@@ -17,7 +17,8 @@ import { _isObj } from "./hulp.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 // De datamodellen (`v`) die deze codec kent. 1 = v0.1, 2 = documentversie 0.2–0.3.
-export const MKP_DATAMODELLEN = Object.freeze([1, 2]);
+// 3 = voorstel v0.4 (datamodel 3: indeling `ind` en volgende inspectie `frq`, besluiten 17-11-2026).
+export const MKP_DATAMODELLEN = Object.freeze([1, 2, 3]);
 
 // De velden die deze codec kent, per blok. "" is het wortelobject; de andere
 // sleutels zijn de blokken en lijsten uit hoofdstuk 4 (een lijst: de velden van
@@ -26,7 +27,7 @@ export const MKP_DATAMODELLEN = Object.freeze([1, 2]);
 // ontwerpintentie-voorstel staat er niet in: dat is nog niet in de spec.
 // De ENIGE plek met deze lijst.
 export const MKP_VELDEN = Object.freeze({
-  "":   Object.freeze(["v", "d", "pc", "nr", "ean", "ean2", "bj", "ha", "kam", "grp", "mat", "lb", "chk", "log", "vd", "voed"]),
+  "":   Object.freeze(["v", "d", "pc", "nr", "ean", "ean2", "bj", "ha", "kam", "grp", "mat", "lb", "chk", "log", "vd", "voed", "ind", "frq"]),
   ha:   Object.freeze(["f", "a", "hs"]),
   kam:  Object.freeze(["mm2", "a"]),
   grp:  Object.freeze(["t", "rol", "kw", "f", "fn", "mat", "n", "vd"]),
@@ -88,8 +89,10 @@ export async function mkpLees(fragmentOfUrl) {
     datamodel,
     bekend,
     nieuwer: datamodel > Math.max(...MKP_DATAMODELLEN),
-    profiel: null,
-    profielStatus: bekend ? "niet-van-toepassing" : "onbekend",
+    // Datamodel 3 (v0.4): een sticker draagt de kern; het profielveld komt pas
+    // als er een ander profiel in een QR kan staan.
+    profiel: datamodel === 3 ? "kern" : null,
+    profielStatus: !bekend ? "onbekend" : datamodel === 3 ? "kern" : "niet-van-toepassing",
     onbekend: _onbekendBovenaan(paspoort),
   };
 }

@@ -1,0 +1,68 @@
+{
+  "omschrijving": "Voorstel v0.4 (datamodel 3): woning met indeling (ind) en volgende inspectie (frq). Demogegevens, geen echt adres.",
+  "fragment": "fY_BasMwEER_Jcx5DZVNW7Q3GUJwciiFpocEH5RGVo2F5CiuQzH-96KE9hLobQ9v3sxOGMEF4QhG_pA_ZUJk4hmE_gMMKaXc7UDwEQwBwqcGT2iuGQ3OH2eCjT14P2EAQzsLQgwu3Q0ooYLQePBe1DPdqC6E7g4rfjHKqfhD_xPm9VwTXLDX-rsXDmC8hxAPxrjjovLnQTunh9aAcAHDxmB64zt9HhajiaP21ngkZeuTbKkupVVfL6ttWVXlWrVqa9--l-vN60qlIfF0a5SZEJh_AA",
+  "paspoort": {
+    "v": 3,
+    "d": "2026-11-17",
+    "pc": "9999ZZ",
+    "nr": "1",
+    "ha": {
+      "f": 3,
+      "a": 25
+    },
+    "grp": [
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ]
+      },
+      {
+        "t": "kook",
+        "rol": "af",
+        "f": 3,
+        "fn": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ]
+      }
+    ],
+    "log": [
+      {
+        "d": "2026-11-17",
+        "b": "Voorbeeld Installatie",
+        "w": "groepenkast vervangen"
+      }
+    ],
+    "ind": "EAwBgAuOGUBIIBJAiAUgTyEJKQGA",
+    "frq": "2029-11"
+  },
+  "verwacht": {
+    "modules": 69,
+    "samenvatting": "9999ZZ 1 · 3×25A · 3 groepen · laatst: Voorbeeld Installatie (2026-11-17)",
+    "verdeelinrichting": null,
+    "controle": {
+      "indexStatus": "geldig",
+      "log": [
+        {
+          "handtekening": "geen",
+          "ondertekenaar": null,
+          "erkenning": null,
+          "zegels": []
+        }
+      ],
+      "notities": []
+    }
+  }
+}

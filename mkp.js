@@ -34,6 +34,7 @@
 //   codec/controleren.js  handtekening, index, erkenning, zegels, veldnotities
 //   codec/versie.js       versieherkenning: datamodel, profiel, onbekende velden
 //   codec/materiaal.js    de soortcodes van mat[] en de plaats ("R1-5") lezen en schrijven
+//   codec/v04.js          versie 0.4 in de payload: datamodel 3, ind en frq
 //   codec/registers.js    uitgevers van erkenningen en certificaten, en hun registers
 //   codec/indeling.js     het indelingsblok (v0.4-voorstel) inpakken en uitpakken
 //   codec/indeling-tabellen.js  de codetabellen van dat blok
@@ -58,6 +59,8 @@ export {
 export { MKP_DATAMODELLEN, MKP_VELDEN, mkpLees, mkpOnbekendePaden } from "./codec/versie.js";
 export { MKP_REGISTERS, mkpRegister } from "./codec/registers.js";
 export { MKP_MAT_SOORTEN, mkpPlaatsLezen, mkpPlaatsTekst } from "./codec/materiaal.js";
+// Versie 0.4 in de payload (voorstel): datamodel 3 met ind en frq.
+export { MKP_V04_DATAMODEL, mkpVolgendeInspectie, mkpIndeling, mkpZetV04, mkpZonderIndeling } from "./codec/v04.js";
 export { mkpSamenvatting, mkpVerdeelinrichting, qrWaarschuwing } from "./codec/teksten.js";
 // Het indelingsblok (voorstel v0.4, bijgesteld) — nog niet in de QR.
 export { mkpIndelingInpakken, mkpIndelingUitpakken } from "./codec/indeling.js";

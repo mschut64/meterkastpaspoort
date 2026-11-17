@@ -93,6 +93,8 @@
   <tr><td><code>log</code></td><td>lijst</td><td>Installateurs-logboek — zie 4.8.</td></tr>
   <tr><td><code>vd</code></td><td>object</td><td>Deze verdeelinrichting, bij een installatie met meer dan één kast — zie 4.9. <span class="opt">voorstel v0.4</span></td></tr>
   <tr><td><code>voed</code></td><td>object</td><td>Waar deze kast aan hangt; alleen bij een onderverdeler — zie 4.9. <span class="opt">voorstel v0.4</span></td></tr>
+  <tr><td><code>ind</code></td><td>tekst</td><td>De fysieke indeling van de kast: welk toestel waar op welke rail, met breedte, polen, nominale stroom, karakteristiek, aanspreekstroom en aardlektype — als compact blok in base64url. Alleen een <em>gemeten</em> indeling hoort op een sticker. Een lezer die het blok niet kent, slaat het over. Vraagt datamodel <code>v: 3</code>. <span class="opt">voorstel v0.4</span></td></tr>
+  <tr><td><code>frq</code></td><td>tekst</td><td>Maand van de volgende periodieke inspectie, <code>"JJJJ-MM"</code>. Van een inspectie staat alleen dit op de sticker; de rest blijft in het dossier. Vraagt datamodel <code>v: 3</code>. <span class="opt">voorstel v0.4</span></td></tr>
 </table>
 
 <h3>4.2 Hoofdaansluiting <code>ha</code></h3>

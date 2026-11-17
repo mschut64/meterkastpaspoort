@@ -64,7 +64,7 @@
 // Sinds 19-09-2026 rekent de lezer met de referentie-implementatie zelf (mkp.js):
 // decoderen, handtekeningen, de index, erkenning en veldnotities. Geen eigen
 // kopie meer die kan afwijken van wat YourWkb en Kastscan vaststellen.
-import { mkpDecode, mkpVerifieer, mkpVerifieerIndex, mkpErkenning, mkpVeldnotities, mkpZegels, mkpVerdeelinrichting } from '/mkp.js';
+import { mkpDecode, mkpVerifieer, mkpVerifieerIndex, mkpErkenning, mkpVeldnotities, mkpZegels, mkpVerdeelinrichting, mkpIndeling, mkpVolgendeInspectie } from '/mkp.js';
 
 const E = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Demo-feed en -index van deze site. De sleutel van de beheerder komt NIET uit de
@@ -80,6 +80,40 @@ const SOORT = {hs:'hoofdschakelaar', als:'aardlekschakelaar', ala:'aardlekautoma
                aut:'installatieautomaat', kam:'kamrail', tr:'transformator', ov:'overig'};
 const TYPE  = {alg:'algemene groep', kook:'kookgroep', wp:'warmtepomp', lp:'laadpaal',
                pv:'PV-omvormer', bat:'thuisbatterij', ov:'overig'};
+
+// De indeling (voorstel v0.4): per rail de toestellen van links naar rechts.
+// Alles uit het blok is invoer van een vreemde, dus ontsnapt (§3.1).
+const IND_SOORT = { hoofdschakelaar:'hoofdschakelaar', automaat:'automaat', aardlek:'aardlekschakelaar',
+  aardlekautomaat:'aardlekautomaat', overspanning:'overspanningsbeveiliging', beltrafo:'beltransformator',
+  schakeltoestel:'schakeltoestel', 'kwh-meter':'kWh-meter', 'pv-scheider':'PV-scheider', lastscheider:'lastscheider',
+  overig:'overig', smeltveiligheid:'smeltveiligheid', gereserveerd:'onbekend toestel' };
+const IND_ST = { gemeten:'gemeten', ontworpen:'ontworpen', gebouwd:'gebouwd, nog niet gemeten' };
+function toonIndeling(p) {
+  const r = mkpIndeling(p);
+  if (!r) return '';
+  if (r.fout) return `<h2>Indeling <span class="vlag v-onbek">voorstel v0.4</span></h2><p class="leeg">De indeling op deze sticker is niet leesbaar; de rest van het paspoort wel.</p>`;
+  if (r.overgeslagen) return `<h2>Indeling <span class="vlag v-onbek">voorstel v0.4</span></h2><p class="leeg">Deze sticker draagt een indeling in een nieuwere versie (${E(r.versie)}); deze lezer slaat hem over.</p>`;
+  const u = r.indeling;
+  const rails = [[]];
+  for (const t of u.toestellen) {
+    if (t.soort === 'railscheiding') { rails.push([]); continue; }
+    rails[rails.length - 1].push(t);
+  }
+  let h = `<h2>Indeling <span class="vlag v-onbek">voorstel v0.4</span></h2>
+    <p class="leeg" style="font-size:13.5px">${E(IND_ST[u.st] || u.st)}${u.mpr ? ` · ${E(u.mpr)} modules per rail` : ''} · van links naar rechts, breedte in modules</p>
+    <table><tr><th style="width:18%">Rail</th><th>Toestellen</th></tr>`;
+  rails.forEach((lijst, i) => {
+    const delen = lijst.map((t) => {
+      if (t.soort === 'leeg') return `<span class="leeg">${E(t.breedte)}× leeg</span>`;
+      const bev = [t.kar && t.In ? `${E(t.kar)}${E(t.In)}` : (t.In ? `${E(t.In)} A` : ''),
+        t.idn ? `${E(t.idn)} mA` : '', t.lek ? `type ${E(t.lek)}` : '', t.selectief ? 'selectief' : '', t.polen ? E(t.polen) : '']
+        .filter(Boolean).join(' · ');
+      return `<b>${E(t.naam || IND_SOORT[t.soort] || t.soort)}</b>${bev ? ' ' + bev : ''} <span class="leeg">(${E(t.breedte)}${t.groep ? ` · groep ${E(t.groep)}` : ''})</span>`;
+    });
+    h += `<tr><th>${i + 1}</th><td>${delen.join('<br>') || '<span class="leeg">leeg</span>'}</td></tr>`;
+  });
+  return h + `</table>`;
+}
 
 function rij(k,v){ return v==null||v==='' ? '' : `<tr><th>${E(k)}</th><td>${v}</td></tr>`; }
 
@@ -122,7 +156,7 @@ async function lees(url) {
         <br><span class="leeg" style="font-size:13px">De andere kast heeft een eigen paspoort; deze lezer toont alleen de verwijzing.</span></div>` : '';
     h += `<h2>Kast</h2><table>
       ${rij('Verdeelinrichting', vi?.kast ? E(vi.kast) + ' <span class="vlag v-onbek">voorstel v0.4</span>' : '')}
-      ${rij('Datamodelversie', E(p.v) + (p.v >= 2 ? ' <span class="vlag v-ok">v2 — materiaal, fasenummers, erkenning</span>' : ' <span class="vlag v-geen">v1 — basisgegevens</span>'))}
+      ${rij('Datamodelversie', E(p.v) + (p.v >= 3 ? ' <span class="vlag v-onbek">v3 — voorstel v0.4: indeling, volgende inspectie</span>' : p.v >= 2 ? ' <span class="vlag v-ok">v2 — materiaal, fasenummers, erkenning</span>' : ' <span class="vlag v-geen">v1 — basisgegevens</span>'))}
       ${rij('Adres', E([p.pc, p.nr].filter(Boolean).join(' ')))}
       ${rij('Bijgewerkt', E(p.d))}
       ${rij('EAN-code', E(p.ean))}
@@ -131,7 +165,9 @@ async function lees(url) {
       ${rij('Kam / verdeler', p.kam ? `${E(p.kam.mm2)} mm² · max ${E(p.kam.a)} A` : '')}
       ${rij('Load balancing', p.lb ? (p.lb.aan ? `${E(p.lb.typ)} · max ${E(p.lb.max)} A · regisseur ${E(p.lb.reg)}` : 'niet actief') : '')}
       ${rij('Laatste belastingcheck', p.chk ? `${E(p.chk.r)} (${E(p.chk.d)})` : '')}
+      ${rij('Volgende inspectie', mkpVolgendeInspectie(p) ? E(mkpVolgendeInspectie(p)) + ' <span class="vlag v-onbek">voorstel v0.4</span>' : '')}
     </table>`;
+    h += toonIndeling(p);
 
     if (p.grp?.length) {
       h += `<h2>Groepen</h2><table><tr><th style="width:22%">Type</th><th style="width:auto">Gegevens</th></tr>`;

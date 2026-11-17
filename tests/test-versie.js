@@ -23,7 +23,9 @@ const namen = readdirSync(map).filter((n) => n.endsWith(".json")).map((n) => n.r
 
 console.log("▶ VERSIE 1: de vaste lijsten");
 eq(MKP_DATAMODELLEN.includes(MKP_SPEC_VERSIE), true, "V1.1 het datamodel dat de codec schrijft, kent hij ook");
-eq(Math.max(...MKP_DATAMODELLEN), MKP_SPEC_VERSIE, "V1.2 het hoogste bekende datamodel is het datamodel dat de codec schrijft");
+// Sinds 17-11-2026 kent de codec datamodel 3 (voorstel v0.4); hij schrijft
+// standaard nog 2 — v0.4 schrijven gaat alleen via mkpZetV04 (besluit 2).
+eq([Math.max(...MKP_DATAMODELLEN), MKP_SPEC_VERSIE], [3, 2], "V1.2 het hoogste bekende datamodel is 3 (v0.4); standaard wordt 2 geschreven");
 eq(Object.isFrozen(MKP_VELDEN) && Object.values(MKP_VELDEN).every(Object.isFrozen), true, "V1.3 de veldenlijst is bevroren");
 eq(Object.keys(MKP_VELDEN).filter((k) => k).every((k) => MKP_VELDEN[""].includes(k)), true, "V1.4 elk blok is een veld van het wortelobject");
 // Elk veld in de lijst staat in de spec als <code>veld</code> (hoofdstuk 4).
@@ -53,8 +55,11 @@ console.log("▶ VERSIE 3: een gewoon paspoort (datamodel 2)");
 for (const naam of namen.filter((n) => !BEWUST_ONBEKEND[n])) {
   const f = fixture(naam);
   const l = await mkpLees(f.fragment);
+  // v04-woning is datamodel 3 (voorstel v0.4): bekend, profiel kern (tests/test-v04.js).
+  const v3 = f.paspoort.v === 3;
   eq([l.datamodel, l.bekend, l.nieuwer, l.profiel, l.profielStatus, l.onbekend],
-    [2, true, false, null, "niet-van-toepassing", []], `V3.1 ${naam}: datamodel 2, bekend, geen profiel, niets onbekend`);
+    v3 ? [3, true, false, "kern", "kern", []] : [2, true, false, null, "niet-van-toepassing", []],
+    `V3.1 ${naam}: datamodel ${v3 ? "3, profiel kern" : "2, geen profiel"}, bekend, niets onbekend`);
   eq(l.paspoort, await mkpDecode(f.fragment), `V3.2 ${naam}: paspoort gelijk aan mkpDecode`);
 }
 {
@@ -85,7 +90,7 @@ console.log("▶ VERSIE 5: een verzonnen hoger datamodel");
   const l1 = await mkpLees(await mkpEncode({ v: 1, ha: { f: 3, a: 25 } }));
   eq([l1.datamodel, l1.bekend, l1.nieuwer, l1.profielStatus], [1, true, false, "niet-van-toepassing"], "V5.5 datamodel 1 (v0.1) is bekend");
   const lx = await mkpLees(await mkpEncode({ v: 2.5 }));
-  eq([lx.bekend, lx.nieuwer, lx.profielStatus], [false, true, "onbekend"], "V5.6 een datamodel dat niet in de lijst staat is niet bekend");
+  eq([lx.bekend, lx.nieuwer, lx.profielStatus], [false, false, "onbekend"], "V5.6 een datamodel dat niet in de lijst staat is niet bekend (2,5 is ook niet nieuwer dan 3)");
   const l0 = await mkpLees(await mkpEncode({ v: 0 }));
   eq([l0.bekend, l0.nieuwer], [false, false], "V5.7 een lager onbekend datamodel is niet 'nieuwer'");
 }

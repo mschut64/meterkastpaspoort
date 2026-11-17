@@ -42,6 +42,8 @@ export const MKP_PROFIEL_VELDEN = Object.freeze({
     "vd", "voed",
     // voorstel v0.4: van de inspectie alleen de volgende inspectiedatum, besluit 5
     "frq",
+    // voorstel v0.4: het indelingsblok, als tekst (besluit 6)
+    "ind",
   ]),
   inspectie: Object.freeze(["idc", "con", "stp", "log.mm"]),
   volledig: Object.freeze(["res"]),
