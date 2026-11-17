@@ -9,7 +9,8 @@
     ".": "./mkp.js"
   },
   "files": [
-    "mkp.js"
+    "mkp.js",
+    "codec/"
   ],
   "scripts": {
     "test": "node tests/test-formaat.js && node tests/test-fixtures.js"
