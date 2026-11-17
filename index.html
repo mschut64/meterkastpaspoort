@@ -363,6 +363,7 @@
 <h3>Afkapvolgorde</h3>
 <p>Moet een schrijvende toepassing toch inkorten, dan doet zij dat in deze volgorde, zodat overal dezelfde gegevens als eerste sneuvelen:</p>
 <ol>
+  <li>de handtekening (<code>sig</code> en <code>sid</code>) van oudere regels van <code>log[]</code>, van onderen af — de regels zelf blijven staan, en de nieuwste regel houdt zijn handtekening <span class="opt">Voorstel v0.4.</span>;</li>
   <li>de oudste regels van <code>log[]</code>, van onderen af;</li>
   <li><code>art</code>, <code>sn</code> en <code>pd</code> van toestellen die geen <code>art</code> hebben — die matchen toch niet betrouwbaar;</li>
   <li>hele regels uit <code>mat[]</code>, te beginnen bij toestellen zonder <code>art</code> en zonder <code>sn</code>;</li>

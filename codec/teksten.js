@@ -69,6 +69,7 @@ export function qrWaarschuwing(tekens) {
 export function _afkapMelding(weg, past, modules) {
   const mv = (n, enk, mvv) => `${n} ${n === 1 ? enk : mvv}`;
   const delen = [];
+  if (weg.handtekeningen) delen.push(`handtekening weggelaten bij ${mv(weg.handtekeningen, "oudere logboekregel", "oudere logboekregels")}`);
   if (weg.logregels) delen.push(`${mv(weg.logregels, "oudste logboekregel", "oudste logboekregels")} weggelaten`);
   if (weg.detailvelden) delen.push(`serienummer en productiecode weggelaten bij ${mv(weg.detailvelden, "toestel", "toestellen")} zonder artikelnummer`);
   if (weg.matregels) delen.push(`${mv(weg.matregels, "toestel", "toestellen")} uit de materiaallijst weggelaten`);

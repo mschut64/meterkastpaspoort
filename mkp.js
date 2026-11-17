@@ -30,6 +30,7 @@
 //   codec/samenvoegen.js  hergebruik van een gescand paspoort
 //   codec/qr.js           omvang van een QR en de grens
 //   codec/afkappen.js     inkorten tot het op de sticker past
+//   codec/profielen.js    kern / inspectie / volledig, en de maat van de sticker
 //   codec/controleren.js  handtekening, index, erkenning, zegels, veldnotities
 //   codec/versie.js       versieherkenning: datamodel, profiel, onbekende velden
 //   codec/registers.js    uitgevers van erkenningen en certificaten, en hun registers
@@ -47,6 +48,8 @@ export { eanValide } from "./codec/ean.js";
 export { mkpSamenvoegen } from "./codec/samenvoegen.js";
 export { QR_TEKENS_GRENS, QR_MODULES_GRENS, QR_NIVEAU, qrModules } from "./codec/qr.js";
 export { mkpAfkappen } from "./codec/afkappen.js";
+// De drie profielen en de maat van de sticker (voorstel v0.4, besluiten 17-11-2026).
+export { MKP_PROFIELEN, MKP_PROFIEL_VELDEN, MKP_STREEF_TEKENS, mkpProfielVan, mkpProfiel, mkpGrootte } from "./codec/profielen.js";
 export {
   MKP_INDEX_URL, MKP_DEMO_FEED_URL, MKP_WORTEL_SLEUTEL,
   mkpZegels, mkpCanon, mkpVerifieer, mkpErkenning, mkpVeldnotities, mkpVerifieerIndex, mkpControleer,

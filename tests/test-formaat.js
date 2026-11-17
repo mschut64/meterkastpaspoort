@@ -219,12 +219,19 @@ const pA = { v: 2, d: "2026-09-18", pc: "2691JJ", nr: "72", ha: { f: 3, a: 25 },
   mat: [{ i: 1, fab: "Hager", typ: "CDA440D", art: "CDA440D", sn: "A1", pd: "2024-11", xyz: 1 }], log: logVol };
 const a = await mkpAfkappen(pA);
 eq(a.past, true, `8.5 na afkappen past het (${a.modules} modules)`);
-eq(a.weggelaten.logregels > 0, true, "8.6 eerst gaan er logboekregels af");
+// Besluit 17-11-2026: eerst gaan de handtekeningen van oudere regels af; de
+// regels blijven staan. Pas als dat niet genoeg is, gaan oude regels weg.
+eq(a.weggelaten.handtekeningen > 0, true, "8.6 eerst gaan de handtekeningen van oudere logboekregels af");
 eq(a.paspoort.mat, pA.mat, "8.7 zolang het logboek volstaat, blijft de materiaallijst staan");
-eq(a.paspoort.log.every((r, k) => JSON.stringify(r) === JSON.stringify(logVol[k])), true,
-   "8.8 de nieuwste regels blijven, byte-voor-byte — nooit een ingekorte regel");
+eq(JSON.stringify(a.paspoort.log[0]), JSON.stringify(logVol[0]), "8.8 de nieuwste regel blijft byte-voor-byte, mét handtekening");
+eq(a.paspoort.log.every((r, k) => { const { sig, sid, ...rest } = logVol[k];
+     return JSON.stringify(r) === JSON.stringify("sig" in r ? logVol[k] : rest); }), true,
+   "8.8a elke regel is óf ongewijzigd óf alleen zijn sig en sid kwijt — nooit een ingekorte regel");
+const zonderSig = a.paspoort.log.map((r) => !("sig" in r));
+eq([a.paspoort.log.length, zonderSig.indexOf(true) > 0, zonderSig.slice(zonderSig.indexOf(true)).every(Boolean)], [10, true, true],
+   "8.8b alle regels blijven; de handtekeningen gaan van onderen af, alleen zoveel als nodig");
 eq(a.paspoort.xyz, 123, "8.9 onbekende velden overleven het afkappen");
-eq(/oudste logboekregel/.test(a.melding), true, "8.10 de gebruiker krijgt één regel over wat is weggelaten");
+eq(/handtekening weggelaten bij/.test(a.melding), true, "8.10 de gebruiker krijgt één regel over wat is weggelaten");
 
 // B: het logboek volstaat niet — dan de volgorde 2, 3, 4 af.
 const pB = { v: 2, d: "2026-09-18", pc: "2691JJ", nr: "72", ha: { f: 3, a: 25, xyz: "ha" }, xyz: 123,
