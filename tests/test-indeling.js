@@ -301,7 +301,9 @@ console.log("▶ INDELING 9: de ingang");
   eq(v04.filter((x) => !(x in M)), [], "E3c de namen van v0.4 bestaan");
   const profielen = ["MKP_PROFIELEN", "MKP_PROFIEL_VELDEN", "MKP_STREEF_TEKENS", "mkpProfielVan", "mkpProfiel", "mkpGrootte"];
   eq(profielen.filter((x) => !(x in M)), [], "E3a de namen van de profielen bestaan");
-  eq(Object.keys(M).length, oud.length + nieuw.length + profielen.length + materiaal.length + v04.length, "E4 er is niets anders bijgekomen of weggevallen");
+  const meetwaarden = ["MKP_STELSELS", "MKP_MEETSOORTEN", "mkpStelsel"];
+  eq(meetwaarden.filter((x) => !(x in M)), [], "E3d de namen van stelsel en meetwaarden bestaan (besluit 23-11-2026)");
+  eq(Object.keys(M).length, oud.length + nieuw.length + profielen.length + materiaal.length + v04.length + meetwaarden.length, "E4 er is niets anders bijgekomen of weggevallen");
 }
 
 console.log("\n═══════════════════════════════════════════════");

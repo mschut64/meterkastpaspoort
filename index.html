@@ -84,10 +84,11 @@
   <tr><td><code>ean</code></td><td>tekst</td><td>EAN-code van de elektriciteitsaansluiting (18 cijfers, NL begint met 87; laatste cijfer is GS1 modulo-10-controlecijfer). Vindbaar via <a href="https://www.eancodeboek.nl">eancodeboek.nl</a>.</td></tr>
   <tr><td><code>ean2</code></td><td>tekst</td><td>EAN van een eventueel secundair allocatiepunt (bijv. apart bemeten laadpaal).</td></tr>
   <tr><td><code>bj</code></td><td>tekst</td><td>Bouwjaar of aanlegperiode van de kast, desnoods geschat (<code>"1998"</code>, <code>"±1990"</code>). Relevant voor het normregime van aanleg (rechtens verkregen niveau).</td></tr>
+  <tr><td><code>stl</code></td><td>tekst</td><td>Aardingsstelsel van de installatie: <code>"TN-C-S"</code>, <code>"TN-S"</code>, <code>"TT"</code> of <code>"IT"</code>. De beoordeling van de lusimpedantie hangt eraan; zonder dit veld moet de volgende het opnieuw vaststellen. Een andere waarde wordt niet geschreven. <span class="opt">voorstel v0.4</span></td></tr>
   <tr><td><code>ha</code></td><td>object</td><td>Hoofdaansluiting — zie 4.2.</td></tr>
   <tr><td><code>kam</code></td><td>object</td><td>Ontwerpstroom verdeler — zie 4.3.</td></tr>
   <tr><td><code>grp</code></td><td>lijst</td><td>Afgaande en voedende groepen — zie 4.4.</td></tr>
-  <tr><td><code>mat</code></td><td>lijst</td><td>Materiaal in de kast — zie 4.5. <span class="opt">Nieuw in v0.2.</span></td></tr>
+  <tr><td><code>mat</code></td><td>lijst</td><td>Materiaal in de kast — zie 4.5. <span class="opt">Nieuw in v0.2. Voorstel v0.4: alleen in profiel <em>volledig</em>, niet op de sticker.</span></td></tr>
   <tr><td><code>lb</code></td><td>object</td><td>Load balancing / vermogenssturing — zie 4.6.</td></tr>
   <tr><td><code>chk</code></td><td>object</td><td>Laatste belastingcheck — zie 4.7.</td></tr>
   <tr><td><code>log</code></td><td>lijst</td><td>Installateurs-logboek — zie 4.8.</td></tr>
@@ -95,6 +96,7 @@
   <tr><td><code>voed</code></td><td>object</td><td>Waar deze kast aan hangt; alleen bij een onderverdeler — zie 4.9. <span class="opt">voorstel v0.4</span></td></tr>
   <tr><td><code>ind</code></td><td>tekst</td><td>De fysieke indeling van de kast: welk toestel waar op welke rail, met breedte, polen, nominale stroom, karakteristiek, aanspreekstroom en aardlektype — als compact blok in base64url. Alleen een <em>gemeten</em> indeling hoort op een sticker. Een lezer die het blok niet kent, slaat het over. Vraagt datamodel <code>v: 3</code>. <span class="opt">voorstel v0.4</span></td></tr>
   <tr><td><code>frq</code></td><td>tekst</td><td>Maand van de volgende periodieke inspectie, <code>"JJJJ-MM"</code>. Van een inspectie staat alleen dit op de sticker; de rest blijft in het dossier. Vraagt datamodel <code>v: 3</code>. <span class="opt">voorstel v0.4</span></td></tr>
+  <tr><td><code>mw</code></td><td>lijst</td><td>Meetwaarden — zie 4.10. Alleen in profiel <em>volledig</em>, nooit op de sticker. <span class="opt">voorstel v0.4</span></td></tr>
 </table>
 
 <h3>4.2 Hoofdaansluiting <code>ha</code></h3>
@@ -234,6 +236,18 @@
   <li>Samen vast te stellen met de gereserveerde ruimte <code>res[]</code> uit het ontwerpintentie-voorstel.</li>
 </ul>
 
+<h3>4.10 Meetwaarden <code>mw[]</code> <span class="opt">voorstel v0.4 — alleen profiel volledig</span></h3>
+<p>De meetwaarden van de oplevering of inspectie, voor het bestand dat bij de overdracht hoort. Ze staan nooit op de sticker: de QR is een sleutel en een noodsamenvatting, geen meetrapport. Eén element per gemeten waarde. Deze standaard toetst niets; een grenswaarde en het oordeel zijn van de toepassing.</p>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>s</code></td><td>tekst</td><td>Soort meting, uit een vaste lijst die ook de eenheid bepaalt: lusimpedantie (<code>zln</code>, <code>zlpe</code>, <code>zl2n</code> …, fase-fase <code>zl12</code> …), isolatie (<code>iso-fa</code>, <code>iso-na</code>, <code>iso-l1</code> …), aardlek (<code>rcd-t</code> in ms, <code>rcd-i</code> in mA, <code>rcd-knop</code>), doorgangsweerstand <code>rlo</code>, potentiaalvereffening <code>pe-ver</code>, aardverbinding van een PV-draagconstructie <code>pv-aard</code>, en de PV-metingen (<code>pv-uac</code>, <code>pv-zlpe</code>, <code>pv-isoac</code>, <code>pv-iso</code>, <code>pv-uoc</code>, <code>pv-isc</code>, <code>pv-rlo</code>).</td></tr>
+  <tr><td><code>w</code></td><td>tekst</td><td>De waarde zoals gemeten, als tekst; <code>"&gt;999"</code> (boven het bereik van de meter) en <code>"n.m."</code> (niet meetbaar) zijn toegestaan.</td></tr>
+  <tr><td><code>g</code></td><td>getal</td><td>De plaats van de groep in <code>grp[]</code>, vanaf 1. Ontbreekt het, dan gaat de meting over de kast als geheel.</td></tr>
+  <tr><td><code>p</code></td><td>tekst</td><td>Het meetpunt in woorden: de plek van een veldmeting, van waar naar waar bij een doorgangsweerstand, of welke aardlekschakelaar.</td></tr>
+  <tr><td><code>d</code></td><td>tekst</td><td>Meetdatum, <code>JJJJ-MM-DD</code>.</td></tr>
+  <tr><td><code>c</code></td><td>tekst</td><td>Meetconditie; bij isolatie <code>"afgekoppeld"</code> of <code>"aangesloten"</code> (verbruikers).</td></tr>
+</table>
+
 <h2>5. Voorbeeld</h2>
 <p><b>Zelf bekijken:</b> de <a href="/lezer.html">paspoortlezer</a> is de referentie-implementatie van deze versie. Plak er een QR-URL in — of scan een sticker — en hij toont alle velden, inclusief <code>mat[]</code>, <code>fn</code>, <code>erk</code> en de status van de handtekeningen. Alles gebeurt in de browser; de paspoortdata verlaat het toestel niet.</p>
 <pre><code>{
@@ -362,16 +376,13 @@
   <li><b>Detailvelden weglaten waar ze niet helpen.</b> Laat <code>art</code> en <code>pd</code> weg bij standaardautomaten en volsta met <code>fab</code>, <code>typ</code> en <code>pos</code>; twintig toestellen passen dan op 101 modules bij niveau M. Een veldnotitie gaat vrijwel altijd over een specifieke serie — een aardlekschakelaar, een klemblok — en zelden over de standaardautomaat waarvan er tien in de kast zitten. Neem de volledige gegevens dus op waar ze ertoe doen en houd het elders kort.</li>
 </ol>
 
-<h3>Afkapvolgorde</h3>
-<p>Moet een schrijvende toepassing toch inkorten, dan doet zij dat in deze volgorde, zodat overal dezelfde gegevens als eerste sneuvelen:</p>
+<h3>Afkapvolgorde <span class="opt">voorstel v0.4, vervangt de volgorde van v0.3</span></h3>
+<p>Wat op de sticker staat, is het profiel <em>kern</em>: de materiaallijst, de koppeling ernaar (<code>grp[].mat</code>) en de meetwaarden horen in het volledige dossier en niet op de kast. Past de kern dan nog niet onder de grens, dan doet een schrijvende toepassing dit, en niets anders:</p>
 <ol>
-  <li>de handtekening (<code>sig</code> en <code>sid</code>) van oudere regels van <code>log[]</code>, van onderen af — de regels zelf blijven staan, en de nieuwste regel houdt zijn handtekening <span class="opt">Voorstel v0.4.</span>;</li>
-  <li>de oudste regels van <code>log[]</code>, van onderen af;</li>
-  <li><code>art</code>, <code>sn</code> en <code>pd</code> van toestellen die geen <code>art</code> hebben — die matchen toch niet betrouwbaar;</li>
-  <li>hele regels uit <code>mat[]</code>, te beginnen bij toestellen zonder <code>art</code> en zonder <code>sn</code>;</li>
-  <li>als laatste: vrije omschrijvingen (<code>n</code>) inkorten.</li>
+  <li>de indeling (<code>ind</code>) weglaten;</li>
+  <li>past het dan nog niet: <b>weigeren en melden</b>. Er komt geen sticker; er wordt niets ingekort.</li>
 </ol>
-<p>Nooit afkappen op grond van &ldquo;dit veld ken ik niet&rdquo;. Een toepassing die inkort meldt aan de gebruiker welke gegevens niet zijn meegenomen, zodat die het volledige overzicht in het opleverdocument kan opzoeken.</p>
+<p><b>Nooit</b>, onder geen enkele omstandigheid: de identiteit (<code>pc</code>, <code>nr</code>, <code>ean</code>, <code>ean2</code>, <code>bj</code>), het stelsel (<code>stl</code>), <code>grp[]</code> (ook de omschrijvingen niet), de regels van <code>log[]</code> zelf, en elke handtekening. Ook de overige velden blijven staan, en nooit afkappen op grond van &ldquo;dit veld ken ik niet&rdquo;. Een toepassing die iets weglaat of weigert, noemt bij naam wat er niet op de sticker staat.</p>
 
 <h2>7. Verlies en herstel</h2>
 <p>Een sticker kan verloren gaan — beschadiging, vervanging van de kastdeur, of brand. Het paspoort is daartegen bestand door <em>gedistribueerde opslag zonder register</em>: dezelfde QR-code staat als uitknippagina in elk opleverdocument, en dat document is bij oplevering aan de bewoner verstrekt (en berust in de administratie van de installateur). Herstel bestaat uit het scannen van de QR uit het meest recente opleverdocument en het printen van een nieuwe sticker. Omdat iedere klus een nieuw document met de actuele paspoortstand oplevert, bestaan er evenveel reservekopieën als er ingrepen zijn geweest — verspreid over bewoner en betrokken installateurs. Een centraal register is daarmee bewust géén onderdeel van deze specificatie: het zou een doorzoekbare koppeling tussen adres en installatiegegevens introduceren (privacy- en inbraakrisico) zonder wezenlijke toevoeging aan de hersteldekking.</p>
@@ -551,6 +562,9 @@
 <table>
   <tr><th>Wat</th><th>Waarom</th></tr>
   <tr><td>Voorstel: <code>vd</code>, <code>voed</code> en <code>grp[].vd</code> — meerdere verdeelinrichtingen (4.9)</td><td>Een onderverdeler hangt aan een groep in de hoofdverdeler, maar geen van beide kasten wist dat. Per kast een eigen paspoort dat naar de ander verwijst: de QR blijft bij de kast, en wie in de schuur scant, ziet waar die kast aan hangt. Alle velden optioneel; een lezer die ze niet kent, slaat ze over.</td></tr>
+  <tr><td>Voorstel: <code>stl</code>, het stelsel (4.1)</td><td>De beoordeling van de lusimpedantie hangt aan het stelsel. Op de sticker, want wie de kast opent moet het weten zonder dossier.</td></tr>
+  <tr><td>Voorstel: <code>mw[]</code> (4.10) en <code>mat[]</code> alleen in profiel volledig</td><td>Meetwaarden en artikelnummers horen in het dossier, niet op de kast; de QR blijft daardoor onder de grens.</td></tr>
+  <tr><td>Voorstel: nieuwe afkapvolgorde (hoofdstuk 6)</td><td>Een handtekening en een logregel zijn historie: die vallen nooit meer weg. Alleen de indeling mag wijken; anders weigeren.</td></tr>
 </table>
 
 <h3>11.3 Wijzigingen in v0.3 <span class="opt">datamodel ongewijzigd</span></h3>

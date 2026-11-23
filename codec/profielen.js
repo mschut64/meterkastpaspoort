@@ -36,8 +36,10 @@ export const MKP_PROFIELEN = Object.freeze(["kern", "inspectie", "volledig"]);
 // De ENIGE plek met deze indeling.
 export const MKP_PROFIEL_VELDEN = Object.freeze({
   kern: Object.freeze([
-    // v0.3 (spec 4.1–4.8)
-    "v", "d", "pc", "nr", "ean", "ean2", "bj", "ha", "kam", "grp", "mat", "lb", "chk", "log",
+    // v0.3 (spec 4.1–4.8), zonder mat[] (besluit 23-11-2026: naar volledig)
+    "v", "d", "pc", "nr", "ean", "ean2", "bj", "ha", "kam", "grp", "lb", "chk", "log",
+    // voorstel v0.4: het stelsel (besluit 23-11-2026)
+    "stl",
     // voorstel v0.4: meerdere verdeelinrichtingen (spec 4.9), besluit 8
     "vd", "voed",
     // voorstel v0.4: van de inspectie alleen de volgende inspectiedatum, besluit 5
@@ -46,7 +48,9 @@ export const MKP_PROFIEL_VELDEN = Object.freeze({
     "ind",
   ]),
   inspectie: Object.freeze(["idc", "con", "stp", "log.mm"]),
-  volledig: Object.freeze(["res"]),
+  // besluit 23-11-2026: de materiaallijst (met artikelnummers) en de koppeling
+  // ernaar, en de meetwaarden, staan alleen in het volledige dossier.
+  volledig: Object.freeze(["res", "mat", "grp.mat", "mw"]),
 });
 
 // Streefwaarde en grens van de sticker (besluit 9): 600 tekens is de streefwaarde,

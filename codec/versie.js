@@ -17,7 +17,8 @@ import { _isObj } from "./hulp.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 // De datamodellen (`v`) die deze codec kent. 1 = v0.1, 2 = documentversie 0.2–0.3.
-// 3 = voorstel v0.4 (datamodel 3: indeling `ind` en volgende inspectie `frq`, besluiten 17-11-2026).
+// 3 = voorstel v0.4 (datamodel 3: indeling `ind` en volgende inspectie `frq`, besluiten 17-11-2026;
+// stelsel `stl` en meetwaarden `mw[]` erbij, besluiten 23-11-2026).
 export const MKP_DATAMODELLEN = Object.freeze([1, 2, 3]);
 
 // De velden die deze codec kent, per blok. "" is het wortelobject; de andere
@@ -27,7 +28,7 @@ export const MKP_DATAMODELLEN = Object.freeze([1, 2, 3]);
 // ontwerpintentie-voorstel staat er niet in: dat is nog niet in de spec.
 // De ENIGE plek met deze lijst.
 export const MKP_VELDEN = Object.freeze({
-  "":   Object.freeze(["v", "d", "pc", "nr", "ean", "ean2", "bj", "ha", "kam", "grp", "mat", "lb", "chk", "log", "vd", "voed", "ind", "frq"]),
+  "":   Object.freeze(["v", "d", "pc", "nr", "ean", "ean2", "bj", "stl", "ha", "kam", "grp", "mat", "lb", "chk", "log", "vd", "voed", "ind", "frq", "mw"]),
   ha:   Object.freeze(["f", "a", "hs"]),
   kam:  Object.freeze(["mm2", "a"]),
   grp:  Object.freeze(["t", "rol", "kw", "f", "fn", "mat", "n", "vd"]),
@@ -37,6 +38,8 @@ export const MKP_VELDEN = Object.freeze({
   log:  Object.freeze(["d", "b", "w", "erk", "c", "zeg", "sid", "sig"]),
   vd:   Object.freeze(["id", "n", "rol", "plaats", "inb"]),
   voed: Object.freeze(["vd", "grp", "a", "mm2", "lng"]),
+  // Voorstel v0.4, besluit 23-11-2026: de meetwaarden, alleen in profiel volledig.
+  mw:   Object.freeze(["s", "w", "g", "p", "d", "c"]),
 });
 
 // Velden op het hoogste niveau die deze codec niet kent, in de volgorde van het paspoort.

@@ -60,24 +60,18 @@ export function mkpVerdeelinrichting(p) {
 
 export function qrWaarschuwing(tekens) {
   if (tekens <= QR_TEKENS_GRENS) return "";
-  return `De QR draagt ${tekens} tekens en wordt daarmee dicht. Kort de groepsnamen in of laat de logboekhistorie weg.`;
+  return `De QR draagt ${tekens} tekens en wordt daarmee dicht. Kort de groepsnamen in.`;
 }
 
 // De ene regel die de app toont als mkpAfkappen iets heeft weggelaten, of als
 // het daarna nog steeds niet past. Uit mkpAfkappen gehaald zodat de codec zelf
-// geen gebruikerstekst maakt; de tekst is ongewijzigd.
-export function _afkapMelding(weg, past, modules) {
-  const mv = (n, enk, mvv) => `${n} ${n === 1 ? enk : mvv}`;
+// geen gebruikerstekst maakt in de stappen zelf.
+export function _afkapMelding(weg, past, modules, maxModules = 105) {
+  // Besluit 23-11-2026: de melding noemt bij naam wat er niet op de sticker staat.
+  // Wat naar het volledige paspoort gaat (stap 1) is geen verlies en staat hier
+  // niet in; de toepassing kan het apart noemen.
   const delen = [];
-  if (weg.handtekeningen) delen.push(`handtekening weggelaten bij ${mv(weg.handtekeningen, "oudere logboekregel", "oudere logboekregels")}`);
-  if (weg.logregels) delen.push(`${mv(weg.logregels, "oudste logboekregel", "oudste logboekregels")} weggelaten`);
-  if (weg.detailvelden) delen.push(`serienummer en productiecode weggelaten bij ${mv(weg.detailvelden, "toestel", "toestellen")} zonder artikelnummer`);
-  if (weg.matregels) delen.push(`${mv(weg.matregels, "toestel", "toestellen")} uit de materiaallijst weggelaten`);
-  if (weg.omschrijvingen) delen.push(`${mv(weg.omschrijvingen, "groepsomschrijving", "groepsomschrijvingen")} ingekort`);
-  // Hoofdstuk 6: meld wat niet is meegenomen, "zodat die het volledige overzicht in
-  // het opleverdocument kan opzoeken".
-  let melding = delen.length ? `Om de QR leesbaar te houden: ${delen.join(", ")}. Het volledige overzicht staat in het opleverdocument.` : "";
-  if (!past) melding = (melding ? melding + " " : "") +
-    `De code blijft ${modules === Infinity ? "te groot voor een QR" : modules + " modules"} — te dicht voor een sticker van 50 mm.`;
-  return melding;
+  if (weg && weg.indeling) delen.push("De kastindeling staat niet op de sticker: met de indeling paste de QR niet. Alle andere gegevens staan er wel op.");
+  if (!past) delen.push(`Er is geen QR gemaakt: ook zonder kastindeling is de code ${modules === Infinity ? "te groot voor een QR" : modules + " modules"}, meer dan ${maxModules}. Er is niets ingekort of weggelaten.`);
+  return delen.join(" ");
 }

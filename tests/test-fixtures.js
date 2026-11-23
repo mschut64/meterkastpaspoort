@@ -19,7 +19,7 @@
 
 import {
   mkpDecode, mkpEncode, mkpUrl, MKP_BASIS, qrModules, QR_MODULES_GRENS,
-  mkpControleer, mkpVerdeelinrichting, mkpSamenvatting, mkpAfkappen,
+  mkpControleer, mkpVerdeelinrichting, mkpSamenvatting, mkpAfkappen, mkpProfiel,
 } from "../mkp.js";
 import { readFileSync, readdirSync } from "node:fs";
 
@@ -70,7 +70,7 @@ for (const bestand of namen) {
   // 6. Een paspoort dat past, laat het afkappen ongemoeid.
   if (v.modules <= QR_MODULES_GRENS) {
     const a = await mkpAfkappen(gelezen);
-    eq([a.past, a.melding, a.paspoort], [true, "", f.paspoort], `${naam}: afkappen laat een passend paspoort ongemoeid`);
+    eq([a.past, a.melding, a.paspoort], [true, "", mkpProfiel(f.paspoort, "kern").paspoort], `${naam}: afkappen laat een passend paspoort ongemoeid, op het profiel kern na`);
   }
 }
 

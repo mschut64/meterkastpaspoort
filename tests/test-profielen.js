@@ -20,7 +20,8 @@ const fixture = (n) => JSON.parse(readFileSync(new URL(`./fixtures/${n}.json`, i
 
 console.log("▶ P: de profielen");
 eq(MKP_PROFIELEN, ["kern", "inspectie", "volledig"], "P1 drie profielen, in volgorde (besluit 4)");
-eq(MKP_VELDEN[""].every((k) => mkpProfielVan(k) === "kern"), true, "P2 alles wat v0.3 kent hoort in de kern");
+eq(MKP_VELDEN[""].filter((k) => mkpProfielVan(k) !== "kern"), ["mat", "mw"], "P2 alles wat de codec kent hoort in de kern, behalve mat[] en mw[] (besluit 23-11-2026)");
+eq([mkpProfielVan("stl"), mkpProfielVan("mat"), mkpProfielVan("grp.mat"), mkpProfielVan("mw")], ["kern", "volledig", "volledig", "volledig"], "P2a stelsel op de sticker; materiaal en meetwaarden alleen in volledig");
 eq([mkpProfielVan("vd"), mkpProfielVan("voed")], ["kern", "kern"], "P3 de verwijzing naar onderverdelers gaat mee in de kern (besluit 8)");
 eq(mkpProfielVan("frq"), "kern", "P4 de datum van de volgende inspectie staat op de sticker (besluit 5)");
 eq([mkpProfielVan("idc"), mkpProfielVan("con")], ["inspectie", "inspectie"], "P5 SCIOS-code en constateringen niet op de sticker (besluit 5)");
@@ -65,36 +66,50 @@ eq([gg.modules, gg.past, gg.binnenStreef], [105, true, false], "G4 op de grens: 
 const G5 = await mkpGrootte({ v: 2, x: ruis(1500) });
 eq([G5.past, G5.binnenStreef], [false, false], "G5 boven de grens: past niet");
 
-console.log("▶ H: een volle sticker — oude handtekeningen eerst (besluit 10)");
-// Drie ondertekende klussen op een kast: de nieuwste houdt zijn handtekening.
+console.log("▶ H: een volle sticker — nooit een handtekening of logregel weg (besluit 23-11-2026)");
+// Drie ondertekende klussen op een kast: alles blijft staan, ook als het niet past.
 const basis = grens.paspoort;
 const drie = { ...basis, log: [0, 1, 2].map((i) => ({ d: `202${6 - i}-05-01`, b: `Bedrijf ${i}`, w: "werk aan de kast", sid: `k-${i}`, sig: ruis(86) })) };
 const h = await mkpAfkappen(drie);
-eq(h.paspoort.log[0], drie.log[0], "H1 de laatste klus houdt zijn handtekening, byte-voor-byte");
-eq(h.weggelaten.handtekeningen >= 1, true, "H2 eerst gaan handtekeningen van oudere regels af");
-eq(h.paspoort.log.length === 3 || h.weggelaten.handtekeningen === 2, true, "H3 een regel valt pas weg als alle oudere handtekeningen al weg zijn");
-eq(h.past, true, `H4 daarna past het (${h.modules} modules)`);
-eq(/handtekening weggelaten bij/.test(h.melding), true, "H5 en de melding zegt het");
-// Na het weghalen zegt de controle "niet ondertekend", niet "komt niet overeen".
+const kernDrie = mkpProfiel(drie, "kern").paspoort;
+eq(h.paspoort.log, kernDrie.log, "H1 elke logregel blijft byte-voor-byte, mét handtekening");
+eq(h.paspoort.grp, kernDrie.grp, "H2 de groepen blijven ongewijzigd, ook de omschrijvingen");
+eq([h.past, h.geweigerd], [h.modules <= QR_MODULES_GRENS, h.modules > QR_MODULES_GRENS], "H3 past het niet, dan geweigerd — niet ingekort");
+eq(h.geweigerd ? /geen QR gemaakt/.test(h.melding) : true, true, "H4 en de melding zegt het");
+// Na het weghalen zou de controle "niet ondertekend" zeggen, nooit "komt niet overeen".
 const c = await mkpControleer({ ...h.paspoort, log: h.paspoort.log.slice(1).map((r) => ({ ...r })) }, { index: { installateurs: [] } }).catch(() => null);
 eq(c === null || JSON.stringify(c).includes("ongeldig") === false, true, "H6 een regel zonder handtekening leest als niet ondertekend, nooit als vervalst");
-
-// Review 17-11: de app zet zijn eigen regel bovenaan, nog niet ondertekend. Dan
-// hoort de laatste ECHTE handtekening te blijven, en gaan eerst oude regels weg.
 {
-  const jansen = { d: "2026-01-10", b: "Installatiebedrijf Jansen", w: "groep bij", sid: "k-j", sig: ruis(86) };
-  const oud = Array.from({ length: 40 }, (_, i) => ({ d: `20${10 + (i % 15)}-0${(i % 9) + 1}-01`, b: `Bedrijf ${ruis(8)}`, w: `werk ${ruis(12)}` }));
-  const p = { ...basis, log: [{ d: "2026-11-17", b: "Eigen bedrijf", w: "oplevering" }, jansen, ...oud] };
+  // Alleen de indeling mag wijken.
+  const p = { v: 3, d: "2026-11-23", pc: "1234AB", nr: "1", stl: "TT", grp: [{ t: "alg", rol: "af", f: 1, n: "Keuken" }],
+    log: [{ d: "2026-11-23", b: "Eigen bedrijf", w: "oplevering", sid: "k", sig: ruis(86) }], ind: ruis(900), xyz: 1 };
   const u = await mkpAfkappen(p);
-  eq(u.paspoort.log[1], jansen, "H7 de regel van de laatste ondertekende klus blijft heel, ook onder een ongetekende eigen regel");
-  eq([u.weggelaten.handtekeningen, u.weggelaten.logregels > 0, u.past], [0, true, true], "H8 dan gaan oude regels weg in plaats van zijn handtekening");
+  eq([u.past, u.geweigerd, "ind" in u.paspoort, u.weggelaten.indeling], [true, false, false, true], "H7 te groot door de indeling: de indeling gaat eraf, de rest past");
+  const { ind: _i, ...rest } = p;
+  eq(u.paspoort, rest, "H8 en verder verandert er niets, ook het onbekende veld en de handtekening niet");
+  eq(/kastindeling staat niet op de sticker/.test(u.melding), true, "H9 de melding noemt de indeling bij naam");
 }
 {
-  // De telling: alleen regels die er nog staan zonder handtekening.
+  // Een handtekening valt onder geen enkele omstandigheid weg.
   const veel = { ...basis, log: Array.from({ length: 45 }, (_, i) => ({ d: "2026-01-01", b: `B ${ruis(10)}`, w: ruis(20), sid: `k${i}`, sig: ruis(86) })) };
   const v = await mkpAfkappen(veel);
-  eq(v.weggelaten.handtekeningen, v.paspoort.log.filter((r) => !("sig" in r)).length, "H9 de telling = regels op de sticker zonder handtekening");
-  eq("sig" in v.paspoort.log[0], true, "H10 de nieuwste regel houdt zijn handtekening");
+  eq([v.geweigerd, v.paspoort.log.length, v.paspoort.log.every((r) => "sig" in r)], [true, 45, true], "H10 45 ondertekende regels: geweigerd, alle regels en handtekeningen staan er nog");
+}
+{
+  // De materiaallijst en de meetwaarden horen niet op de sticker.
+  const p = { v: 3, d: "2026-11-23", grp: [{ t: "alg", rol: "af", mat: 1 }], mat: [{ i: 1, fab: "Hager", typ: "MCN116", art: "123" }], mw: [{ s: "zln", w: "0,42" }] };
+  const u = await mkpAfkappen(p);
+  eq([("mat" in u.paspoort), ("mw" in u.paspoort), ("mat" in u.paspoort.grp[0]), u.melding], [false, false, false, ""], "H11 mat[], grp[].mat en mw[] niet op de sticker, en dat is geen afkapmelding");
+  eq(u.weggelaten.naarVolledig.sort(), ["grp[].mat", "mat", "mw"], "H12 wel genoemd als: staat in het volledige paspoort");
+}
+
+console.log("▶ S: het stelsel (besluit 23-11-2026)");
+{
+  const { mkpStelsel, MKP_STELSELS, MKP_MEETSOORTEN } = await import("../mkp.js");
+  eq(MKP_STELSELS, ["TN-C-S", "TN-S", "TT", "IT"], "S1 vier stelsels");
+  eq(["TN-C-S", "tncs", "TN_S", " tt ", "IT"].map(mkpStelsel), ["TN-C-S", "TN-C-S", "TN-S", "TT", "IT"], "S2 schrijfwijzen naar de vorm van de standaard");
+  eq(["Anders", "", null, "TN"].map(mkpStelsel), [null, null, null, null], "S3 anders of onbekend: niet schrijven, geen gok");
+  eq(["zln", "iso-fa", "rcd-t", "pe-ver", "pv-aard"].every((k) => k in MKP_MEETSOORTEN), true, "S4 de meetsoorten van 4.10");
 }
 
 console.log("▶ M: de materiaallijst — soortcodes en plaats (spec 4.5)");

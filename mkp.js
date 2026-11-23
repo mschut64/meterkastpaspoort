@@ -51,6 +51,7 @@ export { mkpSamenvoegen } from "./codec/samenvoegen.js";
 export { QR_TEKENS_GRENS, QR_MODULES_GRENS, QR_NIVEAU, qrModules } from "./codec/qr.js";
 export { mkpAfkappen } from "./codec/afkappen.js";
 // De drie profielen en de maat van de sticker (voorstel v0.4, besluiten 17-11-2026).
+export { MKP_STELSELS, MKP_MEETSOORTEN, mkpStelsel } from "./codec/meetwaarden.js";
 export { MKP_PROFIELEN, MKP_PROFIEL_VELDEN, MKP_STREEF_TEKENS, mkpProfielVan, mkpProfiel, mkpGrootte } from "./codec/profielen.js";
 export {
   MKP_INDEX_URL, MKP_DEMO_FEED_URL, MKP_WORTEL_SLEUTEL,

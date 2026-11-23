@@ -18,7 +18,7 @@ import {
   QR_TEKENS_GRENS, qrWaarschuwing,
   mkpSamenvoegen, mkpZegels, mkpAfkappen, qrModules, QR_MODULES_GRENS, QR_NIVEAU,
   mkpCanon, mkpVerifieer, mkpVerifieerIndex, mkpErkenning, mkpVeldnotities, mkpControleer, MKP_WORTEL_SLEUTEL,
-  mkpVerdeelinrichting,
+  mkpVerdeelinrichting, mkpProfiel,
 } from "../mkp.js";
 import { readFileSync } from "node:fs";
 
@@ -205,7 +205,7 @@ eq([QR_MODULES_GRENS, QR_NIVEAU], [105, "M"], "8.2 grens 105 modules op niveau M
 eq(qrModules(100000), Infinity, "8.3 groter dan versie 40 past nergens");
 
 const klein = await mkpAfkappen(paspoort);
-eq([klein.past, klein.melding, klein.paspoort], [true, "", paspoort], "8.4 een gewone kast blijft onaangeroerd");
+eq([klein.past, klein.geweigerd, klein.melding, klein.paspoort], [true, false, "", mkpProfiel(paspoort, "kern").paspoort], "8.4 een gewone kast: alleen het profiel kern, verder onaangeroerd");
 
 // Deterministische ruis: handtekeningen en serienummers comprimeren niet.
 let zaad = 0x9e3779b9;
@@ -214,48 +214,30 @@ const ALFA = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 const ruis = (n) => Array.from({ length: n }, () => ALFA[Math.floor(rnd() * 64)]).join("");
 const logVol = Array.from({ length: 10 }, (_, i) => ({ d: `2026-0${(i % 9) + 1}-15`, b: `Bedrijf ${i}`, w: "werk aan de kast", sid: `k-${i}`, sig: ruis(86) }));
 
-// A: het logboek inkorten volstaat — dan blijft de materiaallijst ongemoeid.
-const pA = { v: 2, d: "2026-09-18", pc: "2691JJ", nr: "72", ha: { f: 3, a: 25 }, xyz: 123,
-  mat: [{ i: 1, fab: "Hager", typ: "CDA440D", art: "CDA440D", sn: "A1", pd: "2024-11", xyz: 1 }], log: logVol };
+// Besluit 23-11-2026: nooit identiteit, stelsel, grp[], logregels of een
+// handtekening; alleen de indeling mag wijken; past het dan niet, weigeren.
+const pA = { v: 3, d: "2026-09-18", pc: "2691JJ", nr: "72", stl: "TN-C-S", ha: { f: 3, a: 25 }, xyz: 123,
+  mat: [{ i: 1, fab: "Hager", typ: "CDA440D", art: "CDA440D", sn: "A1", pd: "2024-11", xyz: 1 }], log: logVol, ind: ruis(40) };
+const pAvoor = JSON.stringify(pA);
 const a = await mkpAfkappen(pA);
-eq(a.past, true, `8.5 na afkappen past het (${a.modules} modules)`);
-// Besluit 17-11-2026: eerst gaan de handtekeningen van oudere regels af; de
-// regels blijven staan. Pas als dat niet genoeg is, gaan oude regels weg.
-eq(a.weggelaten.handtekeningen > 0, true, "8.6 eerst gaan de handtekeningen van oudere logboekregels af");
-eq(a.paspoort.mat, pA.mat, "8.7 zolang het logboek volstaat, blijft de materiaallijst staan");
-eq(JSON.stringify(a.paspoort.log[0]), JSON.stringify(logVol[0]), "8.8 de nieuwste regel blijft byte-voor-byte, mét handtekening");
-eq(a.paspoort.log.every((r, k) => { const { sig, sid, ...rest } = logVol[k];
-     return JSON.stringify(r) === JSON.stringify("sig" in r ? logVol[k] : rest); }), true,
-   "8.8a elke regel is óf ongewijzigd óf alleen zijn sig en sid kwijt — nooit een ingekorte regel");
-const zonderSig = a.paspoort.log.map((r) => !("sig" in r));
-eq([a.paspoort.log.length, zonderSig.indexOf(true) > 0, zonderSig.slice(zonderSig.indexOf(true)).every(Boolean)], [10, true, true],
-   "8.8b alle regels blijven; de handtekeningen gaan van onderen af, alleen zoveel als nodig");
-eq(a.paspoort.xyz, 123, "8.9 onbekende velden overleven het afkappen");
-eq(/handtekening weggelaten bij/.test(a.melding), true, "8.10 de gebruiker krijgt één regel over wat is weggelaten");
+eq([a.past, a.geweigerd], [false, true], `8.5 tien ondertekende regels passen niet: geweigerd (${a.modules} modules)`);
+eq(JSON.stringify(a.paspoort.log), JSON.stringify(logVol), "8.6 elke logregel staat er nog, byte-voor-byte, mét handtekening");
+eq([a.paspoort.pc, a.paspoort.nr, a.paspoort.stl, a.paspoort.xyz], ["2691JJ", "72", "TN-C-S", 123], "8.7 identiteit, stelsel en onbekende velden blijven");
+eq([("mat" in a.paspoort), ("ind" in a.paspoort), a.weggelaten.indeling], [false, false, true], "8.8 de materiaallijst hoort niet op de sticker; de indeling is als enige weggelaten");
+eq(/geen QR gemaakt/.test(a.melding) && /kastindeling/.test(a.melding), true, "8.9 de melding noemt de indeling en de weigering bij naam");
+eq(JSON.stringify(pA), pAvoor, "8.10 het aangeleverde paspoort zelf wordt niet gewijzigd");
 
-// B: het logboek volstaat niet — dan de volgorde 2, 3, 4 af.
-const pB = { v: 2, d: "2026-09-18", pc: "2691JJ", nr: "72", ha: { f: 3, a: 25, xyz: "ha" }, xyz: 123,
-  mat: Array.from({ length: 14 }, (_, i) => i % 2
-    ? { i, fab: "Hager", typ: "MCN116", art: "MCN116", sn: ruis(10), pd: "2024-05", xyz: i }
-    : { i, fab: "Onbekend", typ: "B16", sn: ruis(10), pd: "2023", xyz: i }),
-  grp: Array.from({ length: 20 }, (_, i) => ({ t: "alg", rol: "af", f: 1, fn: [(i % 3) + 1], mat: i, n: `Groep ${i} ${ruis(40)}` })),
-  log: logVol.slice(0, 3) };
-const pBvoor = JSON.stringify(pB);
+const pB = { v: 2, d: "2026-09-18", pc: "2691JJ", nr: "72",
+  grp: Array.from({ length: 30 }, (_, i) => ({ t: "alg", rol: "af", f: 1, fn: [(i % 3) + 1], n: `Groep ${i} ${ruis(40)}` })),
+  log: logVol.slice(0, 1) };
 const b = await mkpAfkappen(pB);
-eq(b.paspoort.log.length, 1, "8.11 het logboek is tot de nieuwste regel ingekort vóór er materiaal wegvalt");
-eq(b.weggelaten.detailvelden, 7, "8.12 daarna sn en pd van de zeven toestellen zonder artikelnummer");
-eq(b.paspoort.mat.length, 0, "8.13 daarna hele mat-regels — pas als dat op is volgen de omschrijvingen");
-eq(b.weggelaten.omschrijvingen > 0, true, "8.14 als laatste worden omschrijvingen ingekort");
-eq(b.paspoort.grp.every(g => g.n.length <= 24 && g.fn && g.t === "alg"), true, "8.15 alleen de omschrijving is ingekort, de rest van de groep niet");
-eq([b.paspoort.xyz, b.paspoort.ha.xyz], [123, "ha"], "8.16 onbekende velden staan er nog");
-eq(JSON.stringify(pB), pBvoor, "8.17 het aangeleverde paspoort zelf wordt niet gewijzigd");
-eq(b.past, true, `8.18 en daarna past het (${b.modules} modules)`);
+eq([b.geweigerd, JSON.stringify(b.paspoort.grp) === JSON.stringify(pB.grp)], [true, true], "8.11 lange omschrijvingen worden niet ingekort: geweigerd");
 
-// C: nooit afkappen op grond van een onbekend veld.
+// Nooit afkappen op grond van een onbekend veld.
 const pC = { v: 2, d: "2026-09-18", xyz: ruis(3000) };
 const c = await mkpAfkappen(pC);
 eq([c.past, c.paspoort.xyz === pC.xyz], [false, true], "8.19 te groot door een onbekend veld: het veld blijft, de uitkomst zegt 'past niet'");
-eq(/te dicht voor een sticker van 50 mm/.test(c.melding), true, "8.20 en de melding zegt dat ook");
+eq(/geen QR gemaakt/.test(c.melding), true, "8.20 en de melding zegt dat ook");
 
 console.log("▶ CATEGORIE 9: controleren — handtekening, erkenning, veldnotities");
 
@@ -369,15 +351,14 @@ console.log("▶ CATEGORIE 10: materiaal van de app samenvoegen met dat van de b
   eq("mat" in vervalt.grp[0], false, "10.11 een verwijzing naar een vervangen toestel verdwijnt");
 }
 
-// Afkappen haalt een mat-regel weg: een groep mag er daarna niet meer naar wijzen.
+// De sticker draagt geen materiaallijst: een groep mag er dan ook niet naar wijzen.
 {
   const veel = { v: 2, d: "2026-09-19",
     grp: Array.from({ length: 30 }, (_, k) => ({ t: "alg", rol: "af", f: 1, fn: [1 + (k % 3)], mat: k + 1 })),
     mat: Array.from({ length: 30 }, (_, k) => ({ i: k + 1, s: "aut", fab: "Hager", typ: "MCN" + ruis(8), pos: `R${1 + Math.floor(k / 12)}-${1 + (k % 12)}` })) };
   const a = await mkpAfkappen(veel);
-  const bestaat = new Set(a.paspoort.mat.map((m) => m.i));
-  eq([a.weggelaten.matregels > 0, a.paspoort.grp.every((g) => !("mat" in g) || bestaat.has(g.mat))], [true, true],
-     "10.12 na afkappen wijst geen groep naar een weggelaten toestel");
+  eq([("mat" in a.paspoort), a.paspoort.grp.every((g) => !("mat" in g))], [false, true],
+     "10.12 op de sticker geen materiaallijst, en dus geen groep die ernaar wijst (besluit 23-11-2026)");
 }
 
 console.log("▶ CATEGORIE 11: grenzen vóór het uitpakken (decompressiebom)");
