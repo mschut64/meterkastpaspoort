@@ -1,3 +1,5 @@
+> **Opgenomen in de samengevoegde specificatie (23-11-2026):** `docs/meterkastpaspoort-v04-spec.md` in de repo yourwkb. Dit document blijft staan als historie van 17-11-2026; waar het afwijkt (profielen, afkapvolgorde, stelsel, meetwaarden) geldt de samengevoegde versie en `index.html`.
+
 # Indelingsblok `ind` — v0.4 bijgesteld aan de besluiten van 17-11-2026
 
 Status: **voorstel**, 17-11-2026. Gebouwd als pure functies in `codec/indeling.js` (tabellen in `codec/indeling-tabellen.js`), getest in `tests/test-indeling.js`. Gaat nog **niet** in de QR; `mkpEncode`/`mkpDecode`/`mkpAfkappen` zijn ongewijzigd.
