@@ -13,18 +13,24 @@ import { _afkapMelding } from "./teksten.js";
 //      eraf — de materiaallijst met artikelnummers, grp[].mat, de meetwaarden.
 //      Dat is geen afkappen maar de definitie van de sticker; de app geeft die
 //      gegevens mee in het volledige paspoort.
-//   2. Past het niet onder de grens: de indeling (`ind`) eraf.
-//   3. Past het dan nog niet: WEIGEREN. Er wordt niets ingekort en niets
+//   2. Past het niet onder de grens: het meetanker (`log[].ma`) eraf, van elke
+//      logregel die NIET ondertekend is (besluit Martin 24-11-2026: het anker
+//      wijkt vóór de indeling). De regel zelf blijft staan; bij een ondertekende
+//      regel blijft het anker staan, want weghalen breekt zijn handtekening.
+//   3. Past het dan nog niet: de indeling (`ind`) eraf.
+//   4. Past het dan nog niet: WEIGEREN. Er wordt niets ingekort en niets
 //      weggelaten; de uitkomst zegt dat er geen sticker kan komen.
 //
 // NOOIT, onder geen enkele omstandigheid: de identiteit (pc, nr, ean, ean2, bj),
 // het stelsel, grp[] (ook de omschrijvingen niet), de logboekregels zelf, en
 // elke handtekening. Ook de andere kernvelden (ha, kam, lb, chk, vd, voed, frq)
-// en onbekende velden blijven staan: alleen `ind` mag wijken.
+// en onbekende velden blijven staan: alleen het meetanker van een niet
+// ondertekende regel en `ind` mogen wijken.
 //
 // Geeft { paspoort, modules, past, geweigerd, weggelaten, melding }:
 //   weggelaten.naarVolledig  paden die niet op de sticker horen (stap 1)
-//   weggelaten.indeling      true als stap 2 de indeling weghaalde
+//   weggelaten.meetanker     aantal logregels waar stap 2 het meetanker weghaalde
+//   weggelaten.indeling      true als stap 3 de indeling weghaalde
 //   geweigerd                true als ook stap 2 niet genoeg was; `paspoort` is
 //                            dan de kern zonder indeling, en hoort NIET op een sticker
 //   melding                  één regel voor de gebruiker, leeg als er niets weg is
@@ -32,13 +38,20 @@ export async function mkpAfkappen(paspoort, { maxModules = QR_MODULES_GRENS } = 
   const { paspoort: p, weggelaten: naarVolledig } = mkpProfiel(paspoort, "kern");
   const meet = async () => qrModules((await mkpUrl(p)).length);
   let modules = await meet();
+  let meetanker = 0;
+  if (modules > maxModules && Array.isArray(p.log)) {
+    for (const r of p.log) {
+      if (r && typeof r === "object" && "ma" in r && !("sig" in r)) { delete r.ma; meetanker++; }
+    }
+    if (meetanker) modules = await meet();
+  }
   let indeling = false;
   if (modules > maxModules && "ind" in p) {
     delete p.ind; indeling = true;
     modules = await meet();
   }
   const past = modules <= maxModules;
-  const weggelaten = { naarVolledig, indeling };
+  const weggelaten = { naarVolledig, meetanker, indeling };
   return { paspoort: p, modules, past, geweigerd: !past, weggelaten,
     melding: _afkapMelding(weggelaten, past, modules, maxModules) };
 }

@@ -71,6 +71,7 @@ export function _afkapMelding(weg, past, modules, maxModules = 105) {
   // Wat naar het volledige paspoort gaat (stap 1) is geen verlies en staat hier
   // niet in; de toepassing kan het apart noemen.
   const delen = [];
+  if (weg && weg.meetanker) delen.push("De meetwaarden van deze klus (het meetanker) staan niet op de sticker: met het anker paste de QR niet. Ze staan in het volledige paspoort.");
   if (weg && weg.indeling) delen.push("De kastindeling staat niet op de sticker: met de indeling paste de QR niet. Alle andere gegevens staan er wel op.");
   if (!past) delen.push(`Er is geen QR gemaakt: ook zonder kastindeling is de code ${modules === Infinity ? "te groot voor een QR" : modules + " modules"}, meer dan ${maxModules}. Er is niets ingekort of weggelaten.`);
   return delen.join(" ");

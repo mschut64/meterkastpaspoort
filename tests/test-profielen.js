@@ -103,6 +103,33 @@ eq(c === null || JSON.stringify(c).includes("ongeldig") === false, true, "H6 een
   eq(u.weggelaten.naarVolledig.sort(), ["grp[].mat", "mat", "mw"], "H12 wel genoemd als: staat in het volledige paspoort");
 }
 
+console.log("▶ A: het meetanker wijkt vóór de indeling (besluit 24-11-2026)");
+{
+  const ANKER = "261124;FL1664;32;41;250;18,23";
+  const regel = { d: "2026-11-24", b: "Eigen bedrijf", w: "oplevering", ma: ANKER };
+  // Zo groot dat het mét anker niet past, zonder anker wel (met de indeling).
+  const basisInd = ruis(900);
+  let ind = "", p = null, u = null, gevonden = false;
+  for (let n = 400; n < 900; n += 1) {
+    ind = basisInd.slice(0, n);
+    p = { v: 3, d: "2026-11-24", pc: "1234AB", nr: "1", stl: "TN-C-S", grp: [{ t: "alg", rol: "af", f: 1, n: "Keuken" }], log: [{ ...regel }], ind };
+    const zonder = await mkpGrootte({ ...p, log: [{ d: regel.d, b: regel.b, w: regel.w }] });
+    const met = await mkpGrootte(p);
+    if (!met.past && zonder.past) { gevonden = true; break; }
+  }
+  eq(gevonden, true, "A0 (controle) er is een sticker die met anker net niet past en zonder wel");
+  u = await mkpAfkappen(p);
+  eq([u.past, "ma" in u.paspoort.log[0], u.paspoort.ind === ind, u.weggelaten.meetanker, u.weggelaten.indeling], [true, false, true, 1, false], "A1 eerst gaat het anker eraf; de indeling blijft");
+  eq(Object.keys(u.paspoort.log[0]), ["d", "b", "w"], "A2 de logregel zelf blijft staan");
+  eq(/meetanker\) staan niet op de sticker/.test(u.melding), true, "A3 de melding noemt het meetanker bij naam");
+  const getekend = { ...p, log: [{ ...regel, sid: "k", sig: ruis(86) }] };
+  const g = await mkpAfkappen(getekend);
+  eq([g.paspoort.log[0].ma, g.weggelaten.meetanker], [ANKER, 0], "A4 een ondertekende regel houdt zijn anker; dan wijkt de indeling of komt er geen QR");
+  const klein = { v: 3, d: "2026-11-24", log: [{ ...regel }] };
+  eq((await mkpAfkappen(klein)).paspoort.log[0].ma, ANKER, "A5 past het, dan blijft het anker staan");
+  eq(MKP_VELDEN.log.includes("ma"), true, "A6 de codec kent log[].ma");
+}
+
 console.log("▶ S: het stelsel (besluit 23-11-2026)");
 {
   const { mkpStelsel, MKP_STELSELS, MKP_MEETSOORTEN } = await import("../mkp.js");

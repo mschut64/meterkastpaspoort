@@ -35,7 +35,7 @@ export const MKP_VELDEN = Object.freeze({
   mat:  Object.freeze(["i", "s", "fab", "typ", "art", "sn", "pd", "pos"]),
   lb:   Object.freeze(["aan", "typ", "max", "reg"]),
   chk:  Object.freeze(["r", "d"]),
-  log:  Object.freeze(["d", "b", "w", "erk", "c", "zeg", "sid", "sig"]),
+  log:  Object.freeze(["d", "b", "w", "erk", "c", "zeg", "ma", "sid", "sig"]),
   vd:   Object.freeze(["id", "n", "rol", "plaats", "inb"]),
   voed: Object.freeze(["vd", "grp", "a", "mm2", "lng"]),
   // Voorstel v0.4, besluit 23-11-2026: de meetwaarden, alleen in profiel volledig.
