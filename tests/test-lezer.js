@@ -4,7 +4,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { readFileSync, readdirSync } from "node:fs";
 import { mkpDecode } from "../mkp.js";
-import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst } from "../lezer/model.js";
+import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, projecteer, labelStroken } from "../lezer/model.js";
+import { maakQr } from "../lezer/vendor/qrcode.min.js";
+import { qrModules } from "../mkp.js";
 
 let passed = 0, failed = 0;
 const failures = [];
@@ -76,15 +78,55 @@ eq(kastModel({ v: 3, ind: 42 }).ontbreekt.some((t) => /niet leesbaar/.test(t)), 
 eq(kastModel({ v: 3, xyz: 1, grp: [] }).onbekend, ["xyz"], "6.5 onbekende velden worden genoemd, niet getoond");
 
 console.log("▶ 7 · de lezer laadt niets uit een app");
-for (const f of ["lezer/lezer.js", "lezer/model.js"]) {
+const MAG = ["../mkp.js", "./model.js", "./vendor/qrcode.min.js", "./foto.js", "./verklaring.js"];
+for (const f of ["lezer/lezer.js", "lezer/model.js", "lezer/verklaring.js", "lezer/foto.js"]) {
   const s = readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
-  const imports = [...s.matchAll(/^import .* from "([^"]+)"/gm)].map((x) => x[1]);
-  eq(imports.every((i) => i === "../mkp.js" || i === "./model.js"), true, `7.1 ${f} importeert alleen de codec en het model`);
+  const imports = [...s.matchAll(/^import .* from "([^"]+)"/gm), ...s.matchAll(/import\("([^"]+)"\)/g)].map((x) => x[1]);
+  eq(imports.every((i) => MAG.includes(i)), true, `7.1 ${f} importeert alleen de codec, het model en de eigen delen`);
   eq(/innerHTML/.test(s), false, `7.2 ${f} zet niets als HTML in de pagina`);
 }
 const html = readFileSync(new URL("../lezer/index.html", import.meta.url), "utf8");
 eq(/<script(?![^>]*src="\/lezer\/lezer\.js")[^>]*src=/.test(html), false, "7.3 de pagina laadt geen ander script dan de lezer");
 eq(/user-scalable=no|maximum-scale/.test(html), false, "7.4 inzoomen blijft mogelijk");
+
+console.log("▶ 8 · de groepenverklaring");
+{
+  const m = kastModel(await lees("kast-17-groepen")), v = groepenVerklaring(m);
+  eq([v.regels.length, v.regels.every((r) => r.stroom === "B16"), v.aardlekken.map((a) => a.letter)], [17, true, ["A", "B", "C", "D"]], "8.1 17 regels met hun beveiliging, en de aardlekken A–D");
+  // De vier aardlekken staan naast elkaar met alle automaten erachter: uit de plaats
+  // afleiden zou overal "D" geven. Dus niets afleiden.
+  eq(v.regels.every((r) => r.aardlek === ""), true, "8.2 de aardlek wordt nooit uit de plaats afgeleid");
+  const v3 = groepenVerklaring(kastModel(await lees("kast-3-groepen")));
+  eq([v3.regels.length, v3.gekoppeld, v3.regels.every((r) => r.stroom === "")], [3, false, true], "8.3 zonder koppeling: de groepen, zonder beveiliging");
+  const ala = { rails: [{ nr: 1, breedte: 2, items: [{ i: 0, soort: "aardlekautomaat", breedte: 2, positie: 0, groep: 1, bev: "B16 · 30 mA · type A" }] }], groepen: [{ nr: 1, naam: "Laadpaal", type: "laadpunt", fase: "" }] };
+  eq(groepenVerklaring(ala).regels[0].aardlek, "eigen (aardlekautomaat, 30 mA type A)", "8.4 een aardlekautomaat is zijn eigen aardlek");
+  const bron = readFileSync(new URL("../lezer/verklaring.js", import.meta.url), "utf8");
+  eq([/Opgesteld uit het meterkastpaspoort van \$\{datum\}\. Controleer of dit klopt met de kast\./.test(bron), /pdf-?lib|jspdf/i.test(bron)], [true, false], "8.5 de controlezin staat er vast in, en er zit geen pdf-bibliotheek in");
+  const q = maakQr(`https://meterkastpaspoort.nl/p#${fx["kast-17-groepen"].fragment}`, "M");
+  eq(q.modules.size, qrModules(`https://meterkastpaspoort.nl/p#${fx["kast-17-groepen"].fragment}`.length), "8.6 de QR op het vel is even groot als die op de sticker");
+}
+
+console.log("▶ 9 · de foto");
+{
+  const rail = { breedte: 10, items: [{ i: 0, positie: 0, breedte: 2, groep: null }, { i: 1, positie: 2, breedte: 1, groep: 4 }] };
+  const [, p] = projecteer(rail, { x: 0, y: 50 }, { x: 100, y: 50 });
+  eq([p.hoeken[0], p.hoeken[2], p.midden], [[20, 37], [30, 63], [25, 50]], "9.1 een rechte rail: plaats en breedte naar pixels");
+  eq(p.groep, 4, "9.2 het kader draagt zijn groep");
+  const [, s] = projecteer(rail, { x: 50, y: 0 }, { x: 50, y: 100 });
+  eq(s.midden, [50, 25], "9.3 een rail die schuin of rechtop staat volgt de tikken");
+  eq(projecteer(rail, { x: 5, y: 5 }, { x: 5, y: 5 }), [], "9.4 twee keer dezelfde tik: geen kaders");
+  const bron = readFileSync(new URL("../lezer/foto.js", import.meta.url), "utf8") + readFileSync(new URL("../lezer/lezer.js", import.meta.url), "utf8");
+  eq(/localStorage|indexedDB|fetch\(|sendBeacon|XMLHttpRequest/.test(bron.replace(/fetch\("\/veldnotities\/index\.json"\)/, "")), false, "9.5 de foto wordt nergens bewaard of verstuurd");
+}
+
+console.log("▶ 10 · labelstroken");
+{
+  const m = kastModel(await lees("kast-17-groepen")), st = labelStroken(m, 4);
+  const alle = st.flatMap((s) => s.posities);
+  eq(alle.length, m.rails.flatMap((r) => r.items).length, "10.1 elke positie staat op precies één strook");
+  eq(st.every((s) => s.modules <= 4 || s.posities.length === 1), true, "10.2 hooguit vier modules per strook (een breder toestel krijgt er een alleen)");
+  eq(st.find((s) => s.posities.some((p) => p.groep === 1)).posities.find((p) => p.groep === 1), { positie: 12, breedte: 1, leeg: false, groep: 1, naam: "Quooker", bev: "B16", kort: "" }, "10.3 de tekst per positie: groep, naam, beveiliging");
+}
 
 console.log("\n" + "═".repeat(47));
 console.log(`RESULTAAT: ${passed} geslaagd · ${failed} mislukt · ${passed + failed} totaal`);

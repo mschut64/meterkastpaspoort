@@ -41,7 +41,10 @@ const vlag = (st) => el("span", { class: `vlag ${VLAG[st][1]}` }, VLAG[st][0]);
 
 // ── Lezen ─────────────────────────────────────────────────────────────────────
 let huidig = "";   // het fragment dat nu getoond wordt
-async function lees(invoer) {
+let foto = null;   // { url, w, h } — alleen in het geheugen van dit toestel
+function zetFoto(f) { if (foto && foto.url && (!f || f.url !== foto.url)) URL.revokeObjectURL(foto.url); foto = f || null; }
+let laatstePaspoort = null;
+async function lees(invoer, opties = {}) {
   const frag = fragmentUit(invoer);
   $("fout").replaceChildren();
   if (!frag) { toonInvoer(true); return; }
@@ -52,6 +55,8 @@ async function lees(invoer) {
     toonInvoer(true); return;
   }
   huidig = frag;
+  laatstePaspoort = p;
+  zetFoto(opties.foto || null);
   // De link ís het paspoort: zet hem in de adresbalk, dan is de pagina zelf te delen.
   if (location.hash.slice(1) !== frag) history.replaceState(null, "", `${location.pathname}#${frag}`);
   toonInvoer(false);
@@ -65,6 +70,8 @@ async function toon(p) {
   const h = herkomst(p);
   const uit = $("uit");
   keuze = null;
+  const metFoto = !!(foto && m.rails.length);
+  if (metFoto) passend = true;
 
   // 1. Wat het is: adres, kast, stand.
   const kop = el("div", { class: "vlak" },
@@ -92,21 +99,28 @@ async function toon(p) {
   // 3. Wat ontbreekt.
   const ontbreekt = m.ontbreekt.map((t) => el("div", { class: "melding" }, t));
 
-  // 4. De tekening en de groepen naast elkaar.
-  const twee = el("div", { class: "twee" });
-  const links = el("div", {});
+  // 4. De tekening en de groepen naast elkaar — of, met een foto, de foto en de tekening.
+  const herteken = () => {
+    const oud = $("tekening"); if (!oud) return;
+    oud.replaceWith(tekening(m));
+    if ($("knopPas")) $("knopPas").textContent = passend ? "Groot, met schuiven" : "Hele kast in beeld";
+    if (keuze) { const k = keuze; keuze = null; kies(k); }
+  };
+  const kastDeel = el("div", { id: "tekeningPlek" });
   if (m.rails.length) {
-    links.append(el("h2", {}, "De kast"),
+    kastDeel.append(...[el("h2", {}, metFoto ? "Het paspoort" : "De kast"),
       el("p", { class: "tekening-uitleg" }, "Van links naar rechts, rail voor rail. Tik op een module of een groep."),
-      el("div", { class: "knoppen", style: "margin:0 0 8px" }, el("button", { type: "button", id: "knopPas", onclick: () => {
-        passend = !passend; const oud = $("tekening"); const nieuw = tekening(m); oud.replaceWith(nieuw);
-        $("knopPas").textContent = passend ? "Groot, met schuiven" : "Hele kast in beeld"; if (keuze) { const k = keuze; keuze = null; kies(k); }
-      } }, passend ? "Groot, met schuiven" : "Hele kast in beeld")),
+      el("div", { class: "knoppen", style: "margin:0 0 8px" }, el("button", { type: "button", id: "knopPas", onclick: () => { passend = !passend; herteken(); } },
+        passend ? "Groot, met schuiven" : "Hele kast in beeld")),
       tekening(m), el("div", { id: "detail", class: "vlak klein", style: "min-height:48px" }, el("span", { class: "zacht" }, "Tik op een module voor wat hij is.")),
-      el("p", { class: "vraag" }, "Klopt dit met wat je ziet?"));
+      el("p", { class: "vraag" }, "Klopt dit met wat je ziet?"),
+      metFoto ? null : fotoKnop()].filter(Boolean));
   }
-  const rechts = el("div", {}, el("h2", {}, `Groepen${m.groepen.length ? ` (${m.groepen.length})` : ""}`), groepenLijst(m));
-  twee.append(links, rechts);
+  const groepenDeel = el("div", {}, el("h2", {}, `Groepen${m.groepen.length ? ` (${m.groepen.length})` : ""}`), groepenLijst(m));
+  const twee = metFoto
+    ? el("div", {}, el("p", { class: "zacht klein draai" }, "Draai je telefoon voor foto en tekening naast elkaar."),
+        el("div", { class: "twee foto" }, el("div", { id: "fotoPlek" }), kastDeel), groepenDeel)
+    : el("div", { class: "twee" }, kastDeel, groepenDeel);
 
   // 5. Het logboek, in volgorde.
   const logboek = el("details", { class: "vlak" }, el("summary", {}, `Logboek (${h.length})`),
@@ -122,7 +136,8 @@ async function toon(p) {
   // 6. Delen en verder.
   const knoppen = el("div", { class: "knoppen", style: "margin:18px 0" },
     el("button", { class: "hoofd", type: "button", onclick: deel }, "Deel dit paspoort"),
-    el("button", { type: "button", onclick: () => { history.replaceState(null, "", location.pathname); uit.replaceChildren(); toonInvoer(true); } }, "Andere sticker"));
+    el("button", { type: "button", onclick: () => verklaring(m, h) }, "Groepenverklaring (A4)"),
+    el("button", { type: "button", onclick: () => { history.replaceState(null, "", location.pathname); zetFoto(null); uit.replaceChildren(); toonInvoer(true); } }, "Andere sticker"));
 
   const onbekend = m.onbekend.length
     ? el("p", { class: "zacht klein" }, `Op deze sticker staan gegevens die deze lezer niet kent (${m.onbekend.join(", ")}); die zijn overgeslagen.`)
@@ -130,6 +145,11 @@ async function toon(p) {
 
   uit.replaceChildren(...[kop, herkomstVlak, ...ontbreekt, twee, logboek, knoppen, onbekend].filter(Boolean),
     el("p", { class: "zacht klein" }, "Een handtekening toont aan dat een logregel onveranderd is en van de houder van die sleutel komt. Niet dat de installatie deugt, en niet dat de sticker op de juiste kast zit."));
+
+  // "Hele kast in beeld" rekent met de breedte van de kolom: die is er pas nu.
+  if (passend) herteken();
+  if (metFoto) import("./foto.js").then((F) => F.fotoUitlijnen({ el, m, foto, plek: $("fotoPlek"),
+    opModule: (i) => { const it = m.rails.flatMap((r) => r.items).find((x) => x.i === i); if (it) kies({ item: it, groep: it.groep }); } }));
 
   // De handtekeningen na het tekenen: de tekening wacht niet op de sleutellijst.
   for (const [i, r] of h.entries()) {
@@ -150,12 +170,13 @@ let passend = false;   // "hele kast in beeld" of groot met schuiven
 function modulePx(m) {
   if (!passend) return 46;
   const breedst = Math.max(m.mpr || 0, ...m.rails.map((r) => r.breedte), 1);
-  const beschikbaar = Math.max(200, ($("uit").clientWidth || 340) - 34);
+  const plek = $("tekeningPlek");
+  const beschikbaar = Math.max(140, ((plek && plek.clientWidth) || $("uit").clientWidth || 340) - 34);
   return Math.max(6, Math.floor((beschikbaar - (breedst - 1) * GAP) / breedst));
 }
 function tekening(m) {
   const MODULE_PX = modulePx(m);
-  const klein = MODULE_PX < 24 ? (MODULE_PX < 14 ? " mini piep" : " mini") : "";
+  const klein = MODULE_PX < 24 ? (MODULE_PX < 12 ? " mini piep" : " mini") : "";
   const kast = el("div", { class: `kast${passend ? " passend" : ""}${klein}`, id: "tekening", role: "group", "aria-label": "Tekening van de kast" });
   for (const r of m.rails) {
     const rij = el("div", { class: "rail" }, el("div", { class: "railnr" }, String(r.nr)));
@@ -196,7 +217,7 @@ function kies(k) {
   const detail = $("detail");
   if (!keuze) { if (detail) zet(detail, el("span", { class: "zacht" }, "Tik op een module voor wat hij is.")); return; }
   if (keuze.groep) for (const e of uit.querySelectorAll(`[data-groep="${keuze.groep}"]`)) e.classList.add("aan");
-  if (keuze.item) { const e = uit.querySelector(`[data-item="${keuze.item.i}"]`); if (e) e.classList.add("aan"); }
+  if (keuze.item) for (const e of uit.querySelectorAll(`[data-item="${keuze.item.i}"]`)) e.classList.add("aan");
   if (detail) {
     const it = keuze.item;
     if (it) zet(detail, el("b", {}, SOORT_NAAM[it.soort] || it.soort), it.bev ? ` · ${it.bev}` : "", ` · ${it.breedte} ${it.breedte === 1 ? "module" : "modules"}`,
@@ -204,6 +225,38 @@ function kies(k) {
     else zet(detail, el("b", {}, `Groep ${keuze.groep}`), uit.querySelector(`.mod[data-groep="${keuze.groep}"]`) ? " — opgelicht in de kast" : " — staat niet in de tekening");
   }
   if (keuze.uitLijst) { const e = uit.querySelector(`.mod[data-groep="${keuze.groep}"]`); if (e) e.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" }); }
+}
+
+// Een foto erbij, ook als de link geplakt is. Blijft in het geheugen.
+function fotoKnop() {
+  const invoer = el("input", { type: "file", accept: "image/*", capture: "environment", hidden: true, onchange: async () => {
+    const f = invoer.files && invoer.files[0]; if (!f) return;
+    const url = URL.createObjectURL(f);
+    const img = new Image(); img.src = url;
+    try { await img.decode(); } catch { URL.revokeObjectURL(url); stil("Deze foto is niet te openen"); return; }
+    zetFoto({ url, w: img.naturalWidth, h: img.naturalHeight });
+    await toon(laatstePaspoort);
+  } });
+  return el("div", { class: "knoppen" }, invoer, el("button", { type: "button", onclick: () => invoer.click() }, "📷 Foto van de kast ernaast"));
+}
+
+async function verklaring(m, h) {
+  const status = h[0] ? await handtekening(h[0].regel) : "geen";
+  const V = await import("./verklaring.js");
+  const y = window.scrollY;
+  V.toonVerklaring({ el, m, h, frag: huidig, status, terug: () => window.scrollTo(0, y) });
+}
+
+// Het beeld van de camera vastpakken op het moment dat de QR herkend is: de
+// sticker zit op de kast, dus de kast staat in hetzelfde beeld.
+async function vangFrame(video) {
+  const w = video.videoWidth, h = video.videoHeight;
+  if (!w || !h) return null;
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  c.getContext("2d").drawImage(video, 0, 0, w, h);
+  const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.9));
+  return blob ? { url: URL.createObjectURL(blob), w, h } : null;
 }
 
 async function deel() {
@@ -236,7 +289,11 @@ async function startScan() {
     if (!stroom) return;
     try {
       const tekst = await lezer(v, doek, ctx);
-      if (tekst && fragmentUit(tekst)) { stopScan(); await lees(tekst); return; }
+      if (tekst && fragmentUit(tekst)) {
+        let beeld = null;
+        try { beeld = await vangFrame(v); } catch { /* zonder foto verder */ }
+        stopScan(); await lees(tekst, { foto: beeld }); return;
+      }
     } catch { /* volgende beeld */ }
     lus = setTimeout(stap, 180);
   };

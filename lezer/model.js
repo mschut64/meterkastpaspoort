@@ -87,14 +87,17 @@ export function kastModel(p) {
     uit.mpr = u.mpr || null;
     let rail = { nr: 1, items: [], breedte: 0 };
     let n = 0;
+    let letters = 0;   // aardlekken heten A, B, C in leesvolgorde
     for (const t of u.toestellen) {
       if (t.soort === "railscheiding") { uit.rails.push(rail); rail = { nr: rail.nr + 1, items: [], breedte: 0 }; continue; }
       const breedte = t.breedte || 1;
       const groep = Number.isInteger(t.groep) && t.groep >= 1 ? t.groep : null;
       const g = groep && grp[groep - 1] ? grp[groep - 1] : null;
+      const letter = t.soort === "aardlek" ? String.fromCharCode(65 + (letters++ % 26)) : null;
       rail.items.push({
-        i: n++, soort: t.soort, leeg: t.soort === "leeg", breedte, positie: rail.breedte,
-        kort: t.soort === "leeg" ? "" : (SOORT_KORT[t.soort] ?? ""),
+        i: n++, soort: t.soort, leeg: t.soort === "leeg", breedte, positie: rail.breedte, rail: rail.nr,
+        letter,
+        kort: t.soort === "leeg" ? "" : letter ? `AL ${letter}` : (SOORT_KORT[t.soort] ?? ""),
         bev: t.soort === "leeg" ? "" : bevTekst(t),
         naam: tekst(t.naam) || (g && g.n ? tekst(g.n) : ""),
         groep: g ? groep : null,
@@ -154,4 +157,68 @@ export function leesAnker(t) {
   if (dt.length) delen.push(`ΔT ${dt.map((x) => Math.round(x)).join("/")} ms`);
   const datum = /^\d{6}$/.test(d[0]) ? `20${d[0].slice(0, 2)}-${d[0].slice(2, 4)}-${d[0].slice(4, 6)}` : "";
   return { datum, instrument: d[1] || "", tekst: delen.join(" · ") };
+}
+
+/**
+ * De groepenverklaring: per groep nummer, waar hij voor is, aardlek en stroom.
+ * De sticker legt niet vast achter welke aardlek een groep hangt (de kam is niet
+ * te zien, en aardlekken staan vaak bij elkaar op één rail). Alleen bij een
+ * aardlekautomaat is het zeker: die is zijn eigen aardlek. Anders blijft het
+ * veld leeg — op papier om met de hand in te vullen. Nooit afleiden uit de plaats.
+ */
+export function groepenVerklaring(m) {
+  const items = m.rails.flatMap((r) => r.items);
+  const aardlekken = items.filter((it) => it.letter).map((it) => ({ letter: it.letter, bev: it.bev, rail: it.rail }));
+  const regels = m.groepen.map((g) => {
+    const it = items.find((x) => x.groep === g.nr) || null;
+    let aardlek = "";
+    if (it && it.soort === "aardlekautomaat") aardlek = `eigen (aardlekautomaat${it.bev.includes("mA") ? `, ${it.bev.split(" · ").filter((d) => /mA|type/.test(d)).join(" ")}` : ""})`;
+    return {
+      nr: g.nr, naam: g.naam || g.type || "", type: g.naam ? g.type : "", fase: g.fase,
+      aardlek, stroom: it && it.bev ? it.bev.split(" · ")[0] : "", inTekening: !!it, onderverdeler: g.onderverdeler,
+    };
+  });
+  return { regels, aardlekken, gekoppeld: regels.some((r) => r.inTekening) };
+}
+
+/**
+ * Een rail op een foto: de gebruiker tikte het begin (a) en het eind (b) van de
+ * rail aan, op halve hoogte van de modules. Elke module krijgt een vierhoek op
+ * de lijn ertussen, naar zijn plaats en breedte in modules. Pixels zijn alleen
+ * om aan te wijzen: er wordt niets uit gemeten.
+ * @returns [{ i, groep, soort, hoeken: [[x,y]×4], midden: [x,y] }]
+ */
+export function projecteer(rail, a, b) {
+  const totaal = Math.max(1, rail.breedte || 0);
+  const dx = b.x - a.x, dy = b.y - a.y, lengte = Math.hypot(dx, dy);
+  if (!(lengte > 0)) return [];
+  const ux = dx / lengte, uy = dy / lengte;          // langs de rail
+  const nx = -uy, ny = ux;                           // loodrecht erop
+  const mod = lengte / totaal;
+  const half = (mod * 2.6) / 2;                      // een DIN-module is ±2,6 keer zo hoog als breed
+  const punt = (t, s) => [Math.round((a.x + ux * t + nx * s) * 10) / 10, Math.round((a.y + uy * t + ny * s) * 10) / 10];
+  return rail.items.map((it) => {
+    const t0 = it.positie * mod, t1 = (it.positie + it.breedte) * mod;
+    return { i: it.i, groep: it.groep, soort: it.soort, leeg: it.leeg,
+      hoeken: [punt(t0, -half), punt(t1, -half), punt(t1, half), punt(t0, half)], midden: punt((t0 + t1) / 2, 0) };
+  });
+}
+
+/**
+ * De tekst per positie voor een labelstrook van `perStrook` modules. Een toestel
+ * hoort bij de strook waarop het begint; past het er niet meer bij, dan begint
+ * een nieuwe strook. Lege plaatsen tellen mee, met lege tekst.
+ */
+export function labelStroken(m, perStrook = 4) {
+  const stroken = [];
+  for (const r of m.rails) {
+    let s = null;
+    for (const it of r.items) {
+      if (!s || (s.modules + it.breedte > perStrook && s.posities.length)) { s = { rail: r.nr, vanaf: it.positie, modules: 0, posities: [] }; stroken.push(s); }
+      s.posities.push({ positie: it.positie, breedte: it.breedte, leeg: it.leeg,
+        groep: it.groep, naam: it.naam, bev: it.bev.split(" · ")[0] || "", kort: it.kort });
+      s.modules += it.breedte;
+    }
+  }
+  return stroken;
 }
