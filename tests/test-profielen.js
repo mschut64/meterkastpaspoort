@@ -25,7 +25,7 @@ eq([mkpProfielVan("stl"), mkpProfielVan("mat"), mkpProfielVan("grp.mat"), mkpPro
 eq([mkpProfielVan("vd"), mkpProfielVan("voed")], ["kern", "kern"], "P3 de verwijzing naar onderverdelers gaat mee in de kern (besluit 8)");
 eq(mkpProfielVan("frq"), "kern", "P4 de datum van de volgende inspectie staat op de sticker (besluit 5)");
 eq([mkpProfielVan("idc"), mkpProfielVan("con")], ["inspectie", "inspectie"], "P5 SCIOS-code en constateringen niet op de sticker (besluit 5)");
-eq(mkpProfielVan("res"), "volledig", "P6 reserve en grondslag alleen in het volledige dossier (besluit 8)");
+eq([mkpProfielVan("res"), mkpProfielVan("grond")], ["kern", "kern"], "P6 reservering en grondslag op de sticker (besluit Martin 25-11-2026, draait besluit 8 om)");
 eq(mkpProfielVan("xyz"), null, "P7 een onbekend veld hoort bij geen profiel");
 const alle = Object.values(MKP_PROFIEL_VELDEN).flat();
 eq(alle.length, new Set(alle).size, "P8 geen veld in twee profielen tegelijk");
@@ -35,14 +35,14 @@ const vol = { v: 2, d: "2026-11-17", pc: "9999ZZ", nr: "1", frq: "2029-11", idc:
   log: [{ d: "2026-11-17", b: "Bedrijf", w: "inspectie", mm: [{ id: "T1" }] }, { d: "2025-01-01", b: "Oud", w: "x", mm: [{ id: "T0" }], sid: "k", sig: "AAAA" }] };
 const voor = JSON.stringify(vol);
 const k = mkpProfiel(vol, "kern");
-eq(Object.keys(k.paspoort), ["v", "d", "pc", "nr", "frq", "xyz", "log"], "P9 kern: inspectie en volledig eruit, onbekend blijft staan");
-eq(k.weggelaten.sort(), ["con", "idc", "log[].mm", "res", "stp"], "P10 kern: zegt wat er niet op de sticker staat");
+eq(Object.keys(k.paspoort), ["v", "d", "pc", "nr", "frq", "res", "xyz", "log"], "P9 kern: inspectie en volledig eruit, de reservering en onbekend blijven staan");
+eq(k.weggelaten.sort(), ["con", "idc", "log[].mm", "stp"], "P10 kern: zegt wat er niet op de sticker staat");
 eq(["mm" in k.paspoort.log[0], "mm" in k.paspoort.log[1], k.nietIngekort], [false, true, ["log[1]"]],
    "P11 een ondertekende logregel wordt nooit ingekort (anders klopt de handtekening niet meer)");
 eq(JSON.stringify(vol), voor, "P12 het origineel blijft ongewijzigd");
 const ins = mkpProfiel(vol, "inspectie");
-eq([("idc" in ins.paspoort), ("con" in ins.paspoort), ("res" in ins.paspoort), ins.paspoort.log[0].mm.length], [true, true, false, 1],
-   "P13 inspectie: kern + inspectie, zonder de reservering");
+eq([("idc" in ins.paspoort), ("con" in ins.paspoort), ("res" in ins.paspoort), ins.paspoort.log[0].mm.length], [true, true, true, 1],
+   "P13 inspectie: kern + inspectie, met de reservering (die zit in de kern)");
 eq(mkpProfiel(vol, "volledig").paspoort, vol, "P14 volledig: alles");
 let fout = ""; try { mkpProfiel(vol, "sticker"); } catch (e) { fout = e.message; }
 eq(fout, "onbekend profiel: sticker", "P15 een onbekend profiel is een fout");
@@ -149,6 +149,20 @@ console.log("▶ M: de materiaallijst — soortcodes en plaats (spec 4.5)");
   eq([mkpPlaatsTekst({ rail: 1, positie: 5 }), mkpPlaatsTekst({ verdeler: 2, rail: 1, positie: 5 }), mkpPlaatsTekst({ rail: 1, positie: 0 }), mkpPlaatsTekst({ rail: 1.5, positie: 2 })],
      ["R1-5", "V2-R1-5", null, null], "M5 schrijven, en geen verzonnen plaats");
   eq(mkpPlaatsLezen(mkpPlaatsTekst({ verdeler: 3, rail: 2, positie: 7 })), { verdeler: 3, rail: 2, positie: 7 }, "M6 heen en terug");
+}
+
+console.log("▶ R: de reservering wijkt nooit (besluit Martin 25-11-2026)");
+{
+  const { mkpAfkappen, mkpGrootte } = await import("../mkp.js");
+  const res = [{ t: "wp", pos: "R1-9..11", mod: 3, f: 3, fn: [1, 2, 3], a: 16, kw: 8, n: "lege buis naar zolder" }, { t: "lp", pos: "R2-1..2", mod: 2, f: 1, fn: [2], a: 20, kw: 3.7 }];
+  const grond = { d: "2026-11-25", ha: 25, kam: 40, gl: 0.6, rest: 9, door: "installq:12345" };
+  const leeg = { v: 3, d: "2026-11-25", pc: "9999ZZ", nr: "1", grp: [{ t: "alg", n: "Keuken" }] };
+  const kost = (await mkpGrootte({ ...leeg, res, grond })).tekens - (await mkpGrootte(leeg)).tekens;
+  eq(kost > 0 && kost < 250, true, `R1 twee reserveringen met grondslag kosten ${kost} tekens in de QR`);
+  // Een volle sticker: de indeling wijkt, de reservering blijft (en anders weigeren).
+  const groot = { ...leeg, res, grond, ind: "A".repeat(600), grp: Array.from({ length: 20 }, (_, i) => ({ t: "alg", n: "groep nummer " + i })) };
+  const a = await mkpAfkappen(groot);
+  eq(["res" in a.paspoort, "grond" in a.paspoort], [true, true], "R2 bij een volle sticker blijven reservering en grondslag staan");
 }
 
 console.log(`\nRESULTAAT: ${passed} geslaagd · ${failed} mislukt · ${passed + failed} totaal`);

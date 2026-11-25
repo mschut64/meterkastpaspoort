@@ -23,7 +23,8 @@ import { _afkapMelding } from "./teksten.js";
 //
 // NOOIT, onder geen enkele omstandigheid: de identiteit (pc, nr, ean, ean2, bj),
 // het stelsel, grp[] (ook de omschrijvingen niet), de logboekregels zelf, en
-// elke handtekening. Ook de andere kernvelden (ha, kam, lb, chk, vd, voed, frq)
+// elke handtekening, en de reservering met haar grondslag (res, grond — besluit
+// Martin 25-11-2026: juist voor de volgende installateur). Ook de andere kernvelden (ha, kam, lb, chk, vd, voed, frq)
 // en onbekende velden blijven staan: alleen het meetanker van een niet
 // ondertekende regel en `ind` mogen wijken.
 //

@@ -97,6 +97,8 @@
   <tr><td><code>ind</code></td><td>tekst</td><td>De fysieke indeling van de kast: welk toestel waar op welke rail, met breedte, polen, nominale stroom, karakteristiek, aanspreekstroom en aardlektype, en (blokversie 2) achter welke aardlekschakelaar een automaat hangt — als compact blok in base64url. Alleen een <em>gemeten</em> indeling hoort op een sticker. Een lezer die het blok niet kent, slaat het over. Vraagt datamodel <code>v: 3</code>. <span class="opt">voorstel v0.4</span></td></tr>
   <tr><td><code>frq</code></td><td>tekst</td><td>Maand van de volgende periodieke inspectie, <code>"JJJJ-MM"</code>. Van een inspectie staat alleen dit op de sticker; de rest blijft in het dossier. Vraagt datamodel <code>v: 3</code>. <span class="opt">voorstel v0.4</span></td></tr>
   <tr><td><code>mw</code></td><td>lijst</td><td>Meetwaarden — zie 4.10. Alleen in profiel <em>volledig</em>, nooit op de sticker. <span class="opt">voorstel v0.4</span></td></tr>
+  <tr><td><code>res</code></td><td>lijst</td><td>Reservering: waarop de kast is voorbereid (warmtepomp, laadpunt, thuisbatterij …) — zie 4.11. Op de sticker. <span class="opt">voorstel v0.4</span></td></tr>
+  <tr><td><code>grond</code></td><td>object</td><td>Grondslag van de reservering — zie 4.11. Op de sticker. <span class="opt">voorstel v0.4</span></td></tr>
 </table>
 
 <h3>4.2 Hoofdaansluiting <code>ha</code></h3>
@@ -234,7 +236,7 @@
 <ul>
   <li>Staan <code>pc</code> en <code>nr</code> ook in het paspoort van een onderverdeler, of alleen bij de hoofdverdeler?</li>
   <li>Hoe vaak komen installateurs en inspecteurs meerdere verdeelinrichtingen tegen, en wat leggen ze er nu over vast?</li>
-  <li>Samen vast te stellen met de gereserveerde ruimte <code>res[]</code> uit het ontwerpintentie-voorstel.</li>
+  <li>Samen te lezen met de reservering <code>res[]</code> (4.11): een reservering geldt voor de kast van dit paspoort.</li>
 </ul>
 
 <h3>4.10 Meetwaarden <code>mw[]</code> <span class="opt">voorstel v0.4 — alleen profiel volledig</span></h3>
@@ -248,6 +250,32 @@
   <tr><td><code>d</code></td><td>tekst</td><td>Meetdatum, <code>JJJJ-MM-DD</code>.</td></tr>
   <tr><td><code>c</code></td><td>tekst</td><td>Meetconditie; bij isolatie <code>"afgekoppeld"</code> of <code>"aangesloten"</code> (verbruikers).</td></tr>
 </table>
+
+<h3>4.11 Reservering <code>res[]</code> en grondslag <code>grond</code> <span class="opt">voorstel v0.4 — op de sticker</span></h3>
+<p>Het paspoort legt vast wát er is; deze velden leggen vast wát er bedoeld was. De installateur die de kast bouwt, houdt ruimte vrij voor een latere warmtepomp, laadpaal of thuisbatterij, of plaatst er al een automaat voor die nog niet is aangesloten. Zonder dit veld verdampt die gedachte zodra hij wegloopt. Met dit veld ziet de installateur die later komt, bij het scannen, waar hij terechtkan en waarop dat gebaseerd was.</p>
+<p><b>Een reservering is een intentie, geen garantie.</b> Het paspoort verklaart niet dat de uitbreiding past; het toont waarop de reservering rustte, zodat de volgende installateur zelf kan nagaan of dat nog klopt. Een lezer toont het als zodanig en oordeelt niet.</p>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>t</code></td><td>tekst</td><td>Waarvoor: <code>wp</code> (warmtepomp), <code>lp</code> (laadpunt), <code>bat</code> (thuisbatterij), <code>pv</code>, <code>kook</code>, <code>ov</code> (overig).</td></tr>
+  <tr><td><code>pos</code></td><td>tekst</td><td>Plaats in de kast, zelfde notatie als <code>mat[].pos</code>: <code>"R1-9..11"</code> (rail 1, modules 9 tot en met 11).</td></tr>
+  <tr><td><code>mod</code></td><td>getal</td><td>Aantal vrijgehouden modules. Bij een al geplaatste automaat de breedte daarvan.</td></tr>
+  <tr><td><code>f</code></td><td>getal</td><td>Aantal fasen waarvoor gereserveerd: 1 of 3.</td></tr>
+  <tr><td><code>fn</code></td><td>lijst</td><td>Fasenummer(s) waarop de uitbreiding bedoeld is, zoals <code>grp[].fn</code>.</td></tr>
+  <tr><td><code>a</code></td><td>getal</td><td>Stroom waarop is gerekend, in ampère (bij een geplaatste automaat: zijn nominale stroom).</td></tr>
+  <tr><td><code>kw</code></td><td>getal</td><td>Vermogen waarop is gerekend, in kW.</td></tr>
+  <tr><td><code>n</code></td><td>tekst</td><td>Vrije toelichting, bijvoorbeeld <code>"automaat geplaatst, niet aangesloten"</code> of <code>"lege buis naar zolder"</code>.</td></tr>
+</table>
+<p><code>grond</code> — waarop de reserveringen rusten:</p>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>d</code></td><td>tekst</td><td>Datum van de berekening, <code>JJJJ-MM-DD</code>.</td></tr>
+  <tr><td><code>ha</code></td><td>getal</td><td>Hoofdaansluiting waarop is gerekend, in ampère per fase.</td></tr>
+  <tr><td><code>kam</code></td><td>getal</td><td>Ontwerpstroom van de kam of verdeler, in ampère.</td></tr>
+  <tr><td><code>gl</code></td><td>getal</td><td>Toegepaste gelijktijdigheidsfactor.</td></tr>
+  <tr><td><code>rest</code></td><td>getal</td><td>Resterende ruimte op de zwaarst belaste fase, in ampère, mét de reserveringen meegerekend.</td></tr>
+  <tr><td><code>door</code></td><td>tekst</td><td>Wie de berekening deed, als <code>uitgever:nummer</code> (zoals <code>log[].erk</code>).</td></tr>
+</table>
+<p><b>Op de sticker, en nooit afgekapt</b> (besluit 25-11-2026; dit draait voor deze velden besluit 8 om). Gemeten (25-11-2026): één reservering met grondslag kost zo'n 110 tekens in de link, twee met een toelichting zo'n 190. Bij een grote kast die al op de grens van 105 modules zit, betekent dat: eerst wijkt het meetanker, dan de indeling — de reservering blijft. Schrijf daarom alleen wat de volgende installateur nodig heeft; <code>kw</code>, <code>fn</code> en <code>n</code> zijn optioneel. Wie een gereserveerde plek gebruikt, haalt die reservering weg en zegt dat in het logboek; zo blijft zichtbaar dat de ruimte is opgesoupeerd. Een toepassing die <code>res</code> niet begrijpt, geeft het door (paspoortbehoud).</p>
 
 <h2>5. Voorbeeld</h2>
 <p><b>Zelf bekijken:</b> de <a href="/lezer.html">paspoortlezer</a> is de referentie-implementatie van deze versie. Plak er een QR-URL in — of scan een sticker — en hij toont alle velden, inclusief <code>mat[]</code>, <code>fn</code>, <code>erk</code> en de status van de handtekeningen. Alles gebeurt in de browser; de paspoortdata verlaat het toestel niet.</p>
@@ -384,7 +412,7 @@
   <li>de indeling (<code>ind</code>) weglaten;</li>
   <li>past het dan nog niet: <b>weigeren en melden</b>. Er komt geen sticker; er wordt niets ingekort.</li>
 </ol>
-<p><b>Nooit</b>, onder geen enkele omstandigheid: de identiteit (<code>pc</code>, <code>nr</code>, <code>ean</code>, <code>ean2</code>, <code>bj</code>), het stelsel (<code>stl</code>), <code>grp[]</code> (ook de omschrijvingen niet), de regels van <code>log[]</code> zelf, elke handtekening, en het meetanker van een ondertekende regel. Ook de overige velden blijven staan, en nooit afkappen op grond van &ldquo;dit veld ken ik niet&rdquo;. Een toepassing die iets weglaat of weigert, noemt bij naam wat er niet op de sticker staat.</p>
+<p><b>Nooit</b>, onder geen enkele omstandigheid: de identiteit (<code>pc</code>, <code>nr</code>, <code>ean</code>, <code>ean2</code>, <code>bj</code>), het stelsel (<code>stl</code>), <code>grp[]</code> (ook de omschrijvingen niet), de regels van <code>log[]</code> zelf, elke handtekening, het meetanker van een ondertekende regel, en de reservering met haar grondslag (<code>res</code>, <code>grond</code>). Ook de overige velden blijven staan, en nooit afkappen op grond van &ldquo;dit veld ken ik niet&rdquo;. Een toepassing die iets weglaat of weigert, noemt bij naam wat er niet op de sticker staat.</p>
 
 <h2>7. Verlies en herstel</h2>
 <p>Een sticker kan verloren gaan — beschadiging, vervanging van de kastdeur, of brand. Het paspoort is daartegen bestand door <em>gedistribueerde opslag zonder register</em>: dezelfde QR-code staat als uitknippagina in elk opleverdocument, en dat document is bij oplevering aan de bewoner verstrekt (en berust in de administratie van de installateur). Herstel bestaat uit het scannen van de QR uit het meest recente opleverdocument en het printen van een nieuwe sticker. Omdat iedere klus een nieuw document met de actuele paspoortstand oplevert, bestaan er evenveel reservekopieën als er ingrepen zijn geweest — verspreid over bewoner en betrokken installateurs. Een centraal register is daarmee bewust géén onderdeel van deze specificatie: het zou een doorzoekbare koppeling tussen adres en installatiegegevens introduceren (privacy- en inbraakrisico) zonder wezenlijke toevoeging aan de hersteldekking.</p>
@@ -566,6 +594,7 @@
   <tr><td>Voorstel: <code>vd</code>, <code>voed</code> en <code>grp[].vd</code> — meerdere verdeelinrichtingen (4.9)</td><td>Een onderverdeler hangt aan een groep in de hoofdverdeler, maar geen van beide kasten wist dat. Per kast een eigen paspoort dat naar de ander verwijst: de QR blijft bij de kast, en wie in de schuur scant, ziet waar die kast aan hangt. Alle velden optioneel; een lezer die ze niet kent, slaat ze over.</td></tr>
   <tr><td>Voorstel: <code>stl</code>, het stelsel (4.1)</td><td>De beoordeling van de lusimpedantie hangt aan het stelsel. Op de sticker, want wie de kast opent moet het weten zonder dossier.</td></tr>
   <tr><td>Voorstel: <code>mw[]</code> (4.10) en <code>mat[]</code> alleen in profiel volledig</td><td>Meetwaarden en artikelnummers horen in het dossier, niet op de kast; de QR blijft daardoor onder de grens.</td></tr>
+  <tr><td>Voorstel: <code>res[]</code> en <code>grond</code>, de ontwerpintentie (4.11), op de sticker</td><td>Waarop de kast is voorbereid: de installateur die later een warmtepomp, laadpaal of thuisbatterij komt plaatsen, ziet bij het scannen waar hij terechtkan en waarop dat rustte. Nooit afgekapt.</td></tr>
   <tr><td>Voorstel: <code>log[].ma</code>, het meetanker (4.8)</td><td>Een paar meetwaarden van de laatste klus op de sticker, zodat de volgende meting ernaast kan: de meter, de meting of de kast? Het enige meetgegeven in de kern; bij een volle sticker wijkt het als eerste.</td></tr>
   <tr><td>Voorstel: in <code>ind</code> blokversie 2, met per automaat <code>al</code>: achter welke aardlekschakelaar hij hangt</td><td>De plaats op de rail zegt dat niet: aardlekken staan vaak naast elkaar met alle automaten erachter. De installateur weet het, de sticker droeg het niet. Versie 2 alleen als er een koppeling is; anders blijft het blok versie 1.</td></tr>
   <tr><td>Voorstel: nieuwe afkapvolgorde (hoofdstuk 6)</td><td>Een handtekening en een logregel zijn historie: die vallen nooit meer weg. Alleen de indeling mag wijken; anders weigeren.</td></tr>

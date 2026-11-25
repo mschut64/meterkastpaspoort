@@ -14,8 +14,12 @@
 //              de meetmiddelen per logregel (`log[].mm`). (Featurespec paspoort
 //              voor de inspecteur, 15-11-2026; de velden zelf zijn nog een
 //              voorstel en worden hier alleen bij naam gekend.)
-//   volledig   alles: kern + inspectie + de reservering en haar grondslag
-//              (`res[]`, ontwerpintentie — besluit 8: niet in de kern).
+//   volledig   alles: kern + inspectie + de materiaallijst en de meetwaarden.
+//
+// De reservering en haar grondslag (`res[]`, `grond` — ontwerpintentie) staan
+// sinds 25-11-2026 in de KERN (besluit Martin, draait besluit 8 voor dit deel
+// om): de installateur die later een warmtepomp, laadpaal of thuisbatterij komt
+// plaatsen, moet bij het scannen zien waarop de kast is voorbereid.
 //
 // Elk profiel is een uitbreiding van het vorige. Een veld dat in geen enkel
 // profiel genoemd wordt, is ONBEKEND en blijft altijd staan: nooit iets
@@ -46,11 +50,13 @@ export const MKP_PROFIEL_VELDEN = Object.freeze({
     "frq",
     // voorstel v0.4: het indelingsblok, als tekst (besluit 6)
     "ind",
+    // voorstel v0.4: de ontwerpintentie — reservering en grondslag (besluit Martin 25-11-2026)
+    "res", "grond",
   ]),
   inspectie: Object.freeze(["idc", "con", "stp", "log.mm"]),
   // besluit 23-11-2026: de materiaallijst (met artikelnummers) en de koppeling
   // ernaar, en de meetwaarden, staan alleen in het volledige dossier.
-  volledig: Object.freeze(["res", "mat", "grp.mat", "mw"]),
+  volledig: Object.freeze(["mat", "grp.mat", "mw"]),
 });
 
 // Streefwaarde en grens van de sticker (besluit 9): 600 tekens is de streefwaarde,

@@ -24,11 +24,11 @@ export const MKP_DATAMODELLEN = Object.freeze([1, 2, 3]);
 // De velden die deze codec kent, per blok. "" is het wortelobject; de andere
 // sleutels zijn de blokken en lijsten uit hoofdstuk 4 (een lijst: de velden van
 // één element). Afgeleid uit spec 4.1–4.9 (documentversie 0.3, met het voorstel
-// v0.4 voor vd/voed/grp[].vd dat de codec al leest en schrijft). `res[]` uit het
-// ontwerpintentie-voorstel staat er niet in: dat is nog niet in de spec.
+// v0.4 voor vd/voed/grp[].vd dat de codec al leest en schrijft). Sinds 25-11-2026
+// ook de ontwerpintentie: de reservering `res[]` en haar grondslag `grond` (4.11).
 // De ENIGE plek met deze lijst.
 export const MKP_VELDEN = Object.freeze({
-  "":   Object.freeze(["v", "d", "pc", "nr", "ean", "ean2", "bj", "stl", "ha", "kam", "grp", "mat", "lb", "chk", "log", "vd", "voed", "ind", "frq", "mw"]),
+  "":   Object.freeze(["v", "d", "pc", "nr", "ean", "ean2", "bj", "stl", "ha", "kam", "grp", "mat", "lb", "chk", "log", "vd", "voed", "ind", "frq", "mw", "res", "grond"]),
   ha:   Object.freeze(["f", "a", "hs"]),
   kam:  Object.freeze(["mm2", "a"]),
   grp:  Object.freeze(["t", "rol", "kw", "f", "fn", "mat", "n", "vd"]),
@@ -40,6 +40,9 @@ export const MKP_VELDEN = Object.freeze({
   voed: Object.freeze(["vd", "grp", "a", "mm2", "lng"]),
   // Voorstel v0.4, besluit 23-11-2026: de meetwaarden, alleen in profiel volledig.
   mw:   Object.freeze(["s", "w", "g", "p", "d", "c"]),
+  // Voorstel v0.4, besluit Martin 25-11-2026: de ontwerpintentie, op de sticker.
+  res:   Object.freeze(["t", "pos", "mod", "f", "fn", "a", "kw", "n"]),
+  grond: Object.freeze(["d", "ha", "kam", "gl", "rest", "door"]),
 });
 
 // Velden op het hoogste niveau die deze codec niet kent, in de volgorde van het paspoort.
