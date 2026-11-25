@@ -63,14 +63,15 @@
   details.blok > summary::-webkit-details-marker { display:none; }
   details.blok > summary::after { content:"▾"; color:var(--zacht); font-size:18px; transition:transform .15s; }
   details.blok[open] > summary::after { transform:rotate(180deg); }
-  .blok-titel { font-size:18px; font-weight:800; flex:1 1 auto; }
+  .blok-titel { font-size:18px; font-weight:800; flex:0 0 auto; white-space:nowrap; }
   .blok-sam { font-size:14px; font-weight:600; color:var(--zacht); text-align:right; }
   .blok-inhoud { padding-top:6px; }
   .blok-inhoud .twee h2:first-child, .blok-inhoud .twee > div > h2:first-child { margin-top:6px; }
   dl.rijen { display:grid; grid-template-columns:minmax(0,max-content) minmax(0,1fr); gap:6px 14px; margin:0; }
   dl.rijen dt { color:var(--zacht); font-size:15px; }
   dl.rijen dd { margin:0; font-weight:600; overflow-wrap:anywhere; }
-  .gegevens { border-bottom:1px solid var(--rand); padding-bottom:12px; margin-bottom:4px; }
+  .deel { border-top:1px solid var(--rand); padding-top:12px; margin-top:12px; }
+  .deel-kop { font-weight:800; margin-bottom:4px; }
   .chk { font-weight:800; text-transform:uppercase; }
   .chk-groen { color:var(--ok); } .chk-oranje { color:var(--let); } .chk-rood { color:#f87171; }
   .scan { position:relative; background:#000; border-radius:14px; overflow:hidden; }
