@@ -102,7 +102,7 @@ export function toonVerklaring({ el, m, h, frag, status, terug }) {
       el("button", { type: "button", onclick: sluit }, "Terug")),
     el("p", { class: "zacht klein afdrukbalk" }, "Kies in het printvenster je printer, of \"Opslaan als pdf\". Op A4, staand."),
     vel);
-  // A4 alleen zolang het vel open staat (de stroken hebben een eigen paginamaat).
+  // A4 alleen zolang het vel open staat.
   const pagina = document.createElement("style");
   pagina.textContent = "@page { size: A4; margin: 10mm; }";
   document.head.append(pagina);

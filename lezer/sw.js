@@ -1,9 +1,9 @@
 // Service worker van de meterkastpaspoort-lezer: zodat hij werkt in een kelder
 // zonder bereik. Bewaart alleen de lezer, de codec en de sleutellijst; geen
 // paspoorten (die staan in de link) en niets van de gebruiker.
-const CACHE = "mkp-lezer-v3";
+const CACHE = "mkp-lezer-v4";
 const BESTANDEN = [
-  "/lezer/", "/lezer/index.html", "/lezer/lezer.js", "/lezer/model.js", "/lezer/manifest.webmanifest", "/lezer/vendor/jsqr.min.js", "/lezer/verklaring.js", "/lezer/foto.js", "/lezer/stroken.js", "/lezer/vendor/qrcode.min.js",
+  "/lezer/", "/lezer/index.html", "/lezer/lezer.js", "/lezer/model.js", "/lezer/manifest.webmanifest", "/lezer/vendor/jsqr.min.js", "/lezer/verklaring.js", "/lezer/foto.js", "/lezer/vendor/qrcode.min.js",
   "/mkp.js", "/codec/afkappen.js", "/codec/coderen.js", "/codec/controleren.js", "/codec/ean.js", "/codec/hulp.js",
   "/codec/indeling-tabellen.js", "/codec/indeling.js", "/codec/materiaal.js", "/codec/meetwaarden.js", "/codec/profielen.js",
   "/codec/qr.js", "/codec/registers.js", "/codec/samenvoegen.js", "/codec/teksten.js", "/codec/v04.js", "/codec/versie.js",

@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { readFileSync, readdirSync } from "node:fs";
 import { mkpDecode } from "../mkp.js";
-import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, projecteer, labelStroken } from "../lezer/model.js";
+import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, projecteer } from "../lezer/model.js";
 import { maakQr } from "../lezer/vendor/qrcode.min.js";
 import { qrModules } from "../mkp.js";
 
@@ -78,8 +78,8 @@ eq(kastModel({ v: 3, ind: 42 }).ontbreekt.some((t) => /niet leesbaar/.test(t)), 
 eq(kastModel({ v: 3, xyz: 1, grp: [] }).onbekend, ["xyz"], "6.5 onbekende velden worden genoemd, niet getoond");
 
 console.log("▶ 7 · de lezer laadt niets uit een app");
-const MAG = ["../mkp.js", "./model.js", "./vendor/qrcode.min.js", "./foto.js", "./verklaring.js", "./stroken.js"];
-for (const f of ["lezer/lezer.js", "lezer/model.js", "lezer/verklaring.js", "lezer/foto.js", "lezer/stroken.js"]) {
+const MAG = ["../mkp.js", "./model.js", "./vendor/qrcode.min.js", "./foto.js", "./verklaring.js"];
+for (const f of ["lezer/lezer.js", "lezer/model.js", "lezer/verklaring.js", "lezer/foto.js"]) {
   const s = readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
   const imports = [...s.matchAll(/^import .* from "([^"]+)"/gm), ...s.matchAll(/import\("([^"]+)"\)/g)].map((x) => x[1]);
   eq(imports.every((i) => MAG.includes(i)), true, `7.1 ${f} importeert alleen de codec, het model en de eigen delen`);
@@ -117,20 +117,6 @@ console.log("▶ 9 · de foto");
   eq(projecteer(rail, { x: 5, y: 5 }, { x: 5, y: 5 }), [], "9.4 twee keer dezelfde tik: geen kaders");
   const bron = readFileSync(new URL("../lezer/foto.js", import.meta.url), "utf8") + readFileSync(new URL("../lezer/lezer.js", import.meta.url), "utf8");
   eq(/localStorage|indexedDB|fetch\(|sendBeacon|XMLHttpRequest/.test(bron.replace(/fetch\("\/veldnotities\/index\.json"\)/, "")), false, "9.5 de foto wordt nergens bewaard of verstuurd");
-}
-
-console.log("▶ 10 · labelstroken");
-{
-  const m = kastModel(await lees("kast-17-groepen")), st = labelStroken(m, 4);
-  const alle = st.flatMap((s) => s.posities);
-  eq(alle.length, m.rails.flatMap((r) => r.items).length, "10.1 elke positie staat op precies één strook");
-  eq(st.every((s) => s.modules <= 4 || s.posities.length === 1), true, "10.2 hooguit vier modules per strook (een breder toestel krijgt er een alleen)");
-  eq(st.flatMap((s) => s.posities).filter((p) => /^AL/.test(p.kort)).map((p) => p.bev), ["30 mA A", "30 mA A", "30 mA A", "30 mA A"], "10.4 bij een aardlek het type erbij");
-  const bron = readFileSync(new URL("../lezer/stroken.js", import.meta.url), "utf8");
-  eq([/BREEDTE_MM = 70, HOOGTE_MM = 40, PER_STROOK = 4/.test(bron), /MODULE_MM = 17\.5/.test(bron)], [true, true], "10.5 70 × 40 mm, vier modules van 17,5 mm");
-  const css = readFileSync(new URL("../lezer/index.html", import.meta.url), "utf8").match(/\.strook \{[^}]*\}|\.s-[a-z]+ \{[^}]*\}/g).join(" ");
-  eq(/background:#000|background:black/.test(css), false, "10.6 geen zwarte vlakken op een strook");
-  eq(st.find((s) => s.posities.some((p) => p.groep === 1)).posities.find((p) => p.groep === 1), { positie: 12, breedte: 1, leeg: false, groep: 1, naam: "Quooker", kort: "", bev: "B16" }, "10.3 de tekst per positie: groep, naam, beveiliging");
 }
 
 console.log("\n" + "═".repeat(47));

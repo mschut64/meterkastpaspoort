@@ -203,24 +203,3 @@ export function projecteer(rail, a, b) {
       hoeken: [punt(t0, -half), punt(t1, -half), punt(t1, half), punt(t0, half)], midden: punt((t0 + t1) / 2, 0) };
   });
 }
-
-/**
- * De tekst per positie voor een labelstrook van `perStrook` modules. Een toestel
- * hoort bij de strook waarop het begint; past het er niet meer bij, dan begint
- * een nieuwe strook. Lege plaatsen tellen mee, met lege tekst.
- */
-export function labelStroken(m, perStrook = 4) {
-  const stroken = [];
-  for (const r of m.rails) {
-    let s = null;
-    for (const it of r.items) {
-      if (!s || (s.modules + it.breedte > perStrook && s.posities.length)) { s = { rail: r.nr, vanaf: it.positie, modules: 0, posities: [] }; stroken.push(s); }
-      s.posities.push({ positie: it.positie, breedte: it.breedte, leeg: it.leeg,
-        groep: it.groep, naam: it.naam, kort: it.kort,
-        // Bij een aardlek hoort het type erbij ("30 mA A"); anders alleen de beveiliging ("B16").
-        bev: /^aardlek/.test(it.soort) ? it.bev.split(" · ").join(" ").replace("type ", "") : (it.bev.split(" · ")[0] || "") });
-      s.modules += it.breedte;
-    }
-  }
-  return stroken;
-}
