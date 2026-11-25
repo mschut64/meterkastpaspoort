@@ -137,10 +137,14 @@ async function toon(p) {
     ? el("div", {}, el("p", { class: "zacht klein draai" }, "Draai je telefoon voor foto en tekening naast elkaar."),
         el("div", { class: "twee foto" }, el("div", { id: "fotoPlek" }), kastDeel), groepenDeel)
     : el("div", { class: "twee" }, kastDeel, groepenDeel);
-  // De kast in één uitklapscherm, ingeklapt zoals in de app: de gegevens, load
-  // balancing en de laatste belastingcheck. De tekening en de groepen staan erbuiten.
-  const kastBlok = (gegevens || lbDeel || chkDeel) ? blok("De kast",
-    [kg.samenvatting, kg.chk ? `check ${kg.chk.r}` : ""].filter(Boolean).join(" · "), false, gegevens, lbDeel, chkDeel) : null;
+  // De kast in één uitklapscherm, ingeklapt zoals in de app (besluit Martin 25-11-2026):
+  // de gegevens, de indeling en de groepen, de load balancing en de laatste belastingcheck.
+  // Met een foto staat het open: dan wil je vergelijken.
+  const kastBlok = blok("De kast",
+    [kg.samenvatting, `${m.groepen.length} groep${m.groepen.length === 1 ? "" : "en"}`, kg.chk ? `check ${kg.chk.r}` : ""].filter(Boolean).join(" · "),
+    !!metFoto, gegevens, el("div", { class: gegevens ? "deel" : "" }, twee), lbDeel, chkDeel);
+  // "Hele kast in beeld" rekent met de breedte van de kolom; die is er pas als het blok open is.
+  kastBlok.addEventListener("toggle", () => { if (kastBlok.open && passend) herteken(); });
 
   // 5. Het logboek, in volgorde.
   const logboek = el("details", { class: "vlak blok" }, el("summary", {}, el("span", { class: "blok-titel" }, "Logboek"), el("span", { class: "blok-sam" }, `${h.length} regel${h.length === 1 ? "" : "s"}`)),
@@ -163,7 +167,7 @@ async function toon(p) {
     ? el("p", { class: "zacht klein" }, `Op deze sticker staan gegevens die deze lezer niet kent (${m.onbekend.join(", ")}); die zijn overgeslagen.`)
     : null;
 
-  uit.replaceChildren(...[kop, herkomstVlak, ...ontbreekt, kastBlok, twee, logboek, knoppen, onbekend].filter(Boolean),
+  uit.replaceChildren(...[kop, herkomstVlak, ...ontbreekt, kastBlok, logboek, knoppen, onbekend].filter(Boolean),
     el("p", { class: "zacht klein" }, "Een handtekening toont aan dat een logregel onveranderd is en van de houder van die sleutel komt. Niet dat de installatie deugt, en niet dat de sticker op de juiste kast zit."));
 
   // "Hele kast in beeld" rekent met de breedte van de kolom: die is er pas nu.
