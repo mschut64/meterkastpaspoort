@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { readFileSync, readdirSync } from "node:fs";
 import { mkpDecode } from "../mkp.js";
-import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, projecteer, kastGegevens, homografie, pasToe, tikStappen, projecteerKast } from "../lezer/model.js";
+import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, projecteer, kastGegevens, homografie, pasToe, tikStappen, projecteerKast, verschilMetFoto, tikkenUitAi } from "../lezer/model.js";
 import { maakQr } from "../lezer/vendor/qrcode.min.js";
 import { qrModules } from "../mkp.js";
 
@@ -116,7 +116,10 @@ console.log("▶ 9 · de foto");
   eq(s.midden, [50, 25], "9.3 een rail die schuin of rechtop staat volgt de tikken");
   eq(projecteer(rail, { x: 5, y: 5 }, { x: 5, y: 5 }), [], "9.4 twee keer dezelfde tik: geen kaders");
   const bron = readFileSync(new URL("../lezer/foto.js", import.meta.url), "utf8") + readFileSync(new URL("../lezer/lezer.js", import.meta.url), "utf8");
-  eq(/localStorage|indexedDB|fetch\(|sendBeacon|XMLHttpRequest/.test(bron.replace(/fetch\("\/veldnotities\/index\.json"\)/, "")), false, "9.5 de foto wordt nergens bewaard of verstuurd");
+  // Bewaren nergens; versturen alleen naar de motor op yourwkb.nl, en alleen na de knop (besluit Martin 25-11-2026).
+  const zonderToegestaan = bron.replace(/fetch\("\/veldnotities\/index\.json"\)/, "").replace(/fetch\(AI_URL, \{ method: "POST", body: fd \}\)/, "");
+  eq(/localStorage|indexedDB|fetch\(|sendBeacon|XMLHttpRequest/.test(zonderToegestaan), false, "9.5 de foto wordt nergens bewaard, en alleen naar de AI verstuurd");
+  eq([/const AI_URL = location\.hostname === "localhost" \? "http:\/\/localhost:3010\/api\/lezer\/kastbeeld" : "https:\/\/yourwkb\.nl\/api\/lezer\/kastbeeld";/.test(bron), /onclick: \(\) => metAi\(\)/.test(bron), /wordt daar niet bewaard/.test(bron)], [true, true, true], "9.6 de AI alleen op yourwkb.nl, alleen na een tik, en met de melding erbij");
 }
 
 console.log("▶ 11 · achter welke aardlek (blokversie 2)");
@@ -167,6 +170,32 @@ console.log("▶ 13 · de foto in perspectief");
   const nieuw = Math.max(...k.filter((p) => p.groep >= 1 && p.groep <= 29).map((p) => fout(p, p.groep - 0.5, 2.5)));
   eq([oud > 5, nieuw < 0.5], [true, true], `13.5 (controle) de rechte lijn zit er tot ${oud.toFixed(1)} pixels naast, het perspectief ${nieuw.toFixed(2)}`);
   eq([projecteerKast(rails, tikken.slice(0, 5)), homografie([[0, 0], [1, 0], [2, 0], [3, 0]], [[0, 0], [1, 0], [2, 0], [3, 0]])], [[], null], "13.6 te weinig tikken of punten op één lijn: geen kaders");
+}
+
+console.log("▶ 14 · wat de AI terugzegt");
+{
+  const m = kastModel(await lees("kast-17-groepen"));
+  const r2 = m.rails[1].items;   // HS, AL A–D, 17 automaten B16
+  const posities = (wijzig) => {
+    const uit = [{ rail: 1, positie: 0, breedteModules: 2, soort: "overig" }];
+    r2.forEach((it, k) => uit.push({ rail: 2, positie: it.positie, breedteModules: it.breedte, soort: it.soort === "automaat" ? "automaat" : it.soort, karakteristiek: it.soort === "automaat" ? "B" : undefined, In: it.soort === "automaat" ? 16 : it.soort === "hoofdschakelaar" ? 40 : undefined, IAn: it.soort === "aardlek" ? 30 : undefined }));
+    return wijzig ? wijzig(uit) : uit;
+  };
+  eq(verschilMetFoto(m, posities()).gelijk, true, "14.1 dezelfde kast: geen verschil");
+  const anders = verschilMetFoto(m, posities((u) => { u.find((p) => p.soort === "automaat").In = 20; return u; }));
+  eq(anders.zinnen, ["Rail 2, groep 1 (Quooker): op de foto B20, op de sticker B16."], "14.2 een andere automaat: in woorden, met de groep");
+  const erbij = verschilMetFoto(m, posities((u) => [...u, { rail: 2, positie: 40, breedteModules: 1, soort: "automaat", karakteristiek: "C", In: 16 }]));
+  eq(erbij.zinnen, ["Rail 2: op de foto een automaat C16 die niet op de sticker staat."], "14.3 een automaat erbij");
+  const weg = verschilMetFoto(m, posities((u) => u.filter((p, k) => k !== u.length - 1)));
+  eq(weg.zinnen, ["Rail 2: groep 17 (Stopcontact meterkast) (B16) staat op de sticker, maar niet op de foto."], "14.4 een automaat weg");
+  const onleesbaar = verschilMetFoto(m, posities((u) => u.map((p) => ({ ...p, In: undefined, karakteristiek: undefined, IAn: undefined }))));
+  eq(onleesbaar.gelijk, true, "14.5 wat de AI niet kon lezen telt niet als verschil");
+  eq(/afgekeurd|onveilig|moet |fout/i.test([anders, erbij, weg].flatMap((v) => v.zinnen).join(" ")), false, "14.6 signaal, geen oordeel");
+  const ai = [{ rail: 2, linksboven: { x: 100, y: 500 }, rechtsboven: { x: 900, y: 520 }, rechtsonder: { x: 890, y: 600 }, linksonder: { x: 110, y: 580 } },
+              { rail: 1, linksboven: { x: 100, y: 200 }, rechtsboven: { x: 180, y: 200 }, rechtsonder: { x: 180, y: 280 }, linksonder: { x: 100, y: 280 } }];
+  const t = tikkenUitAi(m.rails, ai, 2000, 1000);
+  eq(t, [{ x: 200, y: 500 }, { x: 1800, y: 520 }, { x: 1780, y: 600 }, { x: 220, y: 580 }, { x: 200, y: 240 }], "14.7 de hoeken van de AI worden de tikken: de langste rail, dan het begin van de andere");
+  eq(tikkenUitAi(m.rails, [ai[0]], 2000, 1000), null, "14.8 een rail te weinig: geen tikken (dan zelf aantikken)");
 }
 
 console.log("\n" + "═".repeat(47));

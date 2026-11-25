@@ -9,7 +9,30 @@
 // verslepen en schuiven de kaders mee. Pixels zijn hier alleen om aan te wijzen;
 // er wordt niets uit gemeten.
 
-import { tikStappen, projecteerKast } from "./model.js";
+import { tikStappen, projecteerKast, tikkenUitAi, verschilMetFoto } from "./model.js";
+
+// De motor op yourwkb.nl (besluit Martin 25-11-2026). Alleen als de gebruiker er
+// zelf voor kiest; zonder die tik gaat er niets van deze foto weg.
+const AI_URL = location.hostname === "localhost" ? "http://localhost:3010/api/lezer/kastbeeld" : "https://yourwkb.nl/api/lezer/kastbeeld";
+const AI_MAX_PX = 2400;      // genoeg om de opdruk te lezen, en onder de 4 MB van de route
+
+async function fotoVoorAi(foto) {
+  const img = new Image(); img.src = foto.url; await img.decode();
+  const schaal = Math.min(1, AI_MAX_PX / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.naturalWidth * schaal); c.height = Math.round(img.naturalHeight * schaal);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.88));
+}
+async function vraagAi(modus, blob, verwacht) {
+  const fd = new FormData();
+  fd.append("modus", modus); fd.append("open", blob, "kast.jpg");
+  if (verwacht) fd.append("verwacht", verwacht);
+  const r = await fetch(AI_URL, { method: "POST", body: fd });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `fout ${r.status}`);
+  return j;
+}
 
 const SVG = "http://www.w3.org/2000/svg";
 function svgEl(tag, attrs = {}, tekst) {
@@ -29,12 +52,17 @@ export function fotoUitlijnen({ el, m, foto, plek, opModule }) {
   let sleep = -1;           // welk punt wordt versleept
 
   const tekst = el("p", { class: "foto-tekst", role: "status", "aria-live": "polite" });
+  const aiUit = el("div", { class: "ai-uit", "aria-live": "polite" });
+  const aiKnop = el("button", { type: "button", class: "hoofd", onclick: () => metAi() }, "🤖 Laat AI de kast bekijken");
+  const aiBlok = el("div", { class: "vlak ai-blok" }, aiKnop,
+    el("p", { class: "zacht klein", style: "margin:8px 0 0" }, "De AI zoekt de rails voor de kaders en kijkt of de kast anders is dan de sticker. Daarvoor gaat de foto naar de server van YourWkb; hij wordt daar niet bewaard. Kies je dit niet, dan blijft alles op je toestel."),
+    aiUit);
   const opnieuw = el("button", { type: "button", onclick: () => { tikken = []; bijstellen = false; teken(); } }, "Opnieuw uitlijnen");
   const verschuif = el("button", { type: "button", onclick: () => { bijstellen = !bijstellen; teken(); } }, "Punten verschuiven");
   const svg = svgEl("svg", { viewBox: `0 0 ${foto.w} ${foto.h}`, class: "foto-laag", preserveAspectRatio: "none" });
   const vak = el("div", { class: "fotovak" }, el("img", { src: foto.url, alt: "Foto van de kast", draggable: "false" }));
   vak.append(svg);
-  plek.replaceChildren(el("h2", {}, "De foto"), tekst, vak,
+  plek.replaceChildren(el("h2", {}, "De foto"), aiBlok, tekst, vak,
     el("div", { class: "knoppen", style: "margin-top:8px" }, verschuif, opnieuw),
     el("p", { class: "zacht klein" }, "De foto blijft op dit toestel en gaat nergens heen."));
 
@@ -102,4 +130,34 @@ export function fotoUitlijnen({ el, m, foto, plek, opModule }) {
     });
   }
   teken();
+
+  async function metAi() {
+    aiKnop.disabled = true; aiKnop.textContent = "De AI kijkt… (± een halve minuut)";
+    aiUit.replaceChildren();
+    try {
+      const rails = m.rails.filter((r) => r.items.length);
+      const verwacht = rails.map((r, k) => `rij ${k + 1}: ${r.breedte} modules`).join("; ");
+      const blob = await fotoVoorAi(foto);
+      const [rr, kr] = await Promise.allSettled([vraagAi("rails", blob, verwacht), vraagAi("kast", blob)]);
+      // De kaders.
+      const t = rr.status === "fulfilled" && rr.value.gevonden ? tikkenUitAi(m.rails, rr.value.rails, foto.w, foto.h) : null;
+      if (t) { tikken = t; bijstellen = false; teken(); }
+      const melding = [];
+      if (!t) melding.push(el("p", { class: "melding" }, "De AI vond de rails niet goed genoeg", rr.status === "fulfilled" && rr.value.reden ? `: ${rr.value.reden}` : rr.status === "rejected" ? ` (${rr.reason.message})` : "", ". Tik de punten zelf aan."));
+      // Het verschil met de sticker.
+      if (kr.status === "fulfilled" && Array.isArray(kr.value.posities) && kr.value.posities.length) {
+        const v = verschilMetFoto(m, kr.value.posities);
+        melding.push(el("div", { class: "vlak" }, el("b", {}, v.gelijk ? "De AI ziet geen verschil met de sticker." : "Wat de AI anders ziet dan de sticker:"),
+          v.gelijk ? null : el("ul", { style: "margin:6px 0 0;padding-left:20px" }, ...v.zinnen.map((z) => el("li", {}, z))),
+          el("p", { class: "zacht klein", style: "margin:6px 0 0" }, "De AI kan zich vergissen; kijk zelf op de foto. Een gewijzigde kast is normaal: dan hoort er een nieuwe sticker bij.")));
+      } else if (kr.status === "fulfilled") melding.push(el("p", { class: "melding" }, "De AI kon de kast niet lezen", kr.value.reden ? `: ${kr.value.reden}` : "", "."));
+      else melding.push(el("p", { class: "melding" }, `De kast lezen lukte niet: ${kr.reason.message}`));
+      aiUit.replaceChildren(...melding);
+      if (t) tekst.textContent = "De AI heeft de kaders gelegd. Liggen ze niet goed? Verschuif de punten.";
+    } catch (e) {
+      aiUit.replaceChildren(el("p", { class: "melding" }, `Dat lukte niet: ${e.message}. Tik de punten zelf aan.`));
+    } finally {
+      aiKnop.disabled = false; aiKnop.textContent = "🤖 Laat AI de kast opnieuw bekijken";
+    }
+  }
 }

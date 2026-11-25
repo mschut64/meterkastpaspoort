@@ -346,3 +346,81 @@ export function projecteerKast(rails, tikken) {
   }
   return uit;
 }
+
+// ─── Wat de AI op de foto anders ziet dan de sticker (25-11-2026) ─────────────
+// De posities komen van de kastscan van de motor (via yourwkb.nl), als de gebruiker
+// daar zelf voor koos. Per rail op volgorde naast de indeling van de sticker gelegd.
+// Een signaal, geen oordeel: de AI kan zich vergissen, en een gewijzigde kast is
+// normaal (daar kwam de installateur voor).
+const SOORT_UIT_FOTO = { aardlek: "aardlek", automaat: "automaat", aardlekautomaat: "aardlekautomaat", smeltveiligheid: "smeltveiligheid", hoofdschakelaar: "hoofdschakelaar", overig: "overig" };
+function bevVanFoto(p) {
+  if (p.soort === "aardlek") { const ma = Number(p.IAn) > 0 && Number(p.IAn) < 1 ? Math.round(p.IAn * 1000) : p.IAn; return ma ? `${ma} mA` : ""; }
+  if (p.soort === "hoofdschakelaar") return p.In ? `${p.In} A` : "";
+  if (p.karakteristiek && p.In) return `${p.karakteristiek}${p.In}`;
+  return p.In ? `${p.In} A` : "";
+}
+const NAAM_KORT = { automaat: "automaat", aardlek: "aardlekschakelaar", aardlekautomaat: "aardlekautomaat", smeltveiligheid: "smeltveiligheid", hoofdschakelaar: "hoofdschakelaar", overig: "toestel" };
+
+/**
+ * @param m         kastModel van de sticker
+ * @param posities  [{ rail, positie, breedteModules, soort, karakteristiek, In, IAn }] van de kastscan
+ * @returns { zinnen: string[], gelijk: boolean }
+ */
+export function verschilMetFoto(m, posities) {
+  const stickerRails = m.rails.filter((r) => r.items.some((it) => !it.leeg));
+  const fotoRails = [...new Set((posities || []).map((p) => p.rail))].sort((a, b) => a - b)
+    .map((nr) => (posities || []).filter((p) => p.rail === nr && SOORT_UIT_FOTO[p.soort]).sort((a, b) => a.positie - b.positie));
+  const zinnen = [];
+  if (fotoRails.length !== stickerRails.length)
+    zinnen.push(`Op de foto ${fotoRails.length === 1 ? "één rail" : `${fotoRails.length} rails`} met modules, op de sticker ${stickerRails.length}.`);
+  const n = Math.min(fotoRails.length, stickerRails.length);
+  for (let k = 0; k < n; k++) {
+    const a = stickerRails[k].items.filter((it) => !it.leeg).map((it) => ({ soort: it.soort, bev: (it.bev || "").split(" · ")[0], groep: it.groep, naam: it.naam, positie: it.positie }));
+    // De foto telt vanaf de eerste module die hij ziet; gelijkzetten op het begin.
+    const begin = fotoRails[k].length ? Math.min(...fotoRails[k].map((p) => Number(p.positie) || 0)) : 0;
+    const b = fotoRails[k].map((p) => ({ soort: SOORT_UIT_FOTO[p.soort], bev: bevVanFoto(p), positie: (Number(p.positie) || 0) - begin }));
+    const zelfde = (x, y) => x.soort === y.soort && (x.bev === y.bev || !x.bev || !y.bev);
+    // Uitlijnen met kosten: gelijk 0, zelfde soort met een andere waarde 1, weg of
+    // erbij 1 elk, een andere soort op dezelfde plek 2. Zo wordt "deze automaat is
+    // anders" niet "één erbij en één weg" (tussen zeventien gelijke B16's).
+    // Bij gelijke toestellen beslist de plaats op de rail (een duizendste per module verschil).
+    const kost = (x, y) => (zelfde(x, y) ? 0 : x.soort === y.soort ? 1 : 2) + Math.min(0.5, Math.abs((x.positie || 0) - (y.positie || 0)) / 1000);
+    const D = Array.from({ length: a.length + 1 }, (_, i2) => Array.from({ length: b.length + 1 }, (_, j2) => (i2 === 0 ? j2 : j2 === 0 ? i2 : 0)));
+    for (let i2 = 1; i2 <= a.length; i2++) for (let j2 = 1; j2 <= b.length; j2++)
+      D[i2][j2] = Math.min(D[i2 - 1][j2 - 1] + kost(a[i2 - 1], b[j2 - 1]), D[i2 - 1][j2] + 1, D[i2][j2 - 1] + 1);
+    const wie = (x) => (x.groep ? `groep ${x.groep}${x.naam ? ` (${x.naam})` : ""}` : NAAM_KORT[x.soort] || x.soort);
+    const stappen = [];
+    for (let i2 = a.length, j2 = b.length; i2 > 0 || j2 > 0;) {
+      if (i2 > 0 && j2 > 0 && D[i2][j2] === D[i2 - 1][j2 - 1] + kost(a[i2 - 1], b[j2 - 1]) && kost(a[i2 - 1], b[j2 - 1]) < 1.9) { stappen.push(["paar", a[--i2], b[--j2]]); }
+      else if (i2 > 0 && D[i2][j2] === D[i2 - 1][j2] + 1) stappen.push(["weg", a[--i2]]);
+      else stappen.push(["erbij", b[--j2]]);
+    }
+    for (const [soort, x, y] of stappen.reverse()) {
+      if (soort === "paar") { if (!zelfde(x, y)) zinnen.push(`Rail ${k + 1}, ${wie(x)}: op de foto ${y.bev || "een andere waarde"}, op de sticker ${x.bev || "geen waarde"}.`); }
+      else if (soort === "weg") zinnen.push(`Rail ${k + 1}: ${wie(x)}${x.bev ? ` (${x.bev})` : ""} staat op de sticker, maar niet op de foto.`);
+      else zinnen.push(`Rail ${k + 1}: op de foto een ${NAAM_KORT[x.soort] || x.soort}${x.bev ? ` ${x.bev}` : ""} die niet op de sticker staat.`);
+    }
+  }
+  return { zinnen, gelijk: zinnen.length === 0 };
+}
+
+/**
+ * De hoeken die de AI teruggaf (0–1000 relatief aan de foto) → de tikken die
+ * projecteerKast verwacht, in de volgorde van tikStappen. null als het niet past.
+ */
+export function tikkenUitAi(rails, aiRails, w, h) {
+  const r = rails.filter((x) => x.items && x.items.length);
+  const st = tikStappen(rails);
+  if (!st.length || !Array.isArray(aiRails)) return null;
+  const opVolgorde = [...aiRails].sort((a, b) => a.rail - b.rail);
+  const vanRail = (nr) => opVolgorde[r.findIndex((x) => x.nr === nr)] || null;
+  const p = (q) => ({ x: (Number(q.x) / 1000) * w, y: (Number(q.y) / 1000) * h });
+  const tikken = [];
+  for (const s of st) {
+    const a = vanRail(s.rail);
+    if (!a) return null;
+    if (s.kant === "begin") tikken.push({ x: (p(a.linksboven).x + p(a.linksonder).x) / 2, y: (p(a.linksboven).y + p(a.linksonder).y) / 2 });
+    else tikken.push(p(a[s.kant]));
+  }
+  return tikken.every((t) => Number.isFinite(t.x) && Number.isFinite(t.y)) ? tikken : null;
+}
