@@ -16,14 +16,26 @@ import { tikStappen, projecteerKast, tikkenUitAi, verschilMetFoto } from "./mode
 const AI_URL = location.hostname === "localhost" ? "http://localhost:3010/api/lezer/kastbeeld" : "https://yourwkb.nl/api/lezer/kastbeeld";
 const AI_MAX_PX = 2400;      // genoeg om de opdruk te lezen, en onder de 4 MB van de route
 
+// Twee versies van de foto. Voor de kastscan de foto zelf (verkleind tot AI_MAX_PX),
+// want die moet de opdruk lezen. Voor de rails een VIERKANTE versie, met de foto in
+// het midden op zwart: het model geeft zijn hoeken alsof de foto vierkant is. Op een
+// staande foto van 1800 × 2400 lag elke rail daardoor een derde te laag (gemeten
+// 25-11-2026 op twee kasten van Herman); vierkant gemaakt lagen ze op de modules.
 async function fotoVoorAi(foto) {
   const img = new Image(); img.src = foto.url; await img.decode();
   const schaal = Math.min(1, AI_MAX_PX / Math.max(img.naturalWidth, img.naturalHeight));
-  const c = document.createElement("canvas");
-  c.width = Math.round(img.naturalWidth * schaal); c.height = Math.round(img.naturalHeight * schaal);
-  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-  return await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.88));
+  const w = Math.round(img.naturalWidth * schaal), h = Math.round(img.naturalHeight * schaal);
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  c.getContext("2d").drawImage(img, 0, 0, w, h);
+  const z = Math.max(w, h), v = document.createElement("canvas"); v.width = z; v.height = z;
+  const x = v.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, z, z);
+  const dx = Math.round((z - w) / 2), dy = Math.round((z - h) / 2);
+  x.drawImage(img, dx, dy, w, h);
+  const blob = (cv) => new Promise((ok) => cv.toBlob(ok, "image/jpeg", 0.88));
+  return { foto: await blob(c), vierkant: await blob(v), vak: { z, dx, dy, w, h } };
 }
+// Een punt van het vierkant (0–1000) terug naar de foto (0–1000 van breedte en hoogte).
+const terugUitVierkant = (q, vak) => ({ x: ((q.x / 1000) * vak.z - vak.dx) / vak.w * 1000, y: ((q.y / 1000) * vak.z - vak.dy) / vak.h * 1000 });
 async function vraagAi(modus, blob, verwacht) {
   const fd = new FormData();
   fd.append("modus", modus); fd.append("open", blob, "kast.jpg");
@@ -137,10 +149,13 @@ export function fotoUitlijnen({ el, m, foto, plek, opModule }) {
     try {
       const rails = m.rails.filter((r) => r.items.length);
       const verwacht = rails.map((r, k) => `rij ${k + 1}: ${r.breedte} modules`).join("; ");
-      const blob = await fotoVoorAi(foto);
-      const [rr, kr] = await Promise.allSettled([vraagAi("rails", blob, verwacht), vraagAi("kast", blob)]);
-      // De kaders.
-      const t = rr.status === "fulfilled" && rr.value.gevonden ? tikkenUitAi(m.rails, rr.value.rails, foto.w, foto.h) : null;
+      const ai = await fotoVoorAi(foto);
+      const [rr, kr] = await Promise.allSettled([vraagAi("rails", ai.vierkant, verwacht), vraagAi("kast", ai.foto)]);
+      // De kaders: de hoeken terug uit het vierkant naar de foto.
+      const hoeken = rr.status === "fulfilled" && rr.value.gevonden && Array.isArray(rr.value.rails)
+        ? rr.value.rails.map((r) => ({ ...r, ...Object.fromEntries(["linksboven", "rechtsboven", "rechtsonder", "linksonder"].map((k) => [k, r[k] ? terugUitVierkant(r[k], ai.vak) : r[k]])) }))
+        : null;
+      const t = hoeken ? tikkenUitAi(m.rails, hoeken, foto.w, foto.h) : null;
       if (t) { tikken = t; bijstellen = false; teken(); }
       const melding = [];
       if (!t) melding.push(el("p", { class: "melding" }, "De AI vond de rails niet goed genoeg", rr.status === "fulfilled" && rr.value.reden ? `: ${rr.value.reden}` : rr.status === "rejected" ? ` (${rr.reason.message})` : "", ". Tik de punten zelf aan."));
