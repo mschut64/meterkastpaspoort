@@ -166,8 +166,9 @@ async function toon(p) {
   // 6. Delen en verder.
   const knoppen = el("div", { class: "knoppen", style: "margin:18px 0" },
     // Verder in YourWkb, zoals de stickerlink: het paspoort reist in het #-deel mee
-    // (gaat niet naar een server); daar begin je een uitbreiding met deze gegevens.
-    el("a", { class: "knop hoofd", href: `https://yourwkb.nl/app#${huidig}`, rel: "noopener" }, "Uitbreiding vastleggen in YourWkb →"),
+    // (gaat niet naar een server). De ingang #uitbreiding= start daar meteen een
+    // nieuw project met deze gegevens, zonder eerst de weergave in de app (25-11-2026).
+    el("a", { class: "knop hoofd", href: `https://yourwkb.nl/app#uitbreiding=${huidig}`, rel: "noopener" }, "Uitbreiding vastleggen in YourWkb →"),
     el("button", { type: "button", onclick: deel }, "Deel dit paspoort"),
     el("button", { type: "button", onclick: () => verklaring(m, h) }, "Groepenoverzicht (A4)"),
     el("button", { type: "button", onclick: () => { history.replaceState(null, "", location.pathname); zetFoto(null); uit.replaceChildren(); toonInvoer(true); } }, "Andere sticker"));
