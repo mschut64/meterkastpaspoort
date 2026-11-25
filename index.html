@@ -94,7 +94,7 @@
   <tr><td><code>log</code></td><td>lijst</td><td>Installateurs-logboek — zie 4.8.</td></tr>
   <tr><td><code>vd</code></td><td>object</td><td>Deze verdeelinrichting, bij een installatie met meer dan één kast — zie 4.9. <span class="opt">voorstel v0.4</span></td></tr>
   <tr><td><code>voed</code></td><td>object</td><td>Waar deze kast aan hangt; alleen bij een onderverdeler — zie 4.9. <span class="opt">voorstel v0.4</span></td></tr>
-  <tr><td><code>ind</code></td><td>tekst</td><td>De fysieke indeling van de kast: welk toestel waar op welke rail, met breedte, polen, nominale stroom, karakteristiek, aanspreekstroom en aardlektype — als compact blok in base64url. Alleen een <em>gemeten</em> indeling hoort op een sticker. Een lezer die het blok niet kent, slaat het over. Vraagt datamodel <code>v: 3</code>. <span class="opt">voorstel v0.4</span></td></tr>
+  <tr><td><code>ind</code></td><td>tekst</td><td>De fysieke indeling van de kast: welk toestel waar op welke rail, met breedte, polen, nominale stroom, karakteristiek, aanspreekstroom en aardlektype, en (blokversie 2) achter welke aardlekschakelaar een automaat hangt — als compact blok in base64url. Alleen een <em>gemeten</em> indeling hoort op een sticker. Een lezer die het blok niet kent, slaat het over. Vraagt datamodel <code>v: 3</code>. <span class="opt">voorstel v0.4</span></td></tr>
   <tr><td><code>frq</code></td><td>tekst</td><td>Maand van de volgende periodieke inspectie, <code>"JJJJ-MM"</code>. Van een inspectie staat alleen dit op de sticker; de rest blijft in het dossier. Vraagt datamodel <code>v: 3</code>. <span class="opt">voorstel v0.4</span></td></tr>
   <tr><td><code>mw</code></td><td>lijst</td><td>Meetwaarden — zie 4.10. Alleen in profiel <em>volledig</em>, nooit op de sticker. <span class="opt">voorstel v0.4</span></td></tr>
 </table>
@@ -567,6 +567,7 @@
   <tr><td>Voorstel: <code>stl</code>, het stelsel (4.1)</td><td>De beoordeling van de lusimpedantie hangt aan het stelsel. Op de sticker, want wie de kast opent moet het weten zonder dossier.</td></tr>
   <tr><td>Voorstel: <code>mw[]</code> (4.10) en <code>mat[]</code> alleen in profiel volledig</td><td>Meetwaarden en artikelnummers horen in het dossier, niet op de kast; de QR blijft daardoor onder de grens.</td></tr>
   <tr><td>Voorstel: <code>log[].ma</code>, het meetanker (4.8)</td><td>Een paar meetwaarden van de laatste klus op de sticker, zodat de volgende meting ernaast kan: de meter, de meting of de kast? Het enige meetgegeven in de kern; bij een volle sticker wijkt het als eerste.</td></tr>
+  <tr><td>Voorstel: in <code>ind</code> blokversie 2, met per automaat <code>al</code>: achter welke aardlekschakelaar hij hangt</td><td>De plaats op de rail zegt dat niet: aardlekken staan vaak naast elkaar met alle automaten erachter. De installateur weet het, de sticker droeg het niet. Versie 2 alleen als er een koppeling is; anders blijft het blok versie 1.</td></tr>
   <tr><td>Voorstel: nieuwe afkapvolgorde (hoofdstuk 6)</td><td>Een handtekening en een logregel zijn historie: die vallen nooit meer weg. Alleen de indeling mag wijken; anders weigeren.</td></tr>
 </table>
 

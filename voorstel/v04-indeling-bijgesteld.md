@@ -107,6 +107,16 @@ Codes 0–11 en 15 zijn die van v0.4 §4.3, ongewijzigd. Nieuw: **12 smeltveilig
 - `sel`: 1 bit, besloten 17-11-2026; de veldapp heeft `ag.selectief` sinds 10-11-2026 (500 ms in plaats van 300 ms). v0.4 noemt het niet. Alleen bij aardlek en aardlekautomaat.
 - `pol`: de lijst is 1P, 1P+N, 3P, 3P+N, plus 0 = niet vastgelegd (v0.4 kent dat niet; een gescande kast weet de polen vaak niet). **2P en 4P zijn geen aparte waarden** (besloten 17-11-2026): 2P geldt als 1P+N en 4P als 3P+N. De veldapp schrijft bij aardlekschakelaars "2P" en "4P" (`POLEN_AARDLEK`); inpakken accepteert die schrijfwijzen en zet ze om (`INDELING_POLEN_ALIAS`). **Uitpakken geeft altijd de vorm met +N terug**, dus inpakken en weer uitpakken van "4P" levert "3P+N". Het veld blijft 3 bits (vijf waarden plus "niet vastgelegd" passen niet in 2); de codes 5, 6 en 7 zijn gereserveerd en een lezer weigert ze. De drie voorbeelden zijn daarom even groot als met aparte 2P/4P-waarden.
 
+### 4.1 Achter welke aardlek: `al` (blokversie 2, besloten 25-11-2026)
+
+Een automaat en een smeltveiligheid dragen in blokversie 2 na `groep` het veld `al` (4 bits): het **volgnummer van de aardlekschakelaar** waar hij achter hangt — 1 = het eerste toestel van soort `aardlek` in het blok (in leesvolgorde), 2 = het tweede, tot 15. **0 = niet vastgelegd**: onbekend, of geen aardlek ervoor. Een aardlekschakelaar en een aardlekautomaat dragen het niet (die laatste is zijn eigen aardlek).
+
+Waarom: de plaats op de rail zegt het niet. Aardlekken staan vaak naast elkaar met alle automaten erachter, of op een eigen rail; wie de koppeling uit de plaats afleidt, hangt alles achter de laatste. De kam is op een foto niet te zien. De installateur weet het (hij heeft de aardlekgroepen ingedeeld en per aardlek getest), dus het hoort op de sticker.
+
+- **Versie 2 alleen als er een koppeling is.** Een schrijver zet de versie op 2 zodra één toestel `al` heeft; anders blijft het blok versie 1, bit voor bit gelijk aan vroeger. Een lezer van versie 1 (codec ≤ 0.3.8) slaat een versie-2-blok over (§1.5) in plaats van het verkeerd te lezen.
+- **Een `al` die naar een aardlek wijst die niet in het blok staat, is een fout** — bij inpakken én uitpakken.
+- Kosten: 4 bits per automaat of smeltveiligheid. Een kast met 17 groepen: 68 bits, 9 byte, ±12 tekens in de QR.
+
 ## 5. Groepsnummer (7 bits)
 
 1–127, 0 = geen groep. Besluit 7 vraagt meer dan 31; 63 (6 bits) is krap voor een hoofdverdeler van een school of kantoor, en de motor accepteert plaatnummers tot 99. Kosten t.o.v. v0.4: 2 bits per groep (40 groepen: 10 byte).

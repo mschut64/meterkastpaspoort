@@ -4,13 +4,14 @@
 // Een toestel is een gewoon object met leesbare velden, bijvoorbeeld
 //   { soort: "automaat", breedte: 1, polen: "1P+N", In: 16, kar: "B", groep: 3 }
 // Polen: "2P" en "4P" worden bij het inpakken 1P+N en 3P+N; uitpakken geeft altijd de vorm met +N.
-// Welke velden een soort draagt staat in INDELING_VELDEN. Een veld dat ontbreekt
+// Welke velden een soort draagt staat in INDELING_VELDEN (blokversie 1) en
+// INDELING_VELDEN_V2 (versie 2: met `al`, de aardlek). Een veld dat ontbreekt
 // (of null is, of selectief: false) is "niet vastgelegd" en komt bij het
 // uitpakken niet terug. Een waarde die niet in de tabel staat geeft een fout;
 // er wordt nooit afgerond.
 
 import {
-  INDELING_VERSIE, INDELING_BITS, INDELING_SOORTEN, INDELING_VELDEN, INDELING_POLEN,
+  INDELING_VERSIES, INDELING_BITS, INDELING_SOORTEN, veldenVoorVersie, INDELING_POLEN, INDELING_AARDLEK_MAX,
   INDELING_POLEN_ALIAS, INDELING_STROMEN, INDELING_KARAKTERISTIEKEN, INDELING_AANSPREEKSTROMEN, INDELING_AARDLEKTYPEN,
   INDELING_STATUS, INDELING_WARMTEROUTE, INDELING_GROEP_MAX, INDELING_BREEDTE_MAX,
   INDELING_AANTAL_MAX, INDELING_MPR_MAX, INDELING_NAAM_MAX,
@@ -95,6 +96,11 @@ function codeVan(veld, w, waar) {
     if (typeof w !== "boolean") throw fout(`${waar}: selectief ${toon(w)} is geen true of false`, { veld, waarde: w });
     return w ? 1 : 0;
   }
+  if (veld === "al") {
+    if (!Number.isInteger(w) || w < 1 || w > INDELING_AARDLEK_MAX)
+      throw fout(`${waar}: al ${toon(w)} ligt niet tussen 1 en ${INDELING_AARDLEK_MAX}`, { veld, waarde: w });
+    return w;
+  }
   if (veld === "groep") {
     if (!Number.isInteger(w) || w < 1 || w > INDELING_GROEP_MAX)
       throw fout(`${waar}: groep ${toon(w)} ligt niet tussen 1 en ${INDELING_GROEP_MAX}`, { veld, waarde: w });
@@ -111,7 +117,7 @@ function waardeVan(veld, code, waar) {
   if (veld === "breedte") return code + 1;
   if (veld === "selectief") return code === 1 ? true : undefined;
   if (code === 0) return undefined;
-  if (veld === "groep") return code;
+  if (veld === "groep" || veld === "al") return code;
   const w = TABEL[veld][code];
   if (w === null || w === undefined) throw fout(`${waar}: onbekende code ${code} voor ${veld}`, { veld, waarde: code });
   return w;
@@ -148,6 +154,11 @@ export function mkpIndelingInpakken(indeling) {
   if (toestellen.length > INDELING_AANTAL_MAX)
     throw fout(`${toestellen.length} toestellen, het maximum is ${INDELING_AANTAL_MAX}`, { veld: "toestellen", waarde: toestellen.length });
 
+  // Versie 2 alleen als er een koppeling met een aardlek is (zie de tabellen).
+  const versie = toestellen.some((t) => t && t.al !== undefined && t.al !== null) ? 2 : 1;
+  const VELDEN = veldenVoorVersie(versie);
+  const aardlekken = toestellen.filter((t) => t && t.soort === "aardlek").length;
+
   const namen = [];
   const records = new BitSchrijver();
   toestellen.forEach((t, i) => {
@@ -157,8 +168,10 @@ export function mkpIndelingInpakken(indeling) {
       throw fout(`${waar}: een kamrail staat niet in de indeling; leg hem één keer per kast vast in het paspoortveld "kam" (de kamrail is overal in de kast hetzelfde)`, { toestel: i, veld: "soort", waarde: t.soort });
     const code = typeof t.soort === "string" ? INDELING_SOORTEN.indexOf(t.soort) : -1;
     if (code < 0) throw fout(`${waar}: soort ${toon(t.soort)} staat niet in de tabel`, { toestel: i, veld: "soort", waarde: t.soort });
-    const velden = INDELING_VELDEN[t.soort];
+    const velden = VELDEN[t.soort];
     const toegestaan = ["soort", ...velden, ...(t.soort === "overig" ? ["naam"] : [])];
+    if (Number.isInteger(t.al) && t.al > aardlekken)
+      throw fout(`${waar} (${t.soort}): al ${t.al} wijst naar aardlekschakelaar ${t.al}, maar het blok heeft er ${aardlekken}`, { toestel: i, veld: "al", waarde: t.al });
     for (const k of Object.keys(t))
       if (!toegestaan.includes(k)) throw fout(`${waar} (${t.soort}): veld ${toon(k)} (= ${toon(t[k])}) hoort niet bij deze soort`, { toestel: i, veld: k, waarde: t[k] });
     records.schrijf(code, INDELING_BITS.soort);
@@ -180,7 +193,7 @@ export function mkpIndelingInpakken(indeling) {
 
   const metNamen = namen.some((b) => b.length > 0);
   const kop = new BitSchrijver();
-  kop.schrijf(INDELING_VERSIE, INDELING_BITS.versie);
+  kop.schrijf(versie, INDELING_BITS.versie);
   kop.schrijf(stCode, INDELING_BITS.st);
   kop.schrijf(wrCode, INDELING_BITS.wr);
   kop.schrijf(mprCode, INDELING_BITS.mpr);
@@ -210,7 +223,8 @@ export function mkpIndelingUitpakken(invoer) {
   const r = new BitLezer(bytes);
   const versie = r.lees(INDELING_BITS.versie, "versie");
   if (versie === 0) throw fout("blokversie 0 bestaat niet", { veld: "versie", waarde: 0 });
-  if (versie !== INDELING_VERSIE) return { overgeslagen: true, versie };
+  if (!INDELING_VERSIES.includes(versie)) return { overgeslagen: true, versie };
+  const VELDEN = veldenVoorVersie(versie);
 
   const st = INDELING_STATUS[r.lees(INDELING_BITS.st, "st")];
   if (!st) throw fout("onbekende code voor st", { veld: "st" });
@@ -227,13 +241,17 @@ export function mkpIndelingUitpakken(invoer) {
     const code = r.lees(INDELING_BITS.soort, `${waar}: soort`);
     const soort = INDELING_SOORTEN[code];
     const t = soort ? { soort } : { soort: "gereserveerd", code };
-    for (const veld of INDELING_VELDEN[soort || "gereserveerd"]) {
+    for (const veld of VELDEN[soort || "gereserveerd"]) {
       const w = waardeVan(veld, r.lees(INDELING_BITS[veld], `${waar}: ${veld}`), `${waar} (${t.soort})`);
       if (w !== undefined) t[veld] = w;
     }
     toestellen.push(t);
   }
   r.lijnUit();
+  const aardlekken = toestellen.filter((t) => t.soort === "aardlek").length;
+  toestellen.forEach((t, i) => {
+    if (t.al > aardlekken) throw fout(`toestel ${i + 1} (${t.soort}): al ${t.al} wijst naar een aardlekschakelaar die niet in het blok staat`, { veld: "al", waarde: t.al });
+  });
 
   if (metNamen) {
     const dec = new TextDecoder("utf-8", { fatal: true });

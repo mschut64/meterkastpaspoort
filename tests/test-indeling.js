@@ -87,7 +87,7 @@ const Ct = [{ soort: "hoofdschakelaar", breedte: 4, polen: "3P+N", In: 80 }, { s
 const C = { st: "gemeten", wr: "afgeleid", mpr: 24, toestellen: Ct };
 
 console.log("▶ INDELING 1: de tabellen");
-eq(MKP_INDELING_VERSIE, 1, "T1.1 blokversie 1");
+eq(MKP_INDELING_VERSIE, 2, "T1.1 blokversie 2 (de koppeling met de aardlek, 25-11-2026); versie 1 blijft leesbaar");
 eq(Object.values(MKP_INDELING_BITS).length > 0 && ["versie", "st", "wr", "mpr", "aantal", "namen", "reserve"].reduce((s, k) => s + MKP_INDELING_BITS[k], 0), 32, "T1.2 de kop is 32 bits");
 eq(MKP_INDELING_BITS.versie, 4, "T1.3 de versie staat in de eerste 4 bits");
 eq([MKP_INDELING_BITS, MKP_INDELING_SOORTEN, MKP_INDELING_VELDEN, MKP_INDELING_POLEN, MKP_INDELING_STROMEN, MKP_INDELING_KARAKTERISTIEKEN,
@@ -256,16 +256,16 @@ geeftFout(() => uit(bits(...kop({ nm: 1 }), [11, 5], [0, 3], [0, 3])), "naam", u
 geeftFout(() => uit(bits(...kop({ n: 2 }), [15, 5])), undefined, undefined, "K27 minder toestellen dan de kop meldt");
 
 console.log("▶ INDELING 7: een onbekende blokversie wordt overgeslagen, zonder fout");
-for (const v of [2, 7, 15]) {
+for (const v of [3, 7, 15]) {
   eq(uit(bits(...kop({ v, n: 0 }))), { overgeslagen: true, versie: v }, `O1 versie ${v} (bytes)`);
 }
 {
   // Wat er na de versie staat doet er niet toe: een latere versie mag alles anders doen.
-  const vreemd = Uint8Array.from([0x2f, 0xff, 0xff, 0x00, 0x13]);
-  eq(uit(vreemd), { overgeslagen: true, versie: 2 }, "O2 latere versie met onbegrijpelijke inhoud");
+  const vreemd = Uint8Array.from([0x3f, 0xff, 0xff, 0x00, 0x13]);
+  eq(uit(vreemd), { overgeslagen: true, versie: 3 }, "O2 latere versie met onbegrijpelijke inhoud");
   const tekst = pak(A).tekst;
-  const later = "I" + tekst.slice(1);   // eerste 6 bits 001000 → versie 2
-  eq(uit(later), { overgeslagen: true, versie: 2 }, "O3 latere versie als tekst");
+  const later = "M" + tekst.slice(1);   // eerste 6 bits 001100 → versie 3
+  eq(uit(later), { overgeslagen: true, versie: 3 }, "O3 latere versie als tekst");
   eq(uit(Uint8Array.from([0xf0])), { overgeslagen: true, versie: 15 }, "O4 alleen één byte met een latere versie");
 }
 
@@ -302,8 +302,35 @@ console.log("▶ INDELING 9: de ingang");
   const profielen = ["MKP_PROFIELEN", "MKP_PROFIEL_VELDEN", "MKP_STREEF_TEKENS", "mkpProfielVan", "mkpProfiel", "mkpGrootte"];
   eq(profielen.filter((x) => !(x in M)), [], "E3a de namen van de profielen bestaan");
   const meetwaarden = ["MKP_STELSELS", "MKP_MEETSOORTEN", "mkpStelsel"];
+  const aardlek = ["MKP_INDELING_VERSIES", "MKP_INDELING_VELDEN_V2", "MKP_INDELING_AARDLEK_MAX"];
+  eq(aardlek.filter((x) => !(x in M)), [], "E3e de namen van blokversie 2 bestaan (25-11-2026)");
   eq(meetwaarden.filter((x) => !(x in M)), [], "E3d de namen van stelsel en meetwaarden bestaan (besluit 23-11-2026)");
-  eq(Object.keys(M).length, oud.length + nieuw.length + profielen.length + materiaal.length + v04.length + meetwaarden.length, "E4 er is niets anders bijgekomen of weggevallen");
+  eq(Object.keys(M).length, oud.length + nieuw.length + profielen.length + materiaal.length + v04.length + meetwaarden.length + aardlek.length, "E4 er is niets anders bijgekomen of weggevallen");
+}
+
+console.log("▶ INDELING 10: blokversie 2 — achter welke aardlek een automaat hangt (al)");
+{
+  // alA/alB: undefined = niet vastgelegd
+  const kast = (alA, alB) => ({ st: "gemeten", toestellen: [
+    { soort: "aardlek", breedte: 2, idn: 30, lek: "A" }, { soort: "aardlek", breedte: 2, idn: 30, lek: "A" },
+    { soort: "automaat", breedte: 1, In: 16, kar: "B", groep: 1, ...(alA !== undefined ? { al: alA } : {}) },
+    { soort: "automaat", breedte: 1, In: 16, kar: "B", groep: 2, ...(alB !== undefined ? { al: alB } : {}) },
+    { soort: "smeltveiligheid", breedte: 1, In: 25, kar: "gG", groep: 3 },
+  ] });
+  const zonder = pak(kast()), met = pak(kast(2, 1));
+  eq([uit(zonder.tekst).versie, uit(met.tekst).versie], [1, 2], "V1 zonder koppeling blijft het versie 1, met koppeling versie 2");
+  eq(uit(met.tekst).toestellen.map((t) => t.al ?? null), [null, null, 2, 1, null], "V2 heen en terug: al per toestel, leeg = niet vastgelegd");
+  eq(met.tekst.length - zonder.tekst.length <= 3, true, "V3 kost weinig: vier bits per automaat en smeltveiligheid");
+  geeftFout(() => pak(kast(3)), "al", 3, "V4 al wijst naar een aardlek die er niet is");
+  geeftFout(() => pak(kast(0)), "al", 0, "V5 al 0 bestaat niet (weglaten = niet vastgelegd)");
+  geeftFout(() => pak({ st: "gemeten", toestellen: [{ soort: "aardlek", breedte: 2, al: 1 }] }), "al", 1, "V6 een aardlek zelf draagt geen al");
+  geeftFout(() => pak({ st: "gemeten", toestellen: [{ soort: "aardlek", breedte: 2 }, { soort: "aardlekautomaat", breedte: 2, al: 1 }] }), "al", 1, "V7 een aardlekautomaat ook niet");
+  // Een lezer van versie 1 (codec 0.3.8 en ouder) slaat een versie-2-blok over in plaats van het verkeerd te lezen.
+  eq(uit(met.tekst).versie === 2 && met.bytes[0] >> 4 === 2, true, "V8 de versie staat in de eerste vier bits");
+  // Uitpakken: een al die naar een niet-bestaande aardlek wijst is kapot, geen half resultaat.
+  // aardlek: soort, breedte, polen, In, idn, lek, selectief · automaat (v2): soort, breedte, polen, In, kar, groep, al
+  const kapot = bits(...kop({ v: 2, n: 2 }), [3, 5], [1, 3], [0, 3], [0, 5], [0, 3], [0, 3], [0, 1], [2, 5], [0, 3], [0, 3], [9, 5], [1, 3], [1, 7], [2, 4]);
+  geeftFout(() => uit(kapot), "al", 2, "V9 uitpakken: al naar een aardlek die niet in het blok staat");
 }
 
 console.log("\n═══════════════════════════════════════════════");

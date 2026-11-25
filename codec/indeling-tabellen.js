@@ -5,12 +5,17 @@
 const vries = (x) => Object.freeze(x);
 
 // Versie van het blok zelf. Staat altijd in de eerste 4 bits, in elke versie.
-export const INDELING_VERSIE = 1;
+// Versie 2 (25-11-2026) = versie 1 plus, bij een automaat en een smeltveiligheid,
+// het veld `al`: achter welke aardlekschakelaar hij hangt. Een schrijver gebruikt
+// versie 2 alleen als er een koppeling is; anders blijft het versie 1, zodat een
+// lezer die versie 2 nog niet kent zo'n blok gewoon leest.
+export const INDELING_VERSIE = 2;
+export const INDELING_VERSIES = Object.freeze([1, 2]);
 
 // Breedte van elk veld in bits.
 export const INDELING_BITS = vries({
   versie: 4, st: 2, wr: 2, mpr: 8, aantal: 10, namen: 1, reserve: 5,   // kop: 32 bits
-  soort: 5, breedte: 3, polen: 3, In: 5, kar: 3, idn: 3, lek: 3, selectief: 1, groep: 7,
+  soort: 5, breedte: 3, polen: 3, In: 5, kar: 3, idn: 3, lek: 3, selectief: 1, groep: 7, al: 4,
 });
 
 // Soort toestel, op code. null = gereserveerd. Codes 0–11 en 15 zijn die van v0.4 §4.3.
@@ -59,6 +64,17 @@ export const INDELING_VELDEN = vries({
   gereserveerd: VOL,
 });
 
+// Blokversie 2: een automaat en een smeltveiligheid dragen ook `al` (na `groep`).
+// al = het volgnummer van zijn aardlekschakelaar: 1 = de eerste toestel van soort
+// "aardlek" in het blok, 2 = de tweede, enz. 0 = niet vastgelegd (onbekend, of
+// geen aardlek ervoor). Een aardlekautomaat is zijn eigen aardlek en draagt het niet.
+export const INDELING_VELDEN_V2 = vries({
+  ...INDELING_VELDEN,
+  automaat: vries([...BEVEILIGING, "al"]),
+  smeltveiligheid: vries([...BEVEILIGING, "al"]),
+});
+export const veldenVoorVersie = (versie) => (versie === 2 ? INDELING_VELDEN_V2 : INDELING_VELDEN);
+
 // Polen, op code. 0 = niet vastgelegd; codes 5–7 gereserveerd (waar 2P en 4P zouden staan:
 // besluit 17-11-2026, 2P geldt als 1P+N en 4P als 3P+N). Inpakken neemt "2P" en "4P" aan
 // (INDELING_POLEN_ALIAS); uitpakken geeft altijd de vorm met +N terug.
@@ -89,6 +105,8 @@ export const INDELING_WARMTEROUTE = vries(["onbekend", "beproefd", "afgeleid", "
 
 // Groepsnummer 0 = geen groep of niet vastgelegd; hoogste nummer:
 export const INDELING_GROEP_MAX = 2 ** 7 - 1;          // 127
+// Volgnummer van een aardlekschakelaar in `al`: 1 t/m 15.
+export const INDELING_AARDLEK_MAX = 2 ** 4 - 1;        // 15
 // Breedte in modules: 1 t/m 8 (opgeslagen als breedte − 1).
 export const INDELING_BREEDTE_MAX = 2 ** 3;           // 8
 // Toestellen per blok, en modules per rail (0 = niet vastgelegd).
