@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { readFileSync, readdirSync } from "node:fs";
 import { mkpDecode } from "../mkp.js";
-import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, projecteer, kastGegevens } from "../lezer/model.js";
+import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, projecteer, kastGegevens, homografie, pasToe, tikStappen, projecteerKast } from "../lezer/model.js";
 import { maakQr } from "../lezer/vendor/qrcode.min.js";
 import { qrModules } from "../mkp.js";
 
@@ -138,6 +138,35 @@ console.log("▶ 12 · de gegevens van de kast (uitklapblok)");
   const lb = kastGegevens({ lb: { aan: true, typ: "dyn", max: 25, reg: "evcc" }, chk: { r: "oranje", d: "2026-03-01" } }, kastModel({ v: 2 }));
   eq([lb.lb.tekst, lb.chk], ["Dynamisch · grens 25 A · regisseur: evcc", { r: "oranje", d: "2026-03-01" }], "12.4 load balancing en de laatste belastingcheck");
   eq(kastGegevens({ ean: "<script>" }, kastModel({ v: 2 })).rijen.find(([k]) => k === "EAN aansluiting")[1], "<script>", "12.5 tekst blijft tekst (de lezer zet hem met textContent)");
+}
+
+console.log("▶ 13 · de foto in perspectief");
+{
+  // Een kast die schuin is gefotografeerd; kast-coördinaten: x in modules, y in modulehoogten.
+  const echt = homografie([[0, 0], [30, 0], [30, 6], [0, 6]], [[120, 90], [1100, 190], [1060, 700], [160, 620]]);
+  const naar = (x, y) => { const [u, v] = pasToe(echt, x, y); return { x: u, y: v }; };
+  const rails = [
+    { nr: 1, breedte: 2, items: [{ i: 0, positie: 0, breedte: 2, groep: null }] },                       // kort: overig
+    { nr: 2, breedte: 29, items: Array.from({ length: 29 }, (_, k) => ({ i: 1 + k, positie: k, breedte: 1, groep: k + 1 })) },
+    { nr: 3, breedte: 8, items: Array.from({ length: 8 }, (_, k) => ({ i: 30 + k, positie: k, breedte: 1, groep: 40 + k })) },
+  ];
+  // Rail 1 begint op x 3 en y 0–1, rail 2 op x 0 en y 2–3, rail 3 op x 1 en y 4–5.
+  const st = tikStappen(rails);
+  eq(st.map((s) => `${s.rail}${s.kant}`), ["2linksboven", "2rechtsboven", "2rechtsonder", "2linksonder", "1begin", "3begin"], "13.1 de vier hoeken van de langste rail, dan één tik per andere rail");
+  const tikken = [naar(0, 2), naar(29, 2), naar(29, 3), naar(0, 3), naar(3, 0.5), naar(1, 4.5)];
+  const k = projecteerKast(rails, tikken);
+  const fout = (p, x, y) => { const e = naar(x, y); return Math.hypot(p.midden[0] - e.x, p.midden[1] - e.y); };
+  eq(fout(k.find((p) => p.groep === 20), 19.5, 2.5) < 0.5, true, "13.2 een module op de langste rail valt op zijn plek, ook in perspectief");
+  eq([fout(k.find((p) => p.i === 0), 4, 0.5) < 0.5, fout(k.find((p) => p.groep === 45), 6.5, 4.5) < 0.5], [true, true], "13.3 en de andere rails ook, met hun eigen begin");
+  // Met 4 pixels tikfout: de kaders blijven binnen een halve module.
+  const ruis = [[3, -2], [-4, 3], [2, 4], [-3, -3], [4, 2], [-2, 4]];
+  const kr = projecteerKast(rails, tikken.map((t, i) => ({ x: t.x + ruis[i][0], y: t.y + ruis[i][1] })));
+  const ergst = Math.max(...kr.map((p) => { const it = rails.flatMap((r) => r.items).find((x) => x.i === p.i); const r = rails.find((x) => x.items.includes(it)); const pl = { 1: [3, 0.5], 2: [0, 2.5], 3: [1, 4.5] }[r.nr]; return fout(p, pl[0] + it.positie + it.breedte / 2, pl[1]) / p.modPx; }));
+  eq(ergst < 0.5, true, `13.4 bij 4 pixels tikfout blijft elk kader binnen een halve module (ergst ${ergst.toFixed(2)})`);
+  const oud = Math.max(...projecteer(rails[1], naar(0, 2.5), naar(29, 2.5)).map((p) => fout(p, p.i - 1 + 0.5, 2.5)));
+  const nieuw = Math.max(...k.filter((p) => p.groep >= 1 && p.groep <= 29).map((p) => fout(p, p.groep - 0.5, 2.5)));
+  eq([oud > 5, nieuw < 0.5], [true, true], `13.5 (controle) de rechte lijn zit er tot ${oud.toFixed(1)} pixels naast, het perspectief ${nieuw.toFixed(2)}`);
+  eq([projecteerKast(rails, tikken.slice(0, 5)), homografie([[0, 0], [1, 0], [2, 0], [3, 0]], [[0, 0], [1, 0], [2, 0], [3, 0]])], [[], null], "13.6 te weinig tikken of punten op één lijn: geen kaders");
 }
 
 console.log("\n" + "═".repeat(47));

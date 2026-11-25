@@ -95,11 +95,12 @@
   .fotovak { position:relative; border-radius:12px; overflow:hidden; background:#000; }
   .fotovak img { display:block; width:100%; height:auto; user-select:none; -webkit-user-select:none; }
   .foto-laag { position:absolute; inset:0; width:100%; height:100%; }
-  .foto-laag.richt { cursor:crosshair; }
+  .foto-laag.richt { cursor:crosshair; touch-action:none; }
+  .ftik-nr { fill:#000; font-weight:800; pointer-events:none; }
   .fmod { fill:rgba(255,210,63,.10); stroke:#ffd23f; stroke-width:2; vector-effect:non-scaling-stroke; cursor:pointer; }
   .fmod.aan { fill:rgba(255,210,63,.45); stroke-width:4; }
   .flabel { fill:#fff; stroke:#000; stroke-width:3px; paint-order:stroke; font-weight:800; pointer-events:none; vector-effect:non-scaling-stroke; }
-  .ftik { fill:#ffd23f; stroke:#000; stroke-width:2; vector-effect:non-scaling-stroke; pointer-events:none; }
+  .ftik { fill:#ffd23f; fill-opacity:.85; stroke:#000; stroke-width:2; vector-effect:non-scaling-stroke; pointer-events:none; }
   .foto-tekst { font-weight:700; margin:0 0 8px; }
 
   /* Het groepenoverzicht (A4): op het scherm alleen het vel; de opmaak van het vel zelf staat in verklaring.js */

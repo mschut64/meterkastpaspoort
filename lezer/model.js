@@ -250,3 +250,99 @@ export function kastGegevens(p, m) {
   if (p && p.chk && typeof p.chk === "object" && p.chk.r) chk = { r: t(p.chk.r), d: t(p.chk.d) };
   return { rijen, samenvatting, lb, chk };
 }
+
+// ─── De foto: perspectief (25-11-2026) ────────────────────────────────────────
+// Een foto van een kast is zelden recht van voren genomen. Een rechte lijn per
+// rail verdeelt de modules gelijk, maar in perspectief liggen de modules die
+// verder weg zijn dichter op elkaar. Vier punten bepalen dat perspectief: een
+// homografie van "modules en rails" naar pixels.
+
+/** Homografie uit vier puntparen: van[i] = [x, y] → naar[i] = [x, y]. null als de punten op één lijn liggen. */
+export function homografie(van, naar) {
+  const A = [], b = [];
+  for (let i = 0; i < 4; i++) {
+    const [x, y] = van[i], [u, v] = naar[i];
+    A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]); b.push(u);
+    A.push([0, 0, 0, x, y, 1, -v * x, -v * y]); b.push(v);
+  }
+  // Gauss met rijwissel.
+  for (let k = 0; k < 8; k++) {
+    let p = k;
+    for (let r = k + 1; r < 8; r++) if (Math.abs(A[r][k]) > Math.abs(A[p][k])) p = r;
+    if (Math.abs(A[p][k]) < 1e-12) return null;
+    [A[k], A[p]] = [A[p], A[k]]; [b[k], b[p]] = [b[p], b[k]];
+    for (let r = 0; r < 8; r++) {
+      if (r === k) continue;
+      const f = A[r][k] / A[k][k];
+      for (let c = k; c < 8; c++) A[r][c] -= f * A[k][c];
+      b[r] -= f * b[k];
+    }
+  }
+  return [...b.map((w, i) => w / A[i][i]), 1];
+}
+export function pasToe(H, x, y) {
+  const w = H[6] * x + H[7] * y + H[8];
+  return [(H[0] * x + H[1] * y + H[2]) / w, (H[3] * x + H[4] * y + H[5]) / w];
+}
+
+/** De omgekeerde homografie (pixels → kast). */
+export function omgekeerd(H) {
+  const [a, b, c, d, e, f, g, h, k] = H;
+  const A = e * k - f * h, B = -(d * k - f * g), C = d * h - e * g;
+  const det = a * A + b * B + c * C;
+  if (Math.abs(det) < 1e-12) return null;
+  return [A, -(b * k - c * h), b * f - c * e, B, a * k - c * g, -(a * f - c * d), C, -(a * h - b * g), a * e - b * d].map((v) => v / det);
+}
+
+/**
+ * Welke punten de gebruiker aantikt. Eerst de vier hoeken van de rij modules op
+ * de langste rail: die is breed, dus een tik die een paar pixels mis is, verschuift
+ * de rest nauwelijks. Daarna per andere rail één tik: de linkerrand van zijn eerste
+ * module, op halve hoogte — dat zegt waar die rail op de kast zit.
+ * (Begin en eind van twee rails was te gevoelig: met één korte rail zaten de
+ * kaders bij 4 pixels tikfout tot 100 pixels naast de modules.)
+ */
+export function tikStappen(rails) {
+  const r = rails.filter((x) => x.items && x.items.length);
+  if (!r.length) return [];
+  const lang = [...r].sort((a, b) => b.breedte - a.breedte || a.nr - b.nr)[0];
+  const welke = r.length > 1 ? `rail ${lang.nr}` : "de rail";
+  return [
+    { rail: lang.nr, kant: "linksboven", tekst: `${welke}: de linkerbovenhoek van de eerste module` },
+    { rail: lang.nr, kant: "rechtsboven", tekst: `${welke}: de rechterbovenhoek van de laatste module` },
+    { rail: lang.nr, kant: "rechtsonder", tekst: `${welke}: de rechteronderhoek van de laatste module` },
+    { rail: lang.nr, kant: "linksonder", tekst: `${welke}: de linkeronderhoek van de eerste module` },
+    ...r.filter((x) => x !== lang).map((x) => ({ rail: x.nr, kant: "begin", tekst: `rail ${x.nr}: de linkerrand van de eerste module, op halve hoogte` })),
+  ];
+}
+
+/**
+ * De kaders op de foto uit de tikken (in de volgorde van tikStappen). Kast-
+ * coördinaten: x in modules, y in modulehoogten (de langste rail van 0 tot 1).
+ * @returns [{ i, groep, soort, leeg, hoeken: [[x,y]×4], midden: [x,y], modPx }] of [] als het (nog) niet kan
+ */
+export function projecteerKast(rails, tikken) {
+  const r = rails.filter((x) => x.items && x.items.length);
+  const st = tikStappen(rails);
+  if (!st.length || !tikken || tikken.length < st.length) return [];
+  const lang = r.find((x) => x.nr === st[0].rail);
+  const W = Math.max(1, lang.breedte);
+  const H = homografie([[0, 0], [W, 0], [W, 1], [0, 1]], tikken.slice(0, 4).map((t) => [t.x, t.y]));
+  const Hi = H && omgekeerd(H);
+  if (!H || !Hi) return [];
+  // Per rail: waar hij op de kast begint (x) en waar zijn middenlijn ligt (y).
+  const plaats = new Map([[lang.nr, { x: 0, y: 0.5 }]]);
+  st.slice(4).forEach((s, k) => { const [x, y] = pasToe(Hi, tikken[4 + k].x, tikken[4 + k].y); plaats.set(s.rail, { x, y }); });
+  const rond = (p) => p.map((v) => Math.round(v * 10) / 10);
+  const uit = [];
+  for (const rail of r) {
+    const pl = plaats.get(rail.nr);
+    for (const it of rail.items) {
+      const x0 = pl.x + it.positie, x1 = x0 + it.breedte;
+      const h = [pasToe(H, x0, pl.y - 0.5), pasToe(H, x1, pl.y - 0.5), pasToe(H, x1, pl.y + 0.5), pasToe(H, x0, pl.y + 0.5)].map(rond);
+      const a = pasToe(H, x0, pl.y), b = pasToe(H, x0 + 1, pl.y);
+      uit.push({ i: it.i, groep: it.groep, soort: it.soort, leeg: it.leeg, hoeken: h, midden: rond(pasToe(H, (x0 + x1) / 2, pl.y)), modPx: Math.hypot(b[0] - a[0], b[1] - a[1]) });
+    }
+  }
+  return uit;
+}
