@@ -88,6 +88,7 @@ export function kastModel(p) {
     let rail = { nr: 1, items: [], breedte: 0 };
     let n = 0;
     let letters = 0;   // aardlekken heten A, B, C in leesvolgorde
+    const letterVan = (n) => String.fromCharCode(64 + n);   // al = n → de n-de aardlek
     for (const t of u.toestellen) {
       if (t.soort === "railscheiding") { uit.rails.push(rail); rail = { nr: rail.nr + 1, items: [], breedte: 0 }; continue; }
       const breedte = t.breedte || 1;
@@ -97,6 +98,8 @@ export function kastModel(p) {
       rail.items.push({
         i: n++, soort: t.soort, leeg: t.soort === "leeg", breedte, positie: rail.breedte, rail: rail.nr,
         letter,
+        // Blokversie 2: achter welke aardlek (zoals de installateur het vastlegde). Anders null.
+        achter: Number.isInteger(t.al) && t.al >= 1 ? letterVan(t.al) : null,
         kort: t.soort === "leeg" ? "" : letter ? `AL ${letter}` : (SOORT_KORT[t.soort] ?? ""),
         bev: t.soort === "leeg" ? "" : bevTekst(t),
         naam: tekst(t.naam) || (g && g.n ? tekst(g.n) : ""),
@@ -161,10 +164,11 @@ export function leesAnker(t) {
 
 /**
  * De groepenverklaring: per groep nummer, waar hij voor is, aardlek en stroom.
- * De sticker legt niet vast achter welke aardlek een groep hangt (de kam is niet
- * te zien, en aardlekken staan vaak bij elkaar op één rail). Alleen bij een
- * aardlekautomaat is het zeker: die is zijn eigen aardlek. Anders blijft het
- * veld leeg — op papier om met de hand in te vullen. Nooit afleiden uit de plaats.
+ * Achter welke aardlek een groep hangt, staat op de sticker sinds blokversie 2
+ * (veld `al`, 25-11-2026): dan staat de letter erbij. Een aardlekautomaat is
+ * zijn eigen aardlek. Staat het er niet, dan blijft het veld leeg — op papier om
+ * met de hand in te vullen. Nooit afleiden uit de plaats: aardlekken staan vaak
+ * naast elkaar met alle automaten erachter.
  */
 export function groepenVerklaring(m) {
   const items = m.rails.flatMap((r) => r.items);
@@ -172,13 +176,16 @@ export function groepenVerklaring(m) {
   const regels = m.groepen.map((g) => {
     const it = items.find((x) => x.groep === g.nr) || null;
     let aardlek = "";
-    if (it && it.soort === "aardlekautomaat") aardlek = `eigen (aardlekautomaat${it.bev.includes("mA") ? `, ${it.bev.split(" · ").filter((d) => /mA|type/.test(d)).join(" ")}` : ""})`;
+    if (it && it.achter) aardlek = it.achter;
+    else if (it && it.soort === "aardlekautomaat") aardlek = `eigen (aardlekautomaat${it.bev.includes("mA") ? `, ${it.bev.split(" · ").filter((d) => /mA|type/.test(d)).join(" ")}` : ""})`;
     return {
       nr: g.nr, naam: g.naam || g.type || "", type: g.naam ? g.type : "", fase: g.fase,
       aardlek, stroom: it && it.bev ? it.bev.split(" · ")[0] : "", inTekening: !!it, onderverdeler: g.onderverdeler,
     };
   });
-  return { regels, aardlekken, gekoppeld: regels.some((r) => r.inTekening) };
+  // Of de sticker voor elke groep in de tekening zegt achter welke aardlek hij hangt.
+  const metAardlek = regels.filter((r) => r.inTekening).every((r) => r.aardlek) && regels.some((r) => r.inTekening);
+  return { regels, aardlekken, gekoppeld: regels.some((r) => r.inTekening), metAardlek };
 }
 
 /**

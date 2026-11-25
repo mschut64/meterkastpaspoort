@@ -15,6 +15,8 @@
 //      afgedrukt vel ziet er gezaghebbend uit; het is een weergave, geen vaststelling.
 //   2. Geen aandachtspunten en geen fasebalans: dat zijn oordelen (YourWkb geeft
 //      ze hier ook niet mee).
+// De kolom Aardlek komt uit de sticker (blokversie 2, veld `al`); staat het er
+// niet, dan "—" en een regel om het met de hand in te vullen. Nooit uit de plaats.
 
 import { maakQr } from "./vendor/qrcode.min.js";
 import { groepenVerklaring } from "./model.js";
@@ -130,6 +132,7 @@ export function toonVerklaring({ el, m, p = {}, h, frag, status, terug }) {
   const items = m.rails.flatMap((r) => r.items);
   const aardlekken = items.filter((it) => it.soort === "aardlek");
   const codeVan = new Map(aardlekken.map((it, k) => [it.i, aardlekCode(k + 1)]));
+  const codeVanLetter = (l) => aardlekCode(l.charCodeAt(0) - 64);
   const chip = (code, metStippen) => {
     const n = /^A(\d)$/.test(code) ? Number(code.slice(1)) : 0;
     return el("span", { class: "chip" }, el("span", { class: "stip", style: `background:${AARDLEK_KLEUR[code] || "#546E7A"}` }), code,
@@ -155,7 +158,7 @@ export function toonVerklaring({ el, m, p = {}, h, frag, status, terug }) {
       el("td", { class: "naam" }, g.n ? r.naam : leeg(r.naam || `Groep ${nr}`)),
       el("td", { style: "width:16mm" }, r.stroom || leeg("invullen")),
       el("td", { style: "width:20mm" }, faseChip(g.fn)),
-      el("td", { style: "width:18mm" }, leeg("—")),
+      el("td", { style: "width:18mm" }, /^[A-Z]$/.test(r.aardlek) ? chip(codeVanLetter(r.aardlek), false) : leeg("—")),
       el("td", { style: "width:14mm" }, it ? `${it.breedte}M` : ""),
       el("td", {}, ""));
   });
@@ -168,7 +171,10 @@ export function toonVerklaring({ el, m, p = {}, h, frag, status, terug }) {
       el("td", { style: "width:20mm" }, ma || leeg("invullen")),
       el("td", { style: "width:18mm" }, type || leeg("invullen")),
       el("td", { style: "width:16mm" }, it.polen ? `${it.polen}-polig` : "—"),
-      el("td", {}, "—"));
+      el("td", {}, (() => {
+        const g = items.filter((x) => x.achter === it.letter && x.groep).map((x) => x.groep);
+        return g.length ? `groep ${g.join(", ")}` : "—";
+      })()));
   });
   const ala = items.filter((it) => it.soort === "aardlekautomaat" && it.groep).map((it) => it.groep);
 
@@ -209,7 +215,7 @@ export function toonVerklaring({ el, m, p = {}, h, frag, status, terug }) {
         el("thead", {}, el("tr", {}, ...["Code", "Naam", "IΔn", "Type", "Polen", "Beveiligt"].map((t) => el("th", {}, t)))),
         el("tbody", {}, ...(aardlekRijen.length ? aardlekRijen : [el("tr", {}, el("td", { colspan: "6", class: "leeg" }, m.rails.length ? "Geen aardlekschakelaars." : "Niet op de sticker."))]))),
       ala.length ? el("div", { class: "regel" }, el("strong", {}, "Eigen aardlekbeveiliging: "), `groep ${ala.join(", ")} — aardlekautomaten, elk met een eigen aanspreekstroom.`) : null,
-      el("div", { class: "regel" }, "Achter welke aardlekschakelaar een groep hangt, staat niet op de sticker. Vul het in de kolom Aardlek met de hand in."),
+      v.metAardlek ? null : el("div", { class: "regel" }, "Achter welke aardlekschakelaar een groep hangt, staat niet (voor elke groep) op de sticker. Vul het in de kolom Aardlek met de hand in."),
       m.ontbreekt.length ? el("div", { class: "regel" }, m.ontbreekt.join(" ")) : null),
     el("div", { class: "voet" },
       "Dit overzicht is opgesteld met de lezer van de open standaard Meterkastpaspoort, uit wat de laatste installateur op de sticker heeft vastgelegd. ",

@@ -1,0 +1,199 @@
+{
+  "omschrijving": "De kast met 17 groepen, met blokversie 2: per automaat de aardlek waar hij achter hangt. De verdeling (groep 1–5 achter A1, 6–9 A2, 10–13 A3, 14–17 A4) is nagemaakt voor de test.",
+  "fragment": "rZRRb9owFIX_SnSeNsmdSIBomKcAadd1U7vCOqlVHy7BJMGOHTkB1lX898kJ3artJUx7-R6uck7utY_vM3bgfYYVOIJeEJ75_lkwAEOZgGM0Go3u78GgLTh8MCw3xw_BUNUKHIsFGDICf8a6sSLwYHhgkFS4YlEE4H6vqQ96B4bUluAPz6jBQSoFgzXOiNZgzsJnWGvwB_-RQe7B_XchgwbHl60xUlgcWDex01wZoSRV9Umib8ZoSYWw3mSb10J7V2IrhfY-kPKmd95nkWSk8yr5R9NlazpXRGVb8Ts7uQMJjoZUFZRkuRad1MFR3W_V1zuhO-vakzRS5Ir06iTZhFbtjK_G7XvXO2GVMeVJVreiEnbXbdr-r_AMf7dfKqJuSfhP8uNN3RHVe6qqjtntvxxdk5OTQjbJN7LN6gVZSoW3MLkS9UuAZ2abZMKz23_J29QUy7ygVIvamu5tvXKYWZOe-H7ntSkTo2tKaq8QtbDtY35kUEu3XYg0-JpUJQ4MyqTNZvlrmS3BcamrmpSiWmyt92ZnjF0KoVZvwbAHx4273EpoT-diuxdeao0ohW5-x1CQswx9PxiMzz_5YTgY--E46A3H_tgPWfCeNWwaSzLpOnMb0xqzwh_LdYgDQ65d7SqKLqJzeTPdD-6jOH2KPk5kNJ9dRjKOZHrrkDl8jyOZTRxcLcsdnuJI5lOHucPG4Uccyc3MYeHgXDa9OJIydvga4fAT",
+  "paspoort": {
+    "v": 3,
+    "d": "2026-11-24",
+    "pc": "9999ZZ",
+    "nr": "1",
+    "bj": "2026",
+    "stl": "TT",
+    "ha": {
+      "f": 3,
+      "a": 25
+    },
+    "kam": {
+      "mm2": 10,
+      "a": 40
+    },
+    "grp": [
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 1.6,
+        "n": "Quooker"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "n": "Koelkast"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "n": "Woonkamer Buiten Keuken Hal CV Mechanisc"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "n": "Woonkamer buiten Slaapkamer 1"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 2,
+        "n": "Wasmachine"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "kw": 3,
+        "n": "Oven"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "n": "Kookeiland"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "n": "Badkamer Slaapkamer 3 Overloop"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "n": "Reserve"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "kw": 1.5,
+        "n": "Kookplaat"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "kw": 1.5,
+        "n": "Kookplaat"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "kw": 2,
+        "n": "Vaatwasser"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "n": "Buiten"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "n": "Bijkeuken Garage Toilet Keuken Douche ru"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 2,
+        "n": "Combimagnetron"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 2,
+        "n": "Droger"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "n": "Stopcontact meterkast"
+      }
+    ],
+    "lb": {
+      "aan": false
+    },
+    "log": [
+      {
+        "d": "2026-11-24",
+        "b": "Installateur (voorbeeld)",
+        "w": "Plaatsen nieuwe groepenkast",
+        "ma": "261124;FL1664;16;205;1;16,28,16,28"
+      }
+    ],
+    "chk": {
+      "r": "rood",
+      "d": "2026-11-25"
+    },
+    "ind": "KAAGAFkPCw4ZAEgyAJBkASDIAkEAkgREAkghEAkgxEAkhBEAkhREAkhiEAkhyEAkiCEAkiSEAkijEAkizEAkjDEAkjTEAkjkEAkj0EAkkEEAkkUA"
+  }
+}

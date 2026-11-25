@@ -20,7 +20,7 @@ const fx = Object.fromEntries(readdirSync(map).filter((n) => n.endsWith(".json")
 const lees = async (naam) => mkpDecode(fx[naam].fragment);
 
 console.log("▶ 0 · invoer");
-eq(Object.keys(fx).sort(), ["afgekapt", "kast-17-groepen", "kast-3-groepen", "niet-gemeten", "v03-demo-jansen"], "0.1 vijf testpaspoorten");
+eq(Object.keys(fx).sort(), ["afgekapt", "kast-17-groepen", "kast-3-groepen", "met-aardlekkoppeling", "niet-gemeten", "v03-demo-jansen"], "0.1 zes testpaspoorten");
 eq([fragmentUit("https://meterkastpaspoort.nl/p#abc"), fragmentUit("https://yourwkb.nl/app#abc"), fragmentUit(" abc "), fragmentUit("")], ["abc", "abc", "abc", ""], "0.2 een link of een kaal fragment");
 
 console.log("▶ 1 · kast met 17 groepen");
@@ -117,6 +117,15 @@ console.log("▶ 9 · de foto");
   eq(projecteer(rail, { x: 5, y: 5 }, { x: 5, y: 5 }), [], "9.4 twee keer dezelfde tik: geen kaders");
   const bron = readFileSync(new URL("../lezer/foto.js", import.meta.url), "utf8") + readFileSync(new URL("../lezer/lezer.js", import.meta.url), "utf8");
   eq(/localStorage|indexedDB|fetch\(|sendBeacon|XMLHttpRequest/.test(bron.replace(/fetch\("\/veldnotities\/index\.json"\)/, "")), false, "9.5 de foto wordt nergens bewaard of verstuurd");
+}
+
+console.log("▶ 11 · achter welke aardlek (blokversie 2)");
+{
+  const m = kastModel(await lees("met-aardlekkoppeling")), v = groepenVerklaring(m);
+  eq(v.regels.map((r) => r.aardlek).join(""), "AAAAABBBBCCCCDDDD", "11.1 de kolom Aardlek komt van de sticker");
+  eq(v.metAardlek, true, "11.2 voor elke groep in de tekening bekend");
+  eq(m.rails.flatMap((r) => r.items).find((it) => it.groep === 6).achter, "B", "11.3 de module weet achter welke aardlek hij hangt");
+  eq(groepenVerklaring(kastModel(await lees("kast-17-groepen"))).metAardlek, false, "11.4 zonder koppeling op de sticker: niet bekend (en dus niet afgeleid)");
 }
 
 console.log("\n" + "═".repeat(47));

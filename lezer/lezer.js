@@ -221,7 +221,8 @@ function kies(k) {
   if (detail) {
     const it = keuze.item;
     if (it) zet(detail, el("b", {}, SOORT_NAAM[it.soort] || it.soort), it.bev ? ` · ${it.bev}` : "", ` · ${it.breedte} ${it.breedte === 1 ? "module" : "modules"}`,
-      it.polen ? ` · ${it.polen}` : "", it.groep ? ` · groep ${it.groep}` : " · geen groep", it.naam ? el("div", {}, it.naam) : null);
+      it.polen ? ` · ${it.polen}` : "", it.groep ? ` · groep ${it.groep}` : " · geen groep", it.achter ? ` · achter aardlek ${it.achter}` : "",
+      it.naam ? el("div", {}, it.naam) : null);
     else zet(detail, el("b", {}, `Groep ${keuze.groep}`), uit.querySelector(`.mod[data-groep="${keuze.groep}"]`) ? " — opgelicht in de kast" : " — staat niet in de tekening");
   }
   if (keuze.uitLijst) { const e = uit.querySelector(`.mod[data-groep="${keuze.groep}"]`); if (e) e.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" }); }
