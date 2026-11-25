@@ -23,6 +23,10 @@ console.log("▶ 0 · invoer");
 eq(Object.keys(fx).sort(), ["afgekapt", "kast-17-groepen", "kast-3-groepen", "met-aardlekkoppeling", "met-reservering", "niet-gemeten", "v03-demo-jansen"], "0.1 zeven testpaspoorten");
 eq([fragmentUit("https://meterkastpaspoort.nl/p#abc"), fragmentUit("https://yourwkb.nl/app#abc"), fragmentUit(" abc "), fragmentUit("")], ["abc", "abc", "abc", ""], "0.2 een link of een kaal fragment");
 
+{ // Besluit Martin 25-11-2026: een scan met de telefooncamera (meterkastpaspoort.nl/p#…) komt in de lezer.
+  const r = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8")).redirects;
+  eq(r.filter((x) => x.source.startsWith("/p")).map((x) => x.destination), ["/lezer/", "/lezer/"], "0.3 /p gaat naar de lezer (het fragment reist mee)");
+}
 console.log("▶ 1 · kast met 17 groepen");
 {
   const p = await lees("kast-17-groepen"), m = kastModel(p);

@@ -7,12 +7,12 @@
     },
     {
       "source": "/p",
-      "destination": "https://yourwkb.nl/app",
+      "destination": "/lezer/",
       "permanent": false
     },
     {
       "source": "/p/:rest*",
-      "destination": "https://yourwkb.nl/app",
+      "destination": "/lezer/",
       "permanent": false
     }
   ]
