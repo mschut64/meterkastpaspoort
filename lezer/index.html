@@ -81,39 +81,13 @@
   .ftik { fill:#ffd23f; stroke:#000; stroke-width:2; vector-effect:non-scaling-stroke; pointer-events:none; }
   .foto-tekst { font-weight:700; margin:0 0 8px; }
 
-  /* De groepenverklaring: op het scherm een wit vel, op papier alleen het vel */
+  /* Het groepenoverzicht (A4): op het scherm alleen het vel; de opmaak van het vel zelf staat in verklaring.js */
   body.verklaring .wrap > :not(#afdruk) { display:none !important; }
-  .vel { background:#fff; color:#000; width:210mm; box-sizing:border-box; margin:0 auto; padding:12mm; font:10.5pt/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; border-radius:6px; }
-  .vel .p-kop { display:flex; gap:8mm; justify-content:space-between; align-items:flex-start; }
-  .vel .p-titel { font-size:18pt; font-weight:800; }
-  .vel .p-adres { font-size:12pt; font-weight:700; margin:1mm 0 3mm; }
-  .vel .p-zin { border:0.6mm solid #000; padding:2mm 3mm; font-weight:700; margin:0 0 3mm; }
-  .vel .p-herkomst { font-size:10pt; }
-  .vel .p-qr { flex:0 0 auto; width:46mm; text-align:center; }
-  .vel .p-klein { font-size:8.5pt; color:#333; }
-  .vel .p-blok { margin-top:4mm; }
-  .vel .p-kopje { font-weight:800; font-size:11pt; border-bottom:0.3mm solid #000; margin-bottom:2mm; }
-  .vel .p-rail { display:flex; align-items:stretch; margin-bottom:1.5mm; }
-  .vel .p-railnr { width:6mm; font-size:8pt; display:flex; align-items:center; }
-  .vel .p-mod { min-height:14mm; border:0.3mm solid #000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; font-size:7pt; line-height:1.1; }
-  .vel .p-mod + .p-mod { border-left:none; }
-  .vel .p-aardlek, .vel .p-aardlekautomaat { background:#e6e6e6; }
-  .vel .p-hoofdschakelaar { background:#f2f2f2; }
-  .vel .p-leeg { border-style:dashed; }
-  .vel .p-k { font-weight:700; }
-  .vel .p-g { font-weight:800; font-size:9pt; }
-  .vel .p-tabel { width:100%; border-collapse:collapse; font-size:9.5pt; }
-  .vel .p-tabel th, .vel .p-tabel td { border:0.25mm solid #000; padding:0.8mm 2mm; text-align:left; vertical-align:top; }
-  .vel .p-tabel tr { break-inside:avoid; }
-  .vel .p-nr { font-weight:800; width:12mm; }
-  .vel .p-invul { min-width:22mm; }
-  .vel .p-voet { margin-top:3mm; break-inside:avoid; font-size:8pt; color:#333; border-top:0.3mm solid #000; padding-top:2mm; }
   .afdrukbalk { margin-bottom:12px; }
   @media print {
     html, body { background:#fff !important; }
     .wrap { padding:0; max-width:none; }
     .wrap > :not(#afdruk), #stil, .afdrukbalk { display:none !important; }
-    .vel { padding:0; width:auto; border-radius:0; zoom:1 !important; }
     * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   }
 </style>
