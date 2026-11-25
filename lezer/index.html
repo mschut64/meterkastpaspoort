@@ -23,6 +23,11 @@
     border:2px solid var(--rand); background:var(--vlak2); color:var(--tekst); cursor:pointer; }
   button.hoofd, a.knop.hoofd { background:var(--accent); color:#000; border-color:var(--accent); }
   a.knop { display:inline-flex; align-items:center; text-decoration:none; }
+  /* De knoppen onderin: op de telefoon onder elkaar, even breed; breder de hoofdknop
+     over de hele breedte en de rest in één rij, even breed. */
+  .acties { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; margin:18px 0; }
+  .acties > * { width:100%; justify-content:center; text-align:center; padding:10px 14px; line-height:1.25; }
+  @media (min-width: 600px) { .acties { grid-template-columns:repeat(3, minmax(0,1fr)); } .acties > .hoofd { grid-column:1 / -1; } }
   textarea { width:100%; min-height:84px; font:14px/1.4 ui-monospace,Menlo,monospace; background:var(--vlak2); color:var(--tekst);
     border:2px solid var(--rand); border-radius:10px; padding:10px; }
   .zacht { color:var(--zacht); }

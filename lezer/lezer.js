@@ -156,7 +156,7 @@ async function toon(p) {
       el("div", { "data-st": String(k + 1) }, vlag("geen"))))));
 
   // 6. Delen en verder.
-  const knoppen = el("div", { class: "knoppen", style: "margin:18px 0" },
+  const knoppen = el("div", { class: "acties" },
     // Verder in YourWkb, zoals de stickerlink: het paspoort reist in het #-deel mee
     // (gaat niet naar een server). De ingang #uitbreiding= start daar meteen een
     // nieuw project met deze gegevens, zonder eerst de weergave in de app (25-11-2026).
