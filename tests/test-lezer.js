@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { readFileSync, readdirSync } from "node:fs";
 import { mkpDecode } from "../mkp.js";
-import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, projecteer } from "../lezer/model.js";
+import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, projecteer, kastGegevens } from "../lezer/model.js";
 import { maakQr } from "../lezer/vendor/qrcode.min.js";
 import { qrModules } from "../mkp.js";
 
@@ -126,6 +126,18 @@ console.log("▶ 11 · achter welke aardlek (blokversie 2)");
   eq(v.metAardlek, true, "11.2 voor elke groep in de tekening bekend");
   eq(m.rails.flatMap((r) => r.items).find((it) => it.groep === 6).achter, "B", "11.3 de module weet achter welke aardlek hij hangt");
   eq(groepenVerklaring(kastModel(await lees("kast-17-groepen"))).metAardlek, false, "11.4 zonder koppeling op de sticker: niet bekend (en dus niet afgeleid)");
+}
+
+console.log("▶ 12 · de gegevens van de kast (uitklapblok)");
+{
+  const p = await lees("kast-17-groepen"), g = kastGegevens(p, kastModel(p));
+  const r = Object.fromEntries(g.rijen);
+  eq([r["Adres"], r["Bouwjaar kast"], r["Stelsel"], r["Hoofdaansluiting"], r["Kam / ontwerpstroom"]], ["9999ZZ 1", "2026", "TT", "3-fase × 25 A", "10 mm² · max 40 A"], "12.1 adres, bouwjaar, stelsel, aansluiting en kam");
+  eq(g.samenvatting, "3 × 25 A · TT · bouwjaar 2026", "12.2 de kop van het blok");
+  eq(g.rijen.every(([, w]) => w), true, "12.3 geen lege regels");
+  const lb = kastGegevens({ lb: { aan: true, typ: "dyn", max: 25, reg: "evcc" }, chk: { r: "oranje", d: "2026-03-01" } }, kastModel({ v: 2 }));
+  eq([lb.lb.tekst, lb.chk], ["Dynamisch · grens 25 A · regisseur: evcc", { r: "oranje", d: "2026-03-01" }], "12.4 load balancing en de laatste belastingcheck");
+  eq(kastGegevens({ ean: "<script>" }, kastModel({ v: 2 })).rijen.find(([k]) => k === "EAN aansluiting")[1], "<script>", "12.5 tekst blijft tekst (de lezer zet hem met textContent)");
 }
 
 console.log("\n" + "═".repeat(47));

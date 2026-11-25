@@ -4,7 +4,7 @@
 // in de pagina (textContent), nooit als HTML.
 
 import { mkpDecode, mkpVerifieer } from "../mkp.js";
-import { fragmentUit, kastModel, herkomst, SOORT_NAAM, ST_NAAM } from "./model.js";
+import { fragmentUit, kastModel, herkomst, kastGegevens, SOORT_NAAM, ST_NAAM } from "./model.js";
 
 const $ = (id) => document.getElementById(id);
 function el(tag, attrs = {}, ...kinderen) {
@@ -117,13 +117,34 @@ async function toon(p) {
       metFoto ? null : fotoKnop()].filter(Boolean));
   }
   const groepenDeel = el("div", {}, el("h2", {}, `Groepen${m.groepen.length ? ` (${m.groepen.length})` : ""}`), groepenLijst(m));
+  // Uitklapblokken, zoals de meetblokken in de app: kop met een korte samenvatting.
+  const blok = (titel, samenvatting, open, ...inhoud) => el("details", { class: "vlak blok", open: open || null },
+    el("summary", {}, el("span", { class: "blok-titel" }, titel), samenvatting ? el("span", { class: "blok-sam" }, samenvatting) : null),
+    el("div", { class: "blok-inhoud" }, ...inhoud));
+  const kg = kastGegevens(p, m);
+  // De gegevens van de kast (adres, bouwjaar, aansluiting, kam, EAN …) staan bovenin het kastblok.
+  const gegevens = kg.rijen.length ? el("div", { class: "gegevens" },
+    el("dl", { class: "rijen" }, ...kg.rijen.flatMap(([k, w]) => [el("dt", {}, k), el("dd", {}, w)])),
+    laatste && laatste.meting && laatste.meting.tekst ? el("p", { class: "klein", style: "margin:8px 0 0" }, `Laatste meting${laatste.meting.datum ? ` (${laatste.meting.datum})` : ""}: ${laatste.meting.tekst}`) : null) : null;
+  const lbBlok = kg.lb ? blok("Load balancing", kg.lb.aan ? "aanwezig" : "niet aanwezig", false,
+    el("p", { style: "margin:0" }, kg.lb.tekst),
+    el("p", { class: "zacht klein", style: "margin:6px 0 0" }, "Een instelling, geen veiligheidsmaatregel: hij kan gewijzigd of opgeheven zijn.")) : null;
+  const chkBlok = kg.chk ? blok("Laatste belastingcheck", `${kg.chk.r}${kg.chk.d ? ` · ${kg.chk.d}` : ""}`, false,
+    el("p", { style: "margin:0" }, el("span", { class: `chk chk-${/^(groen|oranje|rood)$/.test(kg.chk.r) ? kg.chk.r : "anders"}` }, kg.chk.r), kg.chk.d ? ` op ${kg.chk.d}` : ""),
+    el("p", { class: "zacht klein", style: "margin:6px 0 0" }, "Zoals de installateur hem toen heeft vastgelegd; geen uitkomst van nu.")) : null;
+
   const twee = metFoto
     ? el("div", {}, el("p", { class: "zacht klein draai" }, "Draai je telefoon voor foto en tekening naast elkaar."),
         el("div", { class: "twee foto" }, el("div", { id: "fotoPlek" }), kastDeel), groepenDeel)
     : el("div", { class: "twee" }, kastDeel, groepenDeel);
+  // Ingeklapt, zoals in de app; de kop zegt in het kort wat erin zit.
+  const kastBlok = blok("De kast en de groepen",
+    [kg.samenvatting, `${m.groepen.length} groep${m.groepen.length === 1 ? "" : "en"}`].filter(Boolean).join(" · "), !!metFoto, gegevens, twee);
+  // "Hele kast in beeld" rekent met de breedte van de kolom; die is er pas als het blok open is.
+  kastBlok.addEventListener("toggle", () => { if (kastBlok.open && passend) herteken(); });
 
   // 5. Het logboek, in volgorde.
-  const logboek = el("details", { class: "vlak" }, el("summary", {}, `Logboek (${h.length})`),
+  const logboek = el("details", { class: "vlak blok" }, el("summary", {}, el("span", { class: "blok-titel" }, "Logboek"), el("span", { class: "blok-sam" }, `${h.length} regel${h.length === 1 ? "" : "s"}`)),
     ...h.map((r, i) => el("div", { style: "border-top:1px solid var(--rand);padding:10px 0" },
       el("div", {}, el("b", {}, r.bedrijf || "Onbekend bedrijf"), r.datum ? ` · ${r.datum}` : ""),
       r.werk ? el("div", {}, r.werk) : null,
@@ -143,7 +164,7 @@ async function toon(p) {
     ? el("p", { class: "zacht klein" }, `Op deze sticker staan gegevens die deze lezer niet kent (${m.onbekend.join(", ")}); die zijn overgeslagen.`)
     : null;
 
-  uit.replaceChildren(...[kop, herkomstVlak, ...ontbreekt, twee, logboek, knoppen, onbekend].filter(Boolean),
+  uit.replaceChildren(...[kop, herkomstVlak, ...ontbreekt, kastBlok, lbBlok, chkBlok, logboek, knoppen, onbekend].filter(Boolean),
     el("p", { class: "zacht klein" }, "Een handtekening toont aan dat een logregel onveranderd is en van de houder van die sleutel komt. Niet dat de installatie deugt, en niet dat de sticker op de juiste kast zit."));
 
   // "Hele kast in beeld" rekent met de breedte van de kolom: die is er pas nu.

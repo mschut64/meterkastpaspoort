@@ -210,3 +210,43 @@ export function projecteer(rail, a, b) {
       hoeken: [punt(t0, -half), punt(t1, -half), punt(t1, half), punt(t0, half)], midden: punt((t0 + t1) / 2, 0) };
   });
 }
+
+/**
+ * De gegevens van de kast zoals de oude lezer en de app ze tonen: adres, bouwjaar,
+ * hoofdaansluiting, kam, EAN, stelsel, load balancing en de laatste belastingcheck.
+ * Alleen wat op de sticker staat; een leeg veld komt niet in de lijst.
+ * @returns {{ rijen: [string, string][], samenvatting: string, lb: object|null, chk: object|null }}
+ */
+export function kastGegevens(p, m) {
+  const t = (v) => (v == null ? "" : String(v).trim());
+  const ha = p && typeof p.ha === "object" && p.ha ? p.ha : null;
+  const kam = p && typeof p.kam === "object" && p.kam ? p.kam : null;
+  const aansluiting = ha && (ha.a || ha.f) ? `${t(ha.f) || "?"}-fase × ${t(ha.a) || "?"} A${ha.hs ? ` · hoofdschakelaar ${t(ha.hs)} A` : ""}` : "";
+  const kamTekst = kam && (kam.mm2 || kam.a) ? [kam.mm2 ? `${t(kam.mm2)} mm²` : "", kam.a ? `max ${t(kam.a)} A` : ""].filter(Boolean).join(" · ") : "";
+  const rijen = [
+    ["Verdeelinrichting", t(m && m.kast)],
+    ["Gevoed uit", t(m && m.gevoed && m.gevoed.tekst)],
+    ["Adres", t(m && m.adres)],
+    ["Bouwjaar kast", t(p && p.bj)],
+    ["Stelsel", typeof (p && p.stl) === "string" ? p.stl : ""],
+    ["Hoofdaansluiting", aansluiting],
+    ["Kam / ontwerpstroom", kamTekst],
+    ["EAN aansluiting", t(p && p.ean)],
+    ["EAN secundair", t(p && p.ean2)],
+    ["Laatst bijgewerkt", t(p && p.d)],
+    ["Volgende inspectie", t(m && m.volgendeInspectie)],
+    ["Datamodel", m && m.versie !== null && m.versie !== undefined ? String(m.versie) : ""],
+  ].filter(([, w]) => w);
+  const samenvatting = [ha && ha.a ? `${t(ha.f) || "?"} × ${t(ha.a)} A` : "", typeof (p && p.stl) === "string" ? p.stl : "", p && p.bj ? `bouwjaar ${t(p.bj)}` : ""].filter(Boolean).join(" · ");
+
+  let lb = null;
+  if (p && p.lb && typeof p.lb === "object") {
+    const soort = p.lb.typ === "dyn" ? "Dynamisch" : p.lb.typ === "stat" ? "Statisch" : "Aanwezig";
+    lb = p.lb.aan
+      ? { aan: true, tekst: [soort, p.lb.max ? `grens ${t(p.lb.max)} A` : "", p.lb.reg ? `regisseur: ${t(p.lb.reg)}` : ""].filter(Boolean).join(" · ") }
+      : { aan: false, tekst: "Niet aanwezig" };
+  }
+  let chk = null;
+  if (p && p.chk && typeof p.chk === "object" && p.chk.r) chk = { r: t(p.chk.r), d: t(p.chk.d) };
+  return { rijen, samenvatting, lb, chk };
+}
