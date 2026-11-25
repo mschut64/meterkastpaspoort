@@ -71,6 +71,10 @@
   dl.rijen { display:grid; grid-template-columns:minmax(0,max-content) minmax(0,1fr); gap:6px 14px; margin:0; }
   dl.rijen dt { color:var(--zacht); font-size:15px; }
   dl.rijen dd { margin:0; font-weight:600; overflow-wrap:anywhere; }
+  details.eerder { margin-top:12px; border-top:1px solid var(--rand); }
+  details.eerder > summary { font-size:16px; color:var(--accent); }
+  details.eerder > summary::after { content:"▾"; margin-left:8px; transition:transform .15s; }
+  details.eerder[open] > summary::after { transform:rotate(180deg); }
   .deel { border-top:1px solid var(--rand); padding-top:12px; margin-top:12px; }
   .deel-kop { font-weight:800; margin-bottom:4px; }
   .chk { font-weight:800; text-transform:uppercase; }

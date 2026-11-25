@@ -91,7 +91,9 @@ async function toon(p) {
     herkomstVlak.append(...[
       el("div", { style: "margin-top:6px" }, el("b", {}, laatste.bedrijf || "Onbekend bedrijf"), laatste.datum ? ` · ${laatste.datum}` : ""),
       laatste.werk ? el("div", {}, laatste.werk) : null,
+      laatste.opmerking ? el("div", { class: "zacht" }, laatste.opmerking) : null,
       erkenningRegel(laatste.erkenning),
+      laatste.zegels.length ? el("div", { class: "zacht klein" }, `Zegel${laatste.zegels.length > 1 ? "s" : ""}: ${laatste.zegels.join(", ")}`) : null,
       laatste.meting && laatste.meting.tekst ? el("div", { class: "klein", style: "margin-top:4px" }, `Laatste meting${laatste.meting.datum ? ` (${laatste.meting.datum})` : ""}: ${laatste.meting.tekst}`) : null,
       el("div", { "data-st": "0" }, vlag("geen"))].filter(Boolean));
   } else herkomstVlak.append(el("div", { class: "melding", style: "margin-top:8px" }, "Er staat geen logboek op deze sticker: niet te zien wie dit heeft vastgelegd."));
@@ -147,16 +149,19 @@ async function toon(p) {
   kastBlok.addEventListener("toggle", () => { if (kastBlok.open && passend) herteken(); });
 
   // 5. Het logboek, in volgorde.
-  // Het logboek staat altijd open, boven de kast (besluit Martin 25-11-2026).
-  const logboek = !h.length ? null : el("div", { class: "vlak" }, el("div", { class: "blok-titel", style: "margin-bottom:4px" }, `Logboek (${h.length})`),
-    ...h.map((r, i) => el("div", { style: "border-top:1px solid var(--rand);padding:10px 0" },
+  // De rest van het logboek zit in de herkomst, als uitklap onder de laatste regel
+  // (besluit Martin 25-11-2026): eerst wat de laatste installateur verklaarde, dan
+  // desgewenst wat daarvoor is gebeurd. Geen apart logboekblok meer.
+  if (h.length > 1) herkomstVlak.append(el("details", { class: "eerder" },
+    el("summary", {}, `Wat er daarvoor is gebeurd (${h.length - 1})`),
+    ...h.slice(1).map((r, k) => el("div", { style: "border-top:1px solid var(--rand);padding:10px 0" },
       el("div", {}, el("b", {}, r.bedrijf || "Onbekend bedrijf"), r.datum ? ` · ${r.datum}` : ""),
       r.werk ? el("div", {}, r.werk) : null,
       r.opmerking ? el("div", { class: "zacht" }, r.opmerking) : null,
       erkenningRegel(r.erkenning),
       r.zegels.length ? el("div", { class: "zacht klein" }, `Zegel${r.zegels.length > 1 ? "s" : ""}: ${r.zegels.join(", ")}`) : null,
       r.meting && r.meting.tekst ? el("div", { class: "klein" }, `Meting: ${r.meting.tekst}`) : null,
-      el("div", { "data-st": String(i) }, vlag("geen")))));
+      el("div", { "data-st": String(k + 1) }, vlag("geen"))))));
 
   // 6. Delen en verder.
   const knoppen = el("div", { class: "knoppen", style: "margin:18px 0" },
@@ -171,7 +176,7 @@ async function toon(p) {
     ? el("p", { class: "zacht klein" }, `Op deze sticker staan gegevens die deze lezer niet kent (${m.onbekend.join(", ")}); die zijn overgeslagen.`)
     : null;
 
-  uit.replaceChildren(...[kop, herkomstVlak, ...ontbreekt, logboek, kastBlok, knoppen, onbekend].filter(Boolean),
+  uit.replaceChildren(...[kop, herkomstVlak, ...ontbreekt, kastBlok, knoppen, onbekend].filter(Boolean),
     el("p", { class: "zacht klein" }, "Een handtekening toont aan dat een logregel onveranderd is en van de houder van die sleutel komt. Niet dat de installatie deugt, en niet dat de sticker op de juiste kast zit."));
 
   // "Hele kast in beeld" rekent met de breedte van de kolom: die is er pas nu.
