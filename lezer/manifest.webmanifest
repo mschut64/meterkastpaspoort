@@ -1,0 +1,10 @@
+{
+  "name": "Meterkastpaspoort lezen",
+  "short_name": "Paspoort",
+  "start_url": "/lezer/",
+  "scope": "/lezer/",
+  "display": "standalone",
+  "background_color": "#0d0f13",
+  "theme_color": "#0d0f13",
+  "lang": "nl"
+}

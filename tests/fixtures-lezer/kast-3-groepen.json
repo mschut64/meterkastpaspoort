@@ -1,0 +1,39 @@
+{
+  "omschrijving": "Echte kast met 3 groepen, geanonimiseerd, met meetanker.",
+  "fragment": "jU-9asMwGHwVc1MLCkSqcbE8yaYNpelgvKV0UOwvTpAsGUWJocHvXpy1QzvdDfd7wxXyiaGDhFiLbMX5SqRgGFtI5Hme73ZgcAESHAx9GCE_b4iQ0LYHQ_B24QcwHCA5g4PE9tQeY1JuMLM_tU30Y-td1G0kl0zeO6MHCv-xvtPFkMP8xWB9fx_268geEm_uHLW1OtIlJA9X78OeyHaPYJggMVEw31oPR-rIJQNFCkafIxgGvcRlnIu0eN3yLEsLIYrseb1e8F58ckvlRqmyLo1qKtXUqn8x6qOv6rpqlML8Aw",
+  "paspoort": {
+    "v": 3,
+    "d": "2026-11-24",
+    "pc": "9999ZZ",
+    "nr": "1",
+    "grp": [
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "n": "Licht BG"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "n": "Stopcontacten woonkamer"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "n": "Keuken"
+      }
+    ],
+    "log": [
+      {
+        "d": "2026-11-24",
+        "b": "Installateur (voorbeeld)",
+        "w": "werkzaamheden meterkast",
+        "ma": "261124;FL1664;22;6700;22;"
+      }
+    ],
+    "ind": "GAABQBkASCASQAgEkAMgCQQCSAA"
+  }
+}

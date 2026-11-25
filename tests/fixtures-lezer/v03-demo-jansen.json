@@ -1,0 +1,85 @@
+{
+  "omschrijving": "Het ondertekende demopaspoort van de standaard (v0.3, datamodel 2): materiaal, erkenning, zegel, handtekening; geen indeling.",
+  "fragment": "ZZLdjtowEIVfBZ3b2pXt_EB8VVKBlrJdlUXdP7SqHGJCSEggBFiK8lB9hT5ZNWF3tVLvrLG_Ocdn5owDtGKIoaGE8rkIuJRg2Myp0hOyH4KhqKAhFRisKaDR60q_5wVCCKkc1_O7PTBEK2j8_SODwAPD0kCfsYB2GAy08hqGzKypuF4raCnauisahqTaQM_OqKGxOYChKnNoHEobgyE7QrufFaNmkmFRQM_kM8Pa1NCyYRcu37xzZvFKScleHVwgppjzBqrm7TQ7I20774jNDRgWJoLGXVlWkbV53BnkNqurEgz1aUM34YD3r6dc_eCu4I4Ag6nqNqM2DgqQIv2iAi495XLRlkpSuJXcA7lO2-Rb0X39LtoPw3eZqRIO_yr9j2wAMp5HFKShYdTV3r4B8akA_eqFAmeobAKNq8H3KRqG-TIjiEZZVqZYWXyce48Ln17lZdJG8t9GkLlRsatNnps6tZGNq3S16Hwzxc6S6hEa18bEG2PyjpSd7L7zqRPZ3OzqtEjmSzvPaH-qDBrppc9WS7craXd-k9MZRhPeVrgQrpJdPDPsUnKyalX4xRC52aX0tZ_Zwj9ZNY5v0u28uCtMmjxu61sz3spkokaTfS-7zwYvQ8cvkvlhvA_3UehV_TC7KcNfVzfO0LNJEBwfnx6Gy4dx4eXy6aF_RPPc_AM",
+  "paspoort": {
+    "v": 2,
+    "d": "2026-09-11",
+    "pc": "2801AB",
+    "nr": "12",
+    "ean": "871685900012345678",
+    "bj": "±1995",
+    "ha": {
+      "f": 3,
+      "a": 25
+    },
+    "kam": {
+      "mm2": 10,
+      "a": 40
+    },
+    "grp": [
+      {
+        "t": "pv",
+        "rol": "voed",
+        "kw": 4.2,
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "mat": 1
+      },
+      {
+        "t": "lp",
+        "rol": "af",
+        "kw": 11,
+        "f": 3,
+        "fn": [
+          1,
+          2,
+          3
+        ],
+        "mat": 2
+      }
+    ],
+    "mat": [
+      {
+        "i": 1,
+        "s": "ala",
+        "fab": "Voorbeeld Elektro",
+        "typ": "VBE-ALS-2P-40-30",
+        "art": "1234567",
+        "pd": "@29-1524-07",
+        "pos": "R1-5"
+      },
+      {
+        "i": 2,
+        "s": "aut",
+        "fab": "ABB",
+        "typ": "S203-C16",
+        "pos": "R1-9"
+      }
+    ],
+    "lb": {
+      "aan": true,
+      "typ": "dyn",
+      "max": 25,
+      "reg": "HEMS"
+    },
+    "chk": {
+      "r": "oranje",
+      "d": "2026-08-06"
+    },
+    "log": [
+      {
+        "d": "2026-09-11",
+        "b": "Installatiebedrijf Jansen",
+        "w": "Laadpaal 11 kW + belastingcheck",
+        "erk": "installq:14718",
+        "zeg": [
+          "IQ-14718-004217"
+        ],
+        "sid": "jansen-2026-01",
+        "sig": "Ukf6ye2KdNiqcnVnaigYqtRaKq1gQ2IQu8kWkExF36ngcvKuBubB5rABkNoB_HN3F5eg99wYZXFhXKn5l1ZXAw"
+      }
+    ]
+  }
+}

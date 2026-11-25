@@ -1,0 +1,38 @@
+{
+  "omschrijving": "Echte kast met 3 groepen, niet gemeten: geen indeling en geen meetanker op de sticker.",
+  "fragment": "jY_BSsNAFAB_JcxJ4QVMFCHvaA8iipd6qvSwTV9TyWY3bLYNWPLvolcPep-BmQtn9FbYo9Q39X1ZVWV9hzC2KE3TNJsNQkgoFcKUPcrba7kq1whdGtH3CxnF-Q4hxW_AHRAOaCUElJeP9piLh0cW-ZNd5zi2MWTXZgvFHGPo3WDpP-qznXoLLFvBx-4n7NfXDuUpTNl577KdUnF1jjHtzPz-GmFGmS31n84NR9tbKAbLlno3ZZbt8gU",
+  "paspoort": {
+    "v": 3,
+    "d": "2026-11-24",
+    "pc": "9999ZZ",
+    "nr": "1",
+    "stl": "TN-C-S",
+    "grp": [
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "n": "Licht BG"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "n": "Stopcontacten woonkamer"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "n": "Keuken"
+      }
+    ],
+    "log": [
+      {
+        "d": "2026-11-24",
+        "b": "Installateur (voorbeeld)",
+        "w": "werkzaamheden meterkast"
+      }
+    ]
+  }
+}

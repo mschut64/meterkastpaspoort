@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f13">
+<meta name="description" content="Lees een meterkastpaspoort: de tekening van de kast, de groepen en wie wat heeft vastgelegd. Zonder account, zonder app; alles op je eigen toestel.">
+<title>Meterkastpaspoort lezen</title>
+<link rel="manifest" href="/lezer/manifest.webmanifest">
+<style>
+  :root { --bg:#0d0f13; --vlak:#171a21; --vlak2:#20242e; --rand:#343a47; --tekst:#f4f5f7; --zacht:#aab1bf;
+          --accent:#ffd23f; --ok:#4ade80; --let:#fbbf24; --hs:#7f1d1d; --al:#1e3a8a; --ala:#312e81; --aut:#2a2f3a; }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; background:var(--bg); color:var(--tekst); font:18px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:1100px; margin:0 auto; padding:16px 16px calc(80px + env(safe-area-inset-bottom)); }
+  h1 { font-size:24px; margin:4px 0 2px; }
+  h2 { font-size:19px; margin:26px 0 10px; }
+  .sub { color:var(--zacht); margin:0 0 16px; font-size:15px; }
+  .vlak { background:var(--vlak); border:1px solid var(--rand); border-radius:14px; padding:14px 16px; margin:0 0 14px; }
+  .knoppen { display:flex; flex-wrap:wrap; gap:10px; }
+  button, .knop { font:inherit; font-size:17px; font-weight:700; min-height:52px; padding:0 18px; border-radius:12px;
+    border:2px solid var(--rand); background:var(--vlak2); color:var(--tekst); cursor:pointer; }
+  button.hoofd { background:var(--accent); color:#000; border-color:var(--accent); }
+  textarea { width:100%; min-height:84px; font:14px/1.4 ui-monospace,Menlo,monospace; background:var(--vlak2); color:var(--tekst);
+    border:2px solid var(--rand); border-radius:10px; padding:10px; }
+  .zacht { color:var(--zacht); }
+  .klein { font-size:14px; }
+  .vlag { display:inline-block; font-size:13px; font-weight:700; border:2px solid; border-radius:999px; padding:1px 10px; margin:4px 6px 0 0; }
+  .v-ok { color:var(--ok); } .v-let { color:var(--let); } .v-geen { color:var(--zacht); }
+  .herkomst b { font-size:19px; }
+  .melding { border-left:5px solid var(--let); background:#2a2213; padding:10px 14px; border-radius:0 10px 10px 0; margin:0 0 10px; }
+  .vraag { font-size:20px; font-weight:700; text-align:center; margin:14px 0 4px; }
+  .kast { overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; }
+  .rail { display:flex; gap:3px; margin:0 0 6px; align-items:stretch; }
+  .railnr { flex:0 0 auto; width:26px; color:var(--zacht); font-size:13px; display:flex; align-items:center; }
+  .mod { flex:0 0 auto; min-height:96px; border-radius:8px; border:2px solid transparent; background:var(--aut); color:var(--tekst);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px 2px; text-align:center; cursor:pointer; font:inherit; }
+  .mod .k { font-size:12px; font-weight:700; color:var(--zacht); }
+  .mod .b { font-size:17px; font-weight:800; line-height:1.15; }
+  .mod .g { font-size:13px; font-weight:700; color:var(--accent); margin-top:2px; }
+  .mod .n { font-size:11px; line-height:1.2; max-height:2.4em; overflow:hidden; color:var(--zacht); word-break:break-word; }
+  .mod.hoofdschakelaar { background:var(--hs); } .mod.aardlek { background:var(--al); } .mod.aardlekautomaat { background:var(--ala); }
+  .kast.passend .mod { min-height:72px; padding:2px 0; }
+  .kast.passend .mod .n { display:none; }
+  .kast.passend .mod .b { font-size:13px; }
+  .kast.passend .mod .k { font-size:10px; }
+  .kast.mini .mod .k, .kast.mini .mod .b { display:none; }
+  .kast.mini .mod { border-radius:4px; }
+  .kast.piep .mod .g { display:none; }
+  .kast.passend { overflow-x:hidden; }
+  .mod.leeg { background:transparent; border:2px dashed var(--rand); cursor:default; }
+  .mod.vrij { background:transparent; border:2px dashed #262a33; cursor:default; }
+  .mod.aan, .groep.aan { border-color:var(--accent); box-shadow:0 0 0 3px #ffd23f55; }
+  .groepen { display:grid; gap:8px; }
+  .groep { text-align:left; display:block; width:100%; min-height:56px; padding:10px 14px; font-weight:400; border-width:2px; }
+  .groep .nr { display:inline-block; min-width:2.2em; font-weight:800; color:var(--accent); }
+  .uitleg { font-size:15px; }
+  .tekening-uitleg { font-size:14px; color:var(--zacht); margin:2px 0 8px; }
+  details summary { cursor:pointer; min-height:44px; display:flex; align-items:center; font-weight:700; }
+  .scan { position:relative; background:#000; border-radius:14px; overflow:hidden; }
+  .scan video { width:100%; display:block; max-height:60vh; object-fit:cover; }
+  .scan .kader { position:absolute; inset:18%; border:3px solid var(--accent); border-radius:16px; pointer-events:none; }
+  .twee { display:grid; gap:14px; grid-template-columns:minmax(0,1fr); }
+  .twee > * { min-width:0; }
+  @media (min-width: 900px) { .twee { grid-template-columns: minmax(0,3fr) minmax(0,2fr); } }
+  footer { margin-top:34px; color:var(--zacht); font-size:13px; }
+  a { color:var(--accent); }
+  .stil { position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:var(--accent); color:#000;
+    font-weight:700; padding:10px 18px; border-radius:999px; display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Meterkastpaspoort</h1>
+  <p class="sub">Lees de sticker van een meterkast. Alles gebeurt op je eigen toestel: er gaat niets naar een server, en je hebt geen account nodig.</p>
+
+  <section id="invoer" class="vlak" hidden>
+    <div class="knoppen">
+      <button id="knopScan" class="hoofd" type="button">📷 Scan de QR-code</button>
+    </div>
+    <div id="scan" class="scan" hidden style="margin-top:12px"><video id="video" playsinline muted></video><div class="kader"></div></div>
+    <p id="scanTekst" class="zacht klein" hidden>Richt de camera op de QR-code op de kastdeur.</p>
+    <p class="zacht klein" style="margin:14px 0 6px">Of plak een link van een meterkastpaspoort:</p>
+    <textarea id="plak" placeholder="https://meterkastpaspoort.nl/p#…"></textarea>
+    <div class="knoppen" style="margin-top:8px"><button id="knopLees" type="button">Lezen</button></div>
+  </section>
+
+  <div id="fout"></div>
+  <div id="uit"></div>
+
+  <footer>
+    Referentie-implementatie van de open standaard <a href="/">Open Meterkastpaspoort</a> · CC BY 4.0.<br>
+    De lezer tekent wat op de sticker staat. Hij beoordeelt de installatie niet.
+  </footer>
+</div>
+<div id="stil" class="stil" role="status" aria-live="polite"></div>
+<script type="module" src="/lezer/lezer.js"></script>
+</body>
+</html>

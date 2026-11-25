@@ -1,0 +1,207 @@
+{
+  "omschrijving": "Kast met 17 groepen en een langere geschiedenis: bij het maken van de sticker vielen het meetanker en de indeling weg. De meetwaarden van deze klus (het meetanker) staan niet op de sticker: met het anker paste de QR niet. Ze staan in het volledige paspoort. De kastindeling staat niet op de sticker: met de indeling paste de QR niet. Alle andere gegevens staan er wel op.",
+  "fragment": "rZRBa9tAEIX_yvJOLayLVo4D3qOT0pZQ0jYhhQQfRtJYlrXaFauVfDD-70WWk6atD3Loddj3sTPz5u3QQU8lMmjEUXw5UWoSX0CiTqExn8_nj4-QsB4aChLJ5vgQEk0w0Li_h8SaoHdYHVAEHc_2EiVVfbGqYmgVHeoX0V4i9zX00w4BGmRySHjXg2gF2SOUxMpCP6mlRLmFVh8uJSw0vrfOleyxl-PEvebGsSmpCWeJfjpnS6rYi0VbBLbihtuSrfhMRlw9iK-crskWTfpGaDJA7wxRPVTUaFI_kPgIpKaidF1YHqWOj-rpoL7t2I7WDZN0JReGbHaWbEHZ0OOrdqfitmNvnKvPQv3ghn03rtvpi3lmv79fG6JxTvhP8uOmHojClppmpHenz6M7-OQsky2KTTl49RN5ylncu8JweDbwtWvTNQvfvsVvV65Kiopyy8G78d96Rbj2Lj_zfu-Cq1NnA6VBVBzYD8e8lDBJny5EFnpFpuG9hHH5IVn-CbMEGl9sE8gYCtx68a5zzifMJnsPiS00vvXLbdgKW3C7ZZF7xzXbl-w4MqNJpCYqOjI_ss_6g-bMF5uVUCe4B45Iik3OB__8iVOTKJ4odRoXn8AR-cxwKTr2Hdm8t8dSIl2X_TD6kPbOZfgrz2fY738B",
+  "paspoort": {
+    "v": 3,
+    "d": "2026-11-24",
+    "pc": "9999ZZ",
+    "nr": "1",
+    "bj": "2026",
+    "stl": "TT",
+    "ha": {
+      "f": 3,
+      "a": 25
+    },
+    "kam": {
+      "mm2": 10,
+      "a": 40
+    },
+    "grp": [
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 1.6,
+        "n": "Quooker"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "n": "Koelkast"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "n": "Woonkamer Buiten Keuken Hal CV Mechanisc"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "n": "Woonkamer buiten Slaapkamer 1"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 2,
+        "n": "Wasmachine"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "kw": 3,
+        "n": "Oven"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "n": "Kookeiland"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "n": "Badkamer Slaapkamer 3 Overloop"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "n": "Reserve"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "kw": 1.5,
+        "n": "Kookplaat"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "kw": 1.5,
+        "n": "Kookplaat"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "kw": 2,
+        "n": "Vaatwasser"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          3
+        ],
+        "n": "Buiten"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "n": "Bijkeuken Garage Toilet Keuken Douche ru"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 2,
+        "n": "Combimagnetron"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "kw": 2,
+        "n": "Droger"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "fn": [
+          1
+        ],
+        "n": "Stopcontact meterkast"
+      }
+    ],
+    "lb": {
+      "aan": false
+    },
+    "log": [
+      {
+        "d": "2026-11-24",
+        "b": "Installateur (voorbeeld)",
+        "w": "Plaatsen nieuwe groepenkast"
+      },
+      {
+        "d": "2020-01-10",
+        "b": "Eerder bedrijf 1 (voorbeeld)",
+        "w": "groep bijgeplaatst"
+      },
+      {
+        "d": "2021-02-11",
+        "b": "Eerder bedrijf 2 (voorbeeld)",
+        "w": "aardlek vervangen"
+      }
+    ],
+    "chk": {
+      "r": "rood",
+      "d": "2026-11-25"
+    }
+  }
+}

@@ -1,0 +1,92 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// De meterkastpaspoort-lezer (lezer/): het model, op vijf echte, geanonimiseerde
+// paspoorten (tests/fixtures-lezer). Voer uit met:  node tests/test-lezer.js
+// ─────────────────────────────────────────────────────────────────────────────
+import { readFileSync, readdirSync } from "node:fs";
+import { mkpDecode } from "../mkp.js";
+import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst } from "../lezer/model.js";
+
+let passed = 0, failed = 0;
+const failures = [];
+function eq(actual, expected, label) {
+  const a = JSON.stringify(actual), e = JSON.stringify(expected);
+  if (a === e) passed++;
+  else { failed++; failures.push(`❌ ${label}\n     verwacht: ${e}\n     kreeg:    ${a}`); }
+}
+const map = new URL("./fixtures-lezer/", import.meta.url);
+const fx = Object.fromEntries(readdirSync(map).filter((n) => n.endsWith(".json")).map((n) => [n.replace(/\.json$/, ""), JSON.parse(readFileSync(new URL(n, map), "utf8"))]));
+const lees = async (naam) => mkpDecode(fx[naam].fragment);
+
+console.log("▶ 0 · invoer");
+eq(Object.keys(fx).sort(), ["afgekapt", "kast-17-groepen", "kast-3-groepen", "niet-gemeten", "v03-demo-jansen"], "0.1 vijf testpaspoorten");
+eq([fragmentUit("https://meterkastpaspoort.nl/p#abc"), fragmentUit("https://yourwkb.nl/app#abc"), fragmentUit(" abc "), fragmentUit("")], ["abc", "abc", "abc", ""], "0.2 een link of een kaal fragment");
+
+console.log("▶ 1 · kast met 17 groepen");
+{
+  const p = await lees("kast-17-groepen"), m = kastModel(p);
+  const items = m.rails.flatMap((r) => r.items);
+  eq([m.rails.length > 0, items.filter((i) => i.groep).length >= 17, m.groepen.length >= 17], [true, true, true], "1.1 rails, en elke groep aan een module");
+  eq(items.every((it, k) => k === 0 || it.i === items[k - 1].i + 1), true, "1.2 de modules op volgorde");
+  eq(m.rails.every((r) => r.items.every((it, k) => it.positie === (k ? r.items[k - 1].positie + r.items[k - 1].breedte : 0))), true, "1.3 de plaats volgt uit de breedtes");
+  eq(m.status, "gebouwd", "1.4 de status uit st");
+  eq(m.ontbreekt.some((t) => /gebouwd, nog niet gemeten/.test(t)), true, "1.5 en die staat er in woorden bij");
+  const h = herkomst(p);
+  eq([h[0].bedrijf, h[0].ondertekend, !!(h[0].meting && h[0].meting.tekst)], ["Installateur (voorbeeld)", false, true], "1.6 herkomst: wie, niet ondertekend, en de laatste meting");
+}
+
+console.log("▶ 2 · kast met 3 groepen");
+{
+  const m = kastModel(await lees("kast-3-groepen"));
+  // Bevinding 25-11-2026: bij een met de hand ingedeelde kast schrijft de app geen
+  // groepsnummers in de indeling (spec, open punt 8). De lezer zegt dat dan.
+  eq([m.groepen.length, m.rails.length > 0, m.rails.flatMap((r) => r.items).filter((i) => i.groep).length], [3, true, 0], "2.1 drie groepen en een tekening, maar zonder koppeling");
+  eq(m.ontbreekt.some((t) => /koppelt de modules niet aan de groepen/.test(t)), true, "2.2 en de lezer zegt dat de koppeling ontbreekt");
+}
+
+console.log("▶ 3 · niet gemeten");
+{
+  const p = await lees("niet-gemeten"), m = kastModel(p);
+  eq([m.rails.length, m.groepen.length > 0], [0, true], "3.1 geen tekening, wel de groepen");
+  eq(m.ontbreekt.some((t) => /geen indeling/.test(t)), true, "3.2 en de lezer zegt waarom er geen tekening is");
+  eq(herkomst(p)[0].meting, null, "3.3 geen meetanker");
+}
+
+console.log("▶ 4 · afgekapt");
+{
+  const p = await lees("afgekapt"), m = kastModel(p), h = herkomst(p);
+  eq([m.rails.length, m.groepen.length >= 17, h.length], [0, true, 3], "4.1 zonder indeling, met alle groepen en het hele logboek");
+  eq(m.ontbreekt.some((t) => /niet op de sticker paste/.test(t)), true, "4.2 de lezer noemt dat de indeling niet paste als mogelijke reden");
+  eq(h[0].meting, null, "4.3 het meetanker is eraf");
+}
+
+console.log("▶ 5 · v0.3 (datamodel 2)");
+{
+  const p = await lees("v03-demo-jansen"), m = kastModel(p), h = herkomst(p);
+  eq([m.versie, m.rails.length], [2, 0], "5.1 versie 2, geen tekening");
+  eq(m.ontbreekt.some((t) => /van vóór de indeling \(datamodel 2\)/.test(t)), true, "5.2 de lezer zegt dat de sticker van vóór de indeling is");
+  eq([h[0].ondertekend, h[0].erkenning && h[0].erkenning.naam, h[0].zegels.length], [true, "InstallQ", 1], "5.3 handtekening, erkenning en zegel staan in de herkomst");
+  eq(m.onbekend, [], "5.4 niets onbekends");
+}
+
+console.log("▶ 6 · kleine dingen");
+eq([bevTekst({ kar: "B", In: 16 }), bevTekst({ In: 40, idn: 30, lek: "A" }), bevTekst({ kar: "gG", In: 35 })], ["B16", "40 A · 30 mA · type A", "gG 35"], "6.1 de beveiliging in een paar tekens");
+eq(leesAnker("261124;FL1664;32;41;250;18,23").tekst, "Z L-N 0,32 Ω · Z L-PE 0,41 Ω · isolatie 250 MΩ · ΔT 18/23 ms", "6.2 het meetanker in woorden");
+eq(leesAnker("onzin"), null, "6.3 onleesbaar anker: null");
+eq(kastModel({ v: 3, ind: 42 }).ontbreekt.some((t) => /niet leesbaar/.test(t)), true, "6.4 een kapotte indeling: de rest blijft leesbaar");
+eq(kastModel({ v: 3, xyz: 1, grp: [] }).onbekend, ["xyz"], "6.5 onbekende velden worden genoemd, niet getoond");
+
+console.log("▶ 7 · de lezer laadt niets uit een app");
+for (const f of ["lezer/lezer.js", "lezer/model.js"]) {
+  const s = readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
+  const imports = [...s.matchAll(/^import .* from "([^"]+)"/gm)].map((x) => x[1]);
+  eq(imports.every((i) => i === "../mkp.js" || i === "./model.js"), true, `7.1 ${f} importeert alleen de codec en het model`);
+  eq(/innerHTML/.test(s), false, `7.2 ${f} zet niets als HTML in de pagina`);
+}
+const html = readFileSync(new URL("../lezer/index.html", import.meta.url), "utf8");
+eq(/<script(?![^>]*src="\/lezer\/lezer\.js")[^>]*src=/.test(html), false, "7.3 de pagina laadt geen ander script dan de lezer");
+eq(/user-scalable=no|maximum-scale/.test(html), false, "7.4 inzoomen blijft mogelijk");
+
+console.log("\n" + "═".repeat(47));
+console.log(`RESULTAAT: ${passed} geslaagd · ${failed} mislukt · ${passed + failed} totaal`);
+console.log("═".repeat(47));
+if (failures.length) { console.log("\n" + failures.join("\n")); process.exit(1); }
