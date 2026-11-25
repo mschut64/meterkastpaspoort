@@ -91,11 +91,11 @@
   .vel .p-herkomst { font-size:10pt; }
   .vel .p-qr { flex:0 0 auto; width:46mm; text-align:center; }
   .vel .p-klein { font-size:8.5pt; color:#333; }
-  .vel .p-blok { margin-top:6mm; break-inside:avoid; }
+  .vel .p-blok { margin-top:4mm; }
   .vel .p-kopje { font-weight:800; font-size:11pt; border-bottom:0.3mm solid #000; margin-bottom:2mm; }
   .vel .p-rail { display:flex; align-items:stretch; margin-bottom:1.5mm; }
   .vel .p-railnr { width:6mm; font-size:8pt; display:flex; align-items:center; }
-  .vel .p-mod { min-height:16mm; border:0.3mm solid #000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; font-size:7pt; line-height:1.1; }
+  .vel .p-mod { min-height:14mm; border:0.3mm solid #000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; font-size:7pt; line-height:1.1; }
   .vel .p-mod + .p-mod { border-left:none; }
   .vel .p-aardlek, .vel .p-aardlekautomaat { background:#e6e6e6; }
   .vel .p-hoofdschakelaar { background:#f2f2f2; }
@@ -103,18 +103,37 @@
   .vel .p-k { font-weight:700; }
   .vel .p-g { font-weight:800; font-size:9pt; }
   .vel .p-tabel { width:100%; border-collapse:collapse; font-size:9.5pt; }
-  .vel .p-tabel th, .vel .p-tabel td { border:0.25mm solid #000; padding:1.2mm 2mm; text-align:left; vertical-align:top; }
+  .vel .p-tabel th, .vel .p-tabel td { border:0.25mm solid #000; padding:0.8mm 2mm; text-align:left; vertical-align:top; }
   .vel .p-tabel tr { break-inside:avoid; }
   .vel .p-nr { font-weight:800; width:12mm; }
   .vel .p-invul { min-width:22mm; }
-  .vel .p-voet { margin-top:6mm; font-size:8pt; color:#333; border-top:0.3mm solid #000; padding-top:2mm; }
+  .vel .p-voet { margin-top:3mm; break-inside:avoid; font-size:8pt; color:#333; border-top:0.3mm solid #000; padding-top:2mm; }
   .afdrukbalk { margin-bottom:12px; }
+  /* Labelstroken 70 × 40 mm: tekst en dunne lijnen, geen zwarte vlakken */
+  .stroken { display:grid; gap:14px; }
+  .strookkaart { background:var(--vlak); border:1px solid var(--rand); border-radius:12px; padding:10px; }
+  .strookkaart.niet .strook { opacity:.35; }
+  .s-kop { display:flex; align-items:center; gap:8px; font-size:15px; min-height:44px; }
+  .s-kop input { width:24px; height:24px; }
+  .strook { width:70mm; height:40mm; background:#fff; color:#000; display:flex; overflow:hidden; box-sizing:border-box; border-radius:3px;
+    font-family:'Barlow Condensed','Arial Narrow','Roboto Condensed',sans-serif; }
+  .s-pos { flex:0 0 auto; height:100%; box-sizing:border-box; border-right:0.25mm solid #000; padding:1.5mm 1.2mm; display:flex; flex-direction:column; overflow:hidden; }
+  .s-pos:last-child { border-right:none; }
+  .s-leeg { border-right-style:dashed; }
+  .s-nr { font-size:20pt; font-weight:700; line-height:1; }
+  .s-naam { flex:1 1 auto; font-size:10pt; font-weight:500; line-height:1.1; margin-top:1mm; overflow:hidden; overflow-wrap:break-word; hyphens:auto; -webkit-hyphens:auto;
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:5; line-clamp:5; }
+  .s-bev { font-size:11pt; font-weight:600; line-height:1; }
   @media print {
-    @page { size:A4; margin:10mm; }
     html, body { background:#fff !important; }
     .wrap { padding:0; max-width:none; }
     .wrap > :not(#afdruk), #stil, .afdrukbalk { display:none !important; }
     .vel { padding:0; width:auto; border-radius:0; zoom:1 !important; }
+    .stroken { display:block; }
+    .strookkaart { padding:0; background:none; border:none; zoom:1 !important; }
+    .strookkaart.niet { display:none !important; }
+    .strook { break-after:page; page-break-after:always; border:none; border-radius:0; }
+    .strookkaart:last-child .strook { break-after:auto; page-break-after:auto; }
     * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   }
 </style>

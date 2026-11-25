@@ -137,6 +137,7 @@ async function toon(p) {
   const knoppen = el("div", { class: "knoppen", style: "margin:18px 0" },
     el("button", { class: "hoofd", type: "button", onclick: deel }, "Deel dit paspoort"),
     el("button", { type: "button", onclick: () => verklaring(m, h) }, "Groepenverklaring (A4)"),
+    m.rails.length ? el("button", { type: "button", onclick: () => stroken(m) }, "Labelstroken (70 × 40)") : null,
     el("button", { type: "button", onclick: () => { history.replaceState(null, "", location.pathname); zetFoto(null); uit.replaceChildren(); toonInvoer(true); } }, "Andere sticker"));
 
   const onbekend = m.onbekend.length
@@ -245,6 +246,12 @@ async function verklaring(m, h) {
   const V = await import("./verklaring.js");
   const y = window.scrollY;
   V.toonVerklaring({ el, m, h, frag: huidig, status, terug: () => window.scrollTo(0, y) });
+}
+
+async function stroken(m) {
+  const S = await import("./stroken.js");
+  const y = window.scrollY;
+  S.toonStroken({ el, m, terug: () => window.scrollTo(0, y) });
 }
 
 // Het beeld van de camera vastpakken op het moment dat de QR herkend is: de

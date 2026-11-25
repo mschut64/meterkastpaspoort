@@ -102,6 +102,10 @@ export function toonVerklaring({ el, m, h, frag, status, terug }) {
       el("button", { type: "button", onclick: sluit }, "Terug")),
     el("p", { class: "zacht klein afdrukbalk" }, "Kies in het printvenster je printer, of \"Opslaan als pdf\". Op A4, staand."),
     vel);
+  // A4 alleen zolang het vel open staat (de stroken hebben een eigen paginamaat).
+  const pagina = document.createElement("style");
+  pagina.textContent = "@page { size: A4; margin: 10mm; }";
+  document.head.append(pagina);
   plek.hidden = false;
   document.body.classList.add("verklaring");
   window.scrollTo(0, 0);
@@ -111,6 +115,7 @@ export function toonVerklaring({ el, m, h, frag, status, terug }) {
 
   function sluit() {
     window.removeEventListener("resize", pas);
+    pagina.remove();
     plek.hidden = true; plek.replaceChildren();
     document.body.classList.remove("verklaring");
     if (terug) terug();

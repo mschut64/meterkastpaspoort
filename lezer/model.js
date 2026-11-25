@@ -216,7 +216,9 @@ export function labelStroken(m, perStrook = 4) {
     for (const it of r.items) {
       if (!s || (s.modules + it.breedte > perStrook && s.posities.length)) { s = { rail: r.nr, vanaf: it.positie, modules: 0, posities: [] }; stroken.push(s); }
       s.posities.push({ positie: it.positie, breedte: it.breedte, leeg: it.leeg,
-        groep: it.groep, naam: it.naam, bev: it.bev.split(" · ")[0] || "", kort: it.kort });
+        groep: it.groep, naam: it.naam, kort: it.kort,
+        // Bij een aardlek hoort het type erbij ("30 mA A"); anders alleen de beveiliging ("B16").
+        bev: /^aardlek/.test(it.soort) ? it.bev.split(" · ").join(" ").replace("type ", "") : (it.bev.split(" · ")[0] || "") });
       s.modules += it.breedte;
     }
   }
