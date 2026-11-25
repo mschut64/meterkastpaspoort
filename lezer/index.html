@@ -21,7 +21,8 @@
   .knoppen { display:flex; flex-wrap:wrap; gap:10px; }
   button, .knop { font:inherit; font-size:17px; font-weight:700; min-height:52px; padding:0 18px; border-radius:12px;
     border:2px solid var(--rand); background:var(--vlak2); color:var(--tekst); cursor:pointer; }
-  button.hoofd { background:var(--accent); color:#000; border-color:var(--accent); }
+  button.hoofd, a.knop.hoofd { background:var(--accent); color:#000; border-color:var(--accent); }
+  a.knop { display:inline-flex; align-items:center; text-decoration:none; }
   textarea { width:100%; min-height:84px; font:14px/1.4 ui-monospace,Menlo,monospace; background:var(--vlak2); color:var(--tekst);
     border:2px solid var(--rand); border-radius:10px; padding:10px; }
   .zacht { color:var(--zacht); }

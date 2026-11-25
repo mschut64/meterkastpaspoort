@@ -147,7 +147,8 @@ async function toon(p) {
   kastBlok.addEventListener("toggle", () => { if (kastBlok.open && passend) herteken(); });
 
   // 5. Het logboek, in volgorde.
-  const logboek = el("details", { class: "vlak blok" }, el("summary", {}, el("span", { class: "blok-titel" }, "Logboek"), el("span", { class: "blok-sam" }, `${h.length} regel${h.length === 1 ? "" : "s"}`)),
+  // Het logboek staat altijd open, boven de kast (besluit Martin 25-11-2026).
+  const logboek = !h.length ? null : el("div", { class: "vlak" }, el("div", { class: "blok-titel", style: "margin-bottom:4px" }, `Logboek (${h.length})`),
     ...h.map((r, i) => el("div", { style: "border-top:1px solid var(--rand);padding:10px 0" },
       el("div", {}, el("b", {}, r.bedrijf || "Onbekend bedrijf"), r.datum ? ` · ${r.datum}` : ""),
       r.werk ? el("div", {}, r.werk) : null,
@@ -159,7 +160,10 @@ async function toon(p) {
 
   // 6. Delen en verder.
   const knoppen = el("div", { class: "knoppen", style: "margin:18px 0" },
-    el("button", { class: "hoofd", type: "button", onclick: deel }, "Deel dit paspoort"),
+    // Verder in YourWkb, zoals de stickerlink: het paspoort reist in het #-deel mee
+    // (gaat niet naar een server); daar begin je een uitbreiding met deze gegevens.
+    el("a", { class: "knop hoofd", href: `https://yourwkb.nl/app#${huidig}`, rel: "noopener" }, "Uitbreiding vastleggen in YourWkb →"),
+    el("button", { type: "button", onclick: deel }, "Deel dit paspoort"),
     el("button", { type: "button", onclick: () => verklaring(m, h) }, "Groepenoverzicht (A4)"),
     el("button", { type: "button", onclick: () => { history.replaceState(null, "", location.pathname); zetFoto(null); uit.replaceChildren(); toonInvoer(true); } }, "Andere sticker"));
 
@@ -167,7 +171,7 @@ async function toon(p) {
     ? el("p", { class: "zacht klein" }, `Op deze sticker staan gegevens die deze lezer niet kent (${m.onbekend.join(", ")}); die zijn overgeslagen.`)
     : null;
 
-  uit.replaceChildren(...[kop, herkomstVlak, ...ontbreekt, kastBlok, logboek, knoppen, onbekend].filter(Boolean),
+  uit.replaceChildren(...[kop, herkomstVlak, ...ontbreekt, logboek, kastBlok, knoppen, onbekend].filter(Boolean),
     el("p", { class: "zacht klein" }, "Een handtekening toont aan dat een logregel onveranderd is en van de houder van die sleutel komt. Niet dat de installatie deugt, en niet dat de sticker op de juiste kast zit."));
 
   // "Hele kast in beeld" rekent met de breedte van de kolom: die is er pas nu.
