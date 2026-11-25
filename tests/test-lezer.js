@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { readFileSync, readdirSync } from "node:fs";
 import { mkpDecode } from "../mkp.js";
-import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, projecteer, kastGegevens, homografie, pasToe, tikStappen, projecteerKast, verschilMetFoto, tikkenUitAi } from "../lezer/model.js";
+import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, kastGegevens } from "../lezer/model.js";
 import { maakQr } from "../lezer/vendor/qrcode.min.js";
 import { qrModules } from "../mkp.js";
 
@@ -78,8 +78,8 @@ eq(kastModel({ v: 3, ind: 42 }).ontbreekt.some((t) => /niet leesbaar/.test(t)), 
 eq(kastModel({ v: 3, xyz: 1, grp: [] }).onbekend, ["xyz"], "6.5 onbekende velden worden genoemd, niet getoond");
 
 console.log("▶ 7 · de lezer laadt niets uit een app");
-const MAG = ["../mkp.js", "./model.js", "./vendor/qrcode.min.js", "./foto.js", "./verklaring.js"];
-for (const f of ["lezer/lezer.js", "lezer/model.js", "lezer/verklaring.js", "lezer/foto.js"]) {
+const MAG = ["../mkp.js", "./model.js", "./vendor/qrcode.min.js", "./verklaring.js"];
+for (const f of ["lezer/lezer.js", "lezer/model.js", "lezer/verklaring.js"]) {
   const s = readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
   const imports = [...s.matchAll(/^import .* from "([^"]+)"/gm), ...s.matchAll(/import\("([^"]+)"\)/g)].map((x) => x[1]);
   eq(imports.every((i) => MAG.includes(i)), true, `7.1 ${f} importeert alleen de codec, het model en de eigen delen`);
@@ -106,22 +106,6 @@ console.log("▶ 8 · de groepenverklaring");
   eq(q.modules.size, qrModules(`https://meterkastpaspoort.nl/p#${fx["kast-17-groepen"].fragment}`.length), "8.6 de QR op het vel is even groot als die op de sticker");
 }
 
-console.log("▶ 9 · de foto");
-{
-  const rail = { breedte: 10, items: [{ i: 0, positie: 0, breedte: 2, groep: null }, { i: 1, positie: 2, breedte: 1, groep: 4 }] };
-  const [, p] = projecteer(rail, { x: 0, y: 50 }, { x: 100, y: 50 });
-  eq([p.hoeken[0], p.hoeken[2], p.midden], [[20, 37], [30, 63], [25, 50]], "9.1 een rechte rail: plaats en breedte naar pixels");
-  eq(p.groep, 4, "9.2 het kader draagt zijn groep");
-  const [, s] = projecteer(rail, { x: 50, y: 0 }, { x: 50, y: 100 });
-  eq(s.midden, [50, 25], "9.3 een rail die schuin of rechtop staat volgt de tikken");
-  eq(projecteer(rail, { x: 5, y: 5 }, { x: 5, y: 5 }), [], "9.4 twee keer dezelfde tik: geen kaders");
-  const bron = readFileSync(new URL("../lezer/foto.js", import.meta.url), "utf8") + readFileSync(new URL("../lezer/lezer.js", import.meta.url), "utf8");
-  // Bewaren nergens; versturen alleen naar de motor op yourwkb.nl, en alleen na de knop (besluit Martin 25-11-2026).
-  const zonderToegestaan = bron.replace(/fetch\("\/veldnotities\/index\.json"\)/, "").replace(/fetch\(AI_URL, \{ method: "POST", body: fd \}\)/, "");
-  eq(/localStorage|indexedDB|fetch\(|sendBeacon|XMLHttpRequest/.test(zonderToegestaan), false, "9.5 de foto wordt nergens bewaard, en alleen naar de AI verstuurd");
-  eq([/const AI_URL = location\.hostname === "localhost" \? "http:\/\/localhost:3010\/api\/lezer\/kastbeeld" : "https:\/\/yourwkb\.nl\/api\/lezer\/kastbeeld";/.test(bron), /onclick: \(\) => metAi\(\)/.test(bron), /wordt daar niet bewaard/.test(bron)], [true, true, true], "9.6 de AI alleen op yourwkb.nl, alleen na een tik, en met de melding erbij");
-}
-
 console.log("▶ 11 · achter welke aardlek (blokversie 2)");
 {
   const m = kastModel(await lees("met-aardlekkoppeling")), v = groepenVerklaring(m);
@@ -141,61 +125,6 @@ console.log("▶ 12 · de gegevens van de kast (uitklapblok)");
   const lb = kastGegevens({ lb: { aan: true, typ: "dyn", max: 25, reg: "evcc" }, chk: { r: "oranje", d: "2026-03-01" } }, kastModel({ v: 2 }));
   eq([lb.lb.tekst, lb.chk], ["Dynamisch · grens 25 A · regisseur: evcc", { r: "oranje", d: "2026-03-01" }], "12.4 load balancing en de laatste belastingcheck");
   eq(kastGegevens({ ean: "<script>" }, kastModel({ v: 2 })).rijen.find(([k]) => k === "EAN aansluiting")[1], "<script>", "12.5 tekst blijft tekst (de lezer zet hem met textContent)");
-}
-
-console.log("▶ 13 · de foto in perspectief");
-{
-  // Een kast die schuin is gefotografeerd; kast-coördinaten: x in modules, y in modulehoogten.
-  const echt = homografie([[0, 0], [30, 0], [30, 6], [0, 6]], [[120, 90], [1100, 190], [1060, 700], [160, 620]]);
-  const naar = (x, y) => { const [u, v] = pasToe(echt, x, y); return { x: u, y: v }; };
-  const rails = [
-    { nr: 1, breedte: 2, items: [{ i: 0, positie: 0, breedte: 2, groep: null }] },                       // kort: overig
-    { nr: 2, breedte: 29, items: Array.from({ length: 29 }, (_, k) => ({ i: 1 + k, positie: k, breedte: 1, groep: k + 1 })) },
-    { nr: 3, breedte: 8, items: Array.from({ length: 8 }, (_, k) => ({ i: 30 + k, positie: k, breedte: 1, groep: 40 + k })) },
-  ];
-  // Rail 1 begint op x 3 en y 0–1, rail 2 op x 0 en y 2–3, rail 3 op x 1 en y 4–5.
-  const st = tikStappen(rails);
-  eq(st.map((s) => `${s.rail}${s.kant}`), ["2linksboven", "2rechtsboven", "2rechtsonder", "2linksonder", "1begin", "3begin"], "13.1 de vier hoeken van de langste rail, dan één tik per andere rail");
-  const tikken = [naar(0, 2), naar(29, 2), naar(29, 3), naar(0, 3), naar(3, 0.5), naar(1, 4.5)];
-  const k = projecteerKast(rails, tikken);
-  const fout = (p, x, y) => { const e = naar(x, y); return Math.hypot(p.midden[0] - e.x, p.midden[1] - e.y); };
-  eq(fout(k.find((p) => p.groep === 20), 19.5, 2.5) < 0.5, true, "13.2 een module op de langste rail valt op zijn plek, ook in perspectief");
-  eq([fout(k.find((p) => p.i === 0), 4, 0.5) < 0.5, fout(k.find((p) => p.groep === 45), 6.5, 4.5) < 0.5], [true, true], "13.3 en de andere rails ook, met hun eigen begin");
-  // Met 4 pixels tikfout: de kaders blijven binnen een halve module.
-  const ruis = [[3, -2], [-4, 3], [2, 4], [-3, -3], [4, 2], [-2, 4]];
-  const kr = projecteerKast(rails, tikken.map((t, i) => ({ x: t.x + ruis[i][0], y: t.y + ruis[i][1] })));
-  const ergst = Math.max(...kr.map((p) => { const it = rails.flatMap((r) => r.items).find((x) => x.i === p.i); const r = rails.find((x) => x.items.includes(it)); const pl = { 1: [3, 0.5], 2: [0, 2.5], 3: [1, 4.5] }[r.nr]; return fout(p, pl[0] + it.positie + it.breedte / 2, pl[1]) / p.modPx; }));
-  eq(ergst < 0.5, true, `13.4 bij 4 pixels tikfout blijft elk kader binnen een halve module (ergst ${ergst.toFixed(2)})`);
-  const oud = Math.max(...projecteer(rails[1], naar(0, 2.5), naar(29, 2.5)).map((p) => fout(p, p.i - 1 + 0.5, 2.5)));
-  const nieuw = Math.max(...k.filter((p) => p.groep >= 1 && p.groep <= 29).map((p) => fout(p, p.groep - 0.5, 2.5)));
-  eq([oud > 5, nieuw < 0.5], [true, true], `13.5 (controle) de rechte lijn zit er tot ${oud.toFixed(1)} pixels naast, het perspectief ${nieuw.toFixed(2)}`);
-  eq([projecteerKast(rails, tikken.slice(0, 5)), homografie([[0, 0], [1, 0], [2, 0], [3, 0]], [[0, 0], [1, 0], [2, 0], [3, 0]])], [[], null], "13.6 te weinig tikken of punten op één lijn: geen kaders");
-}
-
-console.log("▶ 14 · wat de AI terugzegt");
-{
-  const m = kastModel(await lees("kast-17-groepen"));
-  const r2 = m.rails[1].items;   // HS, AL A–D, 17 automaten B16
-  const posities = (wijzig) => {
-    const uit = [{ rail: 1, positie: 0, breedteModules: 2, soort: "overig" }];
-    r2.forEach((it, k) => uit.push({ rail: 2, positie: it.positie, breedteModules: it.breedte, soort: it.soort === "automaat" ? "automaat" : it.soort, karakteristiek: it.soort === "automaat" ? "B" : undefined, In: it.soort === "automaat" ? 16 : it.soort === "hoofdschakelaar" ? 40 : undefined, IAn: it.soort === "aardlek" ? 30 : undefined }));
-    return wijzig ? wijzig(uit) : uit;
-  };
-  eq(verschilMetFoto(m, posities()).gelijk, true, "14.1 dezelfde kast: geen verschil");
-  const anders = verschilMetFoto(m, posities((u) => { u.find((p) => p.soort === "automaat").In = 20; return u; }));
-  eq(anders.zinnen, ["Rail 2, groep 1 (Quooker): op de foto B20, op de sticker B16."], "14.2 een andere automaat: in woorden, met de groep");
-  const erbij = verschilMetFoto(m, posities((u) => [...u, { rail: 2, positie: 40, breedteModules: 1, soort: "automaat", karakteristiek: "C", In: 16 }]));
-  eq(erbij.zinnen, ["Rail 2: op de foto een automaat C16 die niet op de sticker staat."], "14.3 een automaat erbij");
-  const weg = verschilMetFoto(m, posities((u) => u.filter((p, k) => k !== u.length - 1)));
-  eq(weg.zinnen, ["Rail 2: groep 17 (Stopcontact meterkast) (B16) staat op de sticker, maar niet op de foto."], "14.4 een automaat weg");
-  const onleesbaar = verschilMetFoto(m, posities((u) => u.map((p) => ({ ...p, In: undefined, karakteristiek: undefined, IAn: undefined }))));
-  eq(onleesbaar.gelijk, true, "14.5 wat de AI niet kon lezen telt niet als verschil");
-  eq(/afgekeurd|onveilig|moet |fout/i.test([anders, erbij, weg].flatMap((v) => v.zinnen).join(" ")), false, "14.6 signaal, geen oordeel");
-  const ai = [{ rail: 2, linksboven: { x: 100, y: 500 }, rechtsboven: { x: 900, y: 520 }, rechtsonder: { x: 890, y: 600 }, linksonder: { x: 110, y: 580 } },
-              { rail: 1, linksboven: { x: 100, y: 200 }, rechtsboven: { x: 180, y: 200 }, rechtsonder: { x: 180, y: 280 }, linksonder: { x: 100, y: 280 } }];
-  const t = tikkenUitAi(m.rails, ai, 2000, 1000);
-  eq(t, [{ x: 200, y: 500 }, { x: 1800, y: 520 }, { x: 1780, y: 600 }, { x: 220, y: 580 }, { x: 200, y: 240 }], "14.7 de hoeken van de AI worden de tikken: de langste rail, dan het begin van de andere");
-  eq(tikkenUitAi(m.rails, [ai[0]], 2000, 1000), null, "14.8 een rail te weinig: geen tikken (dan zelf aantikken)");
 }
 
 console.log("\n" + "═".repeat(47));
