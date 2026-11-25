@@ -80,6 +80,13 @@
   details.eerder > summary { font-size:16px; color:var(--accent); }
   details.eerder > summary::after { content:"▾"; margin-left:8px; transition:transform .15s; }
   details.eerder[open] > summary::after { transform:rotate(180deg); }
+  /* Voorbereid op (spec 4.11) */
+  .voorbereid { border-color:var(--accent); }
+  .res-regel { padding:6px 0; border-top:1px solid var(--rand); }
+  .res-regel:first-of-type { border-top:none; }
+  .mod.gereserveerd { border:2px dashed var(--accent) !important; }
+  .mod .res-k { color:var(--accent); }
+  .kast.mini .mod .res-k { display:inline; font-size:10px; }
   .deel { border-top:1px solid var(--rand); padding-top:12px; margin-top:12px; }
   .deel-kop { font-weight:800; margin-bottom:4px; }
   .chk { font-weight:800; text-transform:uppercase; }

@@ -228,3 +228,49 @@ export function kastGegevens(p, m) {
   if (p && p.chk && typeof p.chk === "object" && p.chk.r) chk = { r: t(p.chk.r), d: t(p.chk.d) };
   return { rijen, samenvatting, lb, chk };
 }
+
+// ─── Voorbereid op: de reservering en haar grondslag (spec 4.11, 25-11-2026) ──
+// Wat de installateur die de kast bouwde, vrijhield of al klaarzette voor een
+// latere warmtepomp, laadpaal of thuisbatterij. Een intentie, geen garantie: de
+// lezer toont het en zegt waarop het rustte, hij rekent niets na.
+export const RES_NAAM = { wp: "Warmtepomp", lp: "Laadpaal", bat: "Thuisbatterij", pv: "Zonnepanelen", kook: "Koken", ov: "Overig" };
+const komma = (v) => String(v).replace(".", ",");
+
+/** "R1-9..11" → { rail: 1, van: 9, tot: 11 } (modules vanaf 1); null als het niet te lezen is. */
+export function leesPos(pos) {
+  const m = /^(?:V\d+)?R(\d+)-(\d+)(?:\.\.(\d+))?$/.exec(String(pos || "").trim());
+  if (!m) return null;
+  const rail = Number(m[1]), van = Number(m[2]), tot = m[3] ? Number(m[3]) : van;
+  return van >= 1 && tot >= van ? { rail, van, tot } : null;
+}
+
+export function reserveringen(p) {
+  const lijst = Array.isArray(p && p.res) ? p.res.filter((r) => r && typeof r === "object") : [];
+  const res = lijst.map((r, k) => {
+    const plek = leesPos(r.pos);
+    const fasen = Array.isArray(r.fn) && r.fn.length ? (r.fn.length === 3 ? "3-fase" : `fase ${r.fn.map(String).join("+")}`) : r.f === 3 ? "3-fase" : r.f === 1 ? "1-fase" : "";
+    const delen = [
+      plek ? `rail ${plek.rail}, ${plek.van === plek.tot ? `module ${plek.van}` : `module ${plek.van} t/m ${plek.tot}`}` : (r.pos ? String(r.pos) : ""),
+      Number(r.mod) > 0 ? `${r.mod} ${Number(r.mod) === 1 ? "module" : "modules"}` : "",
+      fasen,
+      Number(r.a) > 0 ? `${komma(r.a)} A` : "",
+      Number(r.kw) > 0 ? `${komma(r.kw)} kW` : "",
+    ].filter(Boolean);
+    return { nr: k + 1, t: String(r.t || ""), naam: RES_NAAM[r.t] || (r.t ? String(r.t) : "Uitbreiding"), plek, tekst: delen.join(" · "), toelichting: r.n ? String(r.n) : "" };
+  });
+  const g = p && p.grond && typeof p.grond === "object" ? p.grond : null;
+  let grond = "";
+  if (g) {
+    const delen = [
+      Number(g.ha) > 0 ? `hoofdaansluiting ${komma(g.ha)} A` : "",
+      Number(g.kam) > 0 ? `kam ${komma(g.kam)} A` : "",
+      Number(g.gl) > 0 ? `gelijktijdigheid ${komma(g.gl)}` : "",
+    ].filter(Boolean);
+    grond = [
+      `Gebaseerd op${g.d ? ` de berekening van ${g.d}` : " een berekening"}${delen.length ? `: ${delen.join(", ")}` : ""}.`,
+      Number(g.rest) >= 0 && g.rest !== undefined && g.rest !== null && g.rest !== "" ? `Toen bleef ${komma(g.rest)} A over op de zwaarst belaste fase.` : "",
+      g.door ? `Berekend door ${String(g.door)}.` : "",
+    ].filter(Boolean).join(" ");
+  }
+  return { lijst: res, grond };
+}

@@ -1,0 +1,68 @@
+{
+  "omschrijving": "De kast met 3 groepen, voorbereid op een laadpaal en een warmtepomp (res[] en grond, spec 4.11). De reserveringen zijn nagemaakt voor de test.",
+  "fragment": "jZKxbtswFEV_hbhTC9CCSMlK9TzJRhMUTQbXW4IMtEXTgiRSoegISOB_D6g2AdoO7cQ3PPLce8BXPIMyjhoEmcpiIcRC5uAYDiCUZVne34PDehAEOIwfQA-vCCCozoDDuy7OR3AcQYLDgnDbHE6BrW9w4f_c3QU3HJwN6hC0ZZNztlW99v9z9bs-t9ri8sjROTMH-6vIHoRvdgyq61TQZ88-PTvn91p39WdwTCBM2rcvSvUnXWvLeh20b9UYwNGr-FwhhMxX17eiKPKVlKviKk3jOYMbG5E3VbXerttqt6l228p8bas7s9luN7uqiuH1-GGtG6JdN4LwQyy-JEkZOa4GyfdqRwt6kI8cCiRTjnYCZcnVL7XaaLY_NyOzSnlWa-YG3wSmlJ30S2M-vE2_gUSaJEK-o7IZlc0EUcQaxrtY5A-BS3CcYoolR6t6UJ5ymA6UJsVcK4BKjtq5-EGan5qfSMgsX-JyeQM",
+  "paspoort": {
+    "v": 3,
+    "d": "2026-11-24",
+    "pc": "9999ZZ",
+    "nr": "1",
+    "grp": [
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "n": "Licht BG"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "n": "Stopcontacten woonkamer"
+      },
+      {
+        "t": "alg",
+        "rol": "af",
+        "f": 1,
+        "n": "Keuken"
+      }
+    ],
+    "log": [
+      {
+        "d": "2026-11-24",
+        "b": "Installateur (voorbeeld)",
+        "w": "werkzaamheden meterkast",
+        "ma": "261124;FL1664;22;6700;22;"
+      }
+    ],
+    "ind": "GAABQBkASCASQAgEkAMgCQQCSAA",
+    "res": [
+      {
+        "t": "lp",
+        "pos": "R1-8..9",
+        "mod": 2,
+        "f": 1,
+        "fn": [
+          2
+        ],
+        "a": 20,
+        "kw": 3.7,
+        "n": "Lege buis naar de oprit aanwezig"
+      },
+      {
+        "t": "wp",
+        "pos": "R1-10..12",
+        "mod": 3,
+        "f": 3,
+        "a": 16
+      }
+    ],
+    "grond": {
+      "d": "2026-11-25",
+      "ha": 25,
+      "kam": 40,
+      "gl": 0.6,
+      "rest": 9,
+      "door": "installq:12345"
+    }
+  }
+}

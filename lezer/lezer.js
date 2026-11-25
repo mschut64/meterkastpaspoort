@@ -4,7 +4,7 @@
 // in de pagina (textContent), nooit als HTML.
 
 import { mkpDecode, mkpVerifieer } from "../mkp.js";
-import { fragmentUit, kastModel, herkomst, kastGegevens, SOORT_NAAM, ST_NAAM } from "./model.js";
+import { fragmentUit, kastModel, herkomst, kastGegevens, reserveringen, SOORT_NAAM, ST_NAAM } from "./model.js";
 
 const $ = (id) => document.getElementById(id);
 function el(tag, attrs = {}, ...kinderen) {
@@ -93,6 +93,18 @@ async function toon(p) {
       el("div", { "data-st": "0" }, vlag("geen"))].filter(Boolean));
   } else herkomstVlak.append(el("div", { class: "melding", style: "margin-top:8px" }, "Er staat geen logboek op deze sticker: niet te zien wie dit heeft vastgelegd."));
 
+  // 2b. Voorbereid op (spec 4.11): open en vooraan, want hier komt de installateur
+  //     die een warmtepomp, laadpaal of thuisbatterij komt plaatsen voor.
+  const rv = reserveringen(p);
+  resPlekken = rv.lijst;
+  const voorbereid = rv.lijst.length ? el("div", { class: "vlak voorbereid" },
+    el("div", { class: "blok-titel", style: "margin-bottom:6px" }, "Voorbereid op"),
+    ...rv.lijst.map((r) => el("div", { class: "res-regel" },
+      el("div", {}, el("b", {}, r.naam), r.tekst ? ` — ${r.tekst}` : ""),
+      r.toelichting ? el("div", { class: "zacht klein" }, r.toelichting) : null)),
+    rv.grond ? el("p", { class: "klein", style: "margin:8px 0 0" }, rv.grond) : null,
+    el("p", { class: "zacht klein", style: "margin:6px 0 0" }, "Een reservering is een intentie, geen garantie. Ga na of het nog klopt met de kast van nu.")) : null;
+
   // 3. Wat ontbreekt.
   const ontbreekt = m.ontbreekt.map((t) => el("div", { class: "melding" }, t));
 
@@ -169,7 +181,7 @@ async function toon(p) {
     ? el("p", { class: "zacht klein" }, `Op deze sticker staan gegevens die deze lezer niet kent (${m.onbekend.join(", ")}); die zijn overgeslagen.`)
     : null;
 
-  uit.replaceChildren(...[kop, herkomstVlak, ...ontbreekt, kastBlok, knoppen, onbekend].filter(Boolean),
+  uit.replaceChildren(...[kop, herkomstVlak, voorbereid, ...ontbreekt, kastBlok, knoppen, onbekend].filter(Boolean),
     el("p", { class: "zacht klein" }, "Een handtekening toont aan dat een logregel onveranderd is en van de houder van die sleutel komt. Niet dat de installatie deugt, en niet dat de sticker op de juiste kast zit."));
 
   // "Hele kast in beeld" rekent met de breedte van de kolom: die is er pas nu.
@@ -193,10 +205,16 @@ const GAP = 3;
 let passend = false;   // "hele kast in beeld" of groot met schuiven
 function modulePx(m) {
   if (!passend) return 46;
-  const breedst = Math.max(m.mpr || 0, ...m.rails.map((r) => r.breedte), 1);
+  const breedst = Math.max(m.mpr || 0, ...m.rails.map((r) => r.breedte), ...resPlekken.filter((x) => x.plek).map((x) => x.plek.tot), 1);
   const plek = $("tekeningPlek");
   const beschikbaar = Math.max(140, ((plek && plek.clientWidth) || $("uit").clientWidth || 340) - 34);
   return Math.max(6, Math.floor((beschikbaar - (breedst - 1) * GAP) / breedst));
+}
+// De gereserveerde plekken (uit toon), zodat de tekening ze kan aanwijzen.
+let resPlekken = [];
+const RES_KORT = { wp: "WP", lp: "LP", bat: "BAT", pv: "PV", kook: "KOOK", ov: "RES" };
+function reserveringVoor(rail, van, tot) {
+  return resPlekken.find((r) => r.plek && r.plek.rail === rail && r.plek.van <= tot && r.plek.tot >= van) || null;
 }
 function tekening(m) {
   const MODULE_PX = modulePx(m);
@@ -206,18 +224,28 @@ function tekening(m) {
     const rij = el("div", { class: "rail" }, el("div", { class: "railnr" }, String(r.nr)));
     for (const it of r.items) {
       const breedte = it.breedte * MODULE_PX + (it.breedte - 1) * GAP;
-      const label = [SOORT_NAAM[it.soort] || it.soort, it.bev, it.groep ? `groep ${it.groep}` : "", it.naam].filter(Boolean).join(", ");
+      const res = reserveringVoor(r.nr, it.positie + 1, it.positie + it.breedte);
+      const label = [SOORT_NAAM[it.soort] || it.soort, it.bev, it.groep ? `groep ${it.groep}` : "", it.naam, res ? `gereserveerd voor ${res.naam.toLowerCase()}` : ""].filter(Boolean).join(", ");
       rij.append(el("button", {
-        class: `mod ${it.soort}${it.leeg ? " leeg" : ""}`, type: "button", style: `width:${breedte}px`, "data-item": String(it.i),
+        class: `mod ${it.soort}${it.leeg ? " leeg" : ""}${res ? " gereserveerd" : ""}`, title: res ? `Gereserveerd voor ${res.naam.toLowerCase()}` : null, type: "button", style: `width:${breedte}px`, "data-item": String(it.i),
         "data-groep": it.groep ? String(it.groep) : null, "aria-label": label, disabled: it.leeg || null,
         onclick: it.leeg ? null : () => kies({ item: it, groep: it.groep }),
-      }, it.kort ? el("span", { class: "k" }, it.kort) : null, it.bev ? el("span", { class: "b" }, it.bev.split(" · ")[0]) : null,
+      }, res && it.leeg ? el("span", { class: "k res-k" }, RES_KORT[res.t] || "RES") : null, it.kort ? el("span", { class: "k" }, it.kort) : null, it.bev ? el("span", { class: "b" }, it.bev.split(" · ")[0]) : null,
         it.groep ? el("span", { class: "g" }, String(it.groep)) : null, it.naam && it.breedte >= 1 ? el("span", { class: "n" }, it.naam) : null));
     }
-    // De rest van de rail, als de sticker de railbreedte noemt.
-    if (m.mpr && m.mpr > r.breedte) {
-      const vrij = m.mpr - r.breedte;
-      rij.append(el("div", { class: "mod vrij", style: `width:${vrij * MODULE_PX + (vrij - 1) * GAP}px`, "aria-hidden": "true" }));
+    // De rest van de rail: tot de railbreedte als de sticker die noemt, en anders
+    // tot het eind van een reservering die achter de laatste module ligt. Per stuk:
+    // vrij, of gereserveerd voor iets.
+    const eindRes = Math.max(0, ...resPlekken.filter((x) => x.plek && x.plek.rail === r.nr).map((x) => x.plek.tot));
+    const eind = Math.max(m.mpr || 0, eindRes);
+    for (let van = r.breedte + 1; van <= eind;) {
+      const res = reserveringVoor(r.nr, van, van);
+      let tot = van;
+      while (tot < eind && reserveringVoor(r.nr, tot + 1, tot + 1) === res) tot++;
+      const n = tot - van + 1;
+      rij.append(el("div", { class: `mod vrij${res ? " gereserveerd" : ""}`, style: `width:${n * MODULE_PX + (n - 1) * GAP}px`, "aria-hidden": res ? null : "true", title: res ? `Gereserveerd voor ${res.naam.toLowerCase()}` : null },
+        res ? el("span", { class: "k res-k" }, RES_KORT[res.t] || "RES") : null));
+      van = tot + 1;
     }
     kast.append(rij);
   }

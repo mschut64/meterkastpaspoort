@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { readFileSync, readdirSync } from "node:fs";
 import { mkpDecode } from "../mkp.js";
-import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, kastGegevens } from "../lezer/model.js";
+import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, kastGegevens, reserveringen, leesPos } from "../lezer/model.js";
 import { maakQr } from "../lezer/vendor/qrcode.min.js";
 import { qrModules } from "../mkp.js";
 
@@ -20,7 +20,7 @@ const fx = Object.fromEntries(readdirSync(map).filter((n) => n.endsWith(".json")
 const lees = async (naam) => mkpDecode(fx[naam].fragment);
 
 console.log("▶ 0 · invoer");
-eq(Object.keys(fx).sort(), ["afgekapt", "kast-17-groepen", "kast-3-groepen", "met-aardlekkoppeling", "niet-gemeten", "v03-demo-jansen"], "0.1 zes testpaspoorten");
+eq(Object.keys(fx).sort(), ["afgekapt", "kast-17-groepen", "kast-3-groepen", "met-aardlekkoppeling", "met-reservering", "niet-gemeten", "v03-demo-jansen"], "0.1 zeven testpaspoorten");
 eq([fragmentUit("https://meterkastpaspoort.nl/p#abc"), fragmentUit("https://yourwkb.nl/app#abc"), fragmentUit(" abc "), fragmentUit("")], ["abc", "abc", "abc", ""], "0.2 een link of een kaal fragment");
 
 console.log("▶ 1 · kast met 17 groepen");
@@ -125,6 +125,20 @@ console.log("▶ 12 · de gegevens van de kast (uitklapblok)");
   const lb = kastGegevens({ lb: { aan: true, typ: "dyn", max: 25, reg: "evcc" }, chk: { r: "oranje", d: "2026-03-01" } }, kastModel({ v: 2 }));
   eq([lb.lb.tekst, lb.chk], ["Dynamisch · grens 25 A · regisseur: evcc", { r: "oranje", d: "2026-03-01" }], "12.4 load balancing en de laatste belastingcheck");
   eq(kastGegevens({ ean: "<script>" }, kastModel({ v: 2 })).rijen.find(([k]) => k === "EAN aansluiting")[1], "<script>", "12.5 tekst blijft tekst (de lezer zet hem met textContent)");
+}
+
+console.log("▶ 15 · voorbereid op (spec 4.11)");
+{
+  const p = await lees("met-reservering"), rv = reserveringen(p);
+  eq(rv.lijst.map((r) => [r.naam, r.tekst, r.toelichting]), [
+    ["Laadpaal", "rail 1, module 8 t/m 9 · 2 modules · fase 2 · 20 A · 3,7 kW", "Lege buis naar de oprit aanwezig"],
+    ["Warmtepomp", "rail 1, module 10 t/m 12 · 3 modules · 3-fase · 16 A", ""],
+  ], "15.1 per reservering waarvoor, waar, fasen en stroom, in woorden");
+  eq(rv.grond, "Gebaseerd op de berekening van 2026-11-25: hoofdaansluiting 25 A, kam 40 A, gelijktijdigheid 0,6. Toen bleef 9 A over op de zwaarst belaste fase. Berekend door installq:12345.", "15.2 de grondslag in woorden");
+  eq([leesPos("R2-5"), leesPos("V1R3-2..4"), leesPos("onzin"), leesPos("R1-0")], [{ rail: 2, van: 5, tot: 5 }, { rail: 3, van: 2, tot: 4 }, null, null], "15.3 de plaats lezen");
+  eq(reserveringen(await lees("kast-17-groepen")), { lijst: [], grond: "" }, "15.4 zonder reservering: niets");
+  eq(/oordeel|voldoet|past niet|afgekeurd/i.test(JSON.stringify(rv)), false, "15.5 signaal, geen oordeel");
+  eq(kastModel(p).onbekend, [], "15.6 res en grond zijn bekende velden");
 }
 
 console.log("\n" + "═".repeat(47));

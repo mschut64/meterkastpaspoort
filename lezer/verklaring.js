@@ -19,7 +19,7 @@
 // niet, dan "—" en een regel om het met de hand in te vullen. Nooit uit de plaats.
 
 import { maakQr } from "./vendor/qrcode.min.js";
-import { groepenVerklaring } from "./model.js";
+import { groepenVerklaring, reserveringen } from "./model.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 
@@ -206,6 +206,16 @@ export function toonVerklaring({ el, m, p = {}, h, frag, status, terug }) {
           veld("Kamrail", p.kam && p.kam.mm2 ? el("span", {}, `${p.kam.mm2} mm`, el("sup", {}, "2")) : "—"),
           veld("Omvang", `${v.regels.length} groep${v.regels.length === 1 ? "" : "en"}${aardlekken.length ? ` · ${aardlekken.length} aardlekschakelaar${aardlekken.length === 1 ? "" : "s"}` : ""}`, true)),
         el("div", { class: "paspoort" }, kaartQr.svg, el("div", { class: "klein" }, "Meterkastpaspoort"), el("div", { class: "micro" }, "scan met de camera"))),
+      ...(() => {
+        // Voorbereid op (spec 4.11): voor wie later een warmtepomp, laadpaal of thuisbatterij komt plaatsen.
+        const rv = reserveringen(p);
+        if (!rv.lijst.length) return [];
+        return [el("h3", {}, "Voorbereid op"),
+          el("table", {}, el("tbody", {}, ...rv.lijst.map((r) => el("tr", {},
+            el("td", { class: "naam", style: "width:32mm" }, r.naam),
+            el("td", {}, r.tekst, r.toelichting ? el("div", { style: "font-size:8.5pt;color:#444" }, r.toelichting) : null))))),
+          el("div", { class: "regel" }, [rv.grond, "Een reservering is een intentie, geen garantie: ga na of het nog klopt met de kast van nu."].filter(Boolean).join(" "))];
+      })(),
       el("h3", {}, "Eindgroepen"),
       el("table", {},
         el("thead", {}, el("tr", {}, ...["Nr", "Naam", "Beveiliging", "Fase", "Aardlek", "Breedte", "Type"].map((t) => el("th", {}, t)))),
