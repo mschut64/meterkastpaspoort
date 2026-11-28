@@ -48,7 +48,11 @@ export async function mkpAfkappen(paspoort, { maxModules = QR_MODULES_GRENS } = 
   }
   let indeling = false;
   if (modules > maxModules && "ind" in p) {
-    delete p.ind; indeling = true;
+    // ⚓ `kamb[]` gaat mee. Zijn `al` verwijst naar de nummering van het
+    // indelingsblok; zonder dat blok is niet te zeggen bij welk aardlekblok een
+    // kam hoort, en blijven er getallen op de sticker staan die niemand kan
+    // plaatsen. De verdelerkam `kam` blijft wel staan — die hangt nergens aan.
+    delete p.ind; delete p.kamb; indeling = true;
     modules = await meet();
   }
   const past = modules <= maxModules;

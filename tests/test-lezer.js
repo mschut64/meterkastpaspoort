@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { readFileSync, readdirSync } from "node:fs";
 import { mkpDecode } from "../mkp.js";
-import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, kastGegevens, reserveringen, leesPos } from "../lezer/model.js";
+import { fragmentUit, kastModel, herkomst, leesAnker, bevTekst, groepenVerklaring, kastGegevens, reserveringen, leesPos, kamPerBlok, kamPerBlokTekst } from "../lezer/model.js";
 import { maakQr } from "../lezer/vendor/qrcode.min.js";
 import { qrModules } from "../mkp.js";
 
@@ -161,6 +161,30 @@ console.log("▶ 16 · de warmtehuishouding in de grondslag (spec 4.11, pb/pr)")
   // De volgorde: eerst de ampère, dan de warmte, dan wie het deed.
   const vol = metWarmte({ pb: 11, pr: 4 });
   eq(vol.indexOf("A over op de zwaarst") < vol.indexOf("Voor de warmte") && vol.indexOf("Voor de warmte") < vol.indexOf("Berekend door"), true, "16.7 de warmte staat tussen de elektrische ruimte en de ondertekenaar");
+}
+
+console.log("▶ 17 · de kam per blok (spec 4.3a, kamb[])");
+{
+  const p = await lees("met-aardlekkoppeling");
+  const met = (kamb) => kastModel({ ...p, kamb });
+  // ⚓ Het punt: `kam` is de verdeler als geheel, `kamb[]` zegt het per blok.
+  // In een kast waar de laadpaal achter één aardlek hangt, kan dát blok zijn kam
+  // overbelasten terwijl het blok ernaast half leeg is.
+  eq(met([{ al: 1, mm2: 10, a: 40 }]).onbekend, [], "17.1 kamb[] is een bekend veld");
+  eq(met([{ al: 1, mm2: 10, a: 40, zz: 1 }]).onbekend, ["kamb[].zz"], "17.2 ⚓ en de doorloper kijkt ook ín de lijst: een onbekend subveld wordt gemeld");
+  eq(kastModel(p).onbekend, [], "17.3 zonder kamb[] verandert er niets");
+  // Met een indeling krijgt elk blok zijn letter, zoals de aardlekken in de tekening.
+  const metInd = { ...p, kamb: [{ al: 1, mm2: 10, a: 40 }, { al: 2, mm2: 16, a: 63 }] };
+  const mi = kastModel(metInd);
+  const tekst = kamPerBlokTekst(metInd, mi);
+  eq(/aardlek A: 10 mm² · max 40 A/.test(tekst), true, "17.4 ⚓ `al` krijgt de letter van de aardlek in de tekening, niet een kaal nummer");
+  eq(kamPerBlok(metInd, mi).map((k) => k.letter), ["A", "B"], "17.5 in leesvolgorde");
+  // Zonder indeling is er geen letter: dan staat het getal er wel, maar ongeplaatst.
+  const zonder = { v: 3, pc: "9999ZZ", nr: "1", kamb: [{ al: 1, mm2: 10, a: 40 }] };
+  eq(/blok 1:/.test(kamPerBlokTekst(zonder, kastModel(zonder))), true, "17.6 zonder indeling valt hij terug op het bloknummer, en doet niet alsof hij de plek kent");
+  eq(kamPerBlokTekst({ v: 3 }, kastModel({ v: 3 })), "", "17.7 zonder kamb[] geen regel");
+  // Een kam zonder maten levert geen lege regel op.
+  eq(kamPerBlokTekst({ v: 3, kamb: [{ al: 1 }] }, kastModel({ v: 3 })), "", "17.8 een kam zonder maten wordt niet getoond");
 }
 
 console.log("\n" + "═".repeat(47));

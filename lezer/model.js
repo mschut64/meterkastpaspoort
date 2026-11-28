@@ -190,6 +190,37 @@ export function groepenVerklaring(m) {
 
 
 /**
+ * De kam per aardlekblok (spec 4.3a). `al` is het volgnummer van de aardlek in
+ * het indelingsblok; de lezer geeft de aardlekken in dezelfde leesvolgorde een
+ * letter, dus die letter is de plek waar deze kam ligt. Zonder indeling is er
+ * geen letter — dan staat het getal er wel, maar ongeplaatst.
+ * @returns {{ al: number, letter: string, mm2: number|null, a: number|null }[]}
+ */
+export function kamPerBlok(p, m) {
+  const lijst = Array.isArray(p && p.kamb) ? p.kamb.filter((k) => k && typeof k === "object") : [];
+  const letters = (m && Array.isArray(m.rails) ? m.rails : []).flatMap((r) => r.items).filter((it) => it.letter).map((it) => it.letter);
+  return lijst.map((k) => {
+    const al = Number(k.al);
+    return {
+      al: Number.isInteger(al) && al >= 1 ? al : null,
+      letter: Number.isInteger(al) && al >= 1 && letters[al - 1] ? letters[al - 1] : "",
+      mm2: Number(k.mm2) > 0 ? Number(k.mm2) : null,
+      a: Number(k.a) > 0 ? Number(k.a) : null,
+    };
+  });
+}
+
+/** De kam per blok in één regel, of "" als er niets staat. */
+export function kamPerBlokTekst(p, m) {
+  const delen = kamPerBlok(p, m).map((k) => {
+    const wat = [k.mm2 ? `${komma(k.mm2)} mm²` : "", k.a ? `max ${komma(k.a)} A` : ""].filter(Boolean).join(" · ");
+    if (!wat) return "";
+    return k.letter ? `aardlek ${k.letter}: ${wat}` : k.al ? `blok ${k.al}: ${wat}` : wat;
+  }).filter(Boolean);
+  return delen.join(" — ");
+}
+
+/**
  * De gegevens van de kast zoals de oude lezer en de app ze tonen: adres, bouwjaar,
  * hoofdaansluiting, kam, EAN, stelsel, load balancing en de laatste belastingcheck.
  * Alleen wat op de sticker staat; een leeg veld komt niet in de lijst.
@@ -209,6 +240,9 @@ export function kastGegevens(p, m) {
     ["Stelsel", typeof (p && p.stl) === "string" ? p.stl : ""],
     ["Hoofdaansluiting", aansluiting],
     ["Kam / ontwerpstroom", kamTekst],
+    // Per blok, als de sticker dat draagt: in een kast met meer aardlekken heeft
+    // elk blok vaak zijn eigen kamrail, en dan zegt één verdelergetal te weinig.
+    ["Kam per blok", kamPerBlokTekst(p, m)],
     ["EAN aansluiting", t(p && p.ean)],
     ["EAN secundair", t(p && p.ean2)],
     ["Laatst bijgewerkt", t(p && p.d)],

@@ -87,6 +87,7 @@
   <tr><td><code>stl</code></td><td>tekst</td><td>Aardingsstelsel van de installatie: <code>"TN-C-S"</code>, <code>"TN-S"</code>, <code>"TT"</code> of <code>"IT"</code>. De beoordeling van de lusimpedantie hangt eraan; zonder dit veld moet de volgende het opnieuw vaststellen. Een andere waarde wordt niet geschreven. <span class="opt">voorstel v0.4</span></td></tr>
   <tr><td><code>ha</code></td><td>object</td><td>Hoofdaansluiting — zie 4.2.</td></tr>
   <tr><td><code>kam</code></td><td>object</td><td>Ontwerpstroom verdeler — zie 4.3.</td></tr>
+  <tr><td><code>kamb</code></td><td>lijst</td><td>De kam per aardlekblok — zie 4.3a. <span class="opt">v0.4</span></td></tr>
   <tr><td><code>grp</code></td><td>lijst</td><td>Afgaande en voedende groepen — zie 4.4.</td></tr>
   <tr><td><code>mat</code></td><td>lijst</td><td>Materiaal in de kast — zie 4.5. <span class="opt">Nieuw in v0.2. Voorstel v0.4: alleen in profiel <em>volledig</em>, niet op de sticker.</span></td></tr>
   <tr><td><code>lb</code></td><td>object</td><td>Load balancing / vermogenssturing — zie 4.6.</td></tr>
@@ -116,6 +117,17 @@
   <tr><td><code>a</code></td><td>getal</td><td>Maximale stroom van de kam in ampère. Onbekend? Conservatief 40 A aanhouden.</td></tr>
 </table>
 <p><b>Toetsregel:</b> de som van de <em>voedende</em> groepen, op het deel van de kam waar hun stromen kunnen cumuleren, mag de kamcapaciteit niet overschrijden. Advies: voedende groepen zo dicht mogelijk bij het voedingspunt plaatsen.</p>
+
+<h3>4.3a De kam per blok <code>kamb[]</code> <span class="opt">v0.4</span></h3>
+<p><code>kam</code> hierboven is de ontwerpstroom van de <b>verdeler als geheel</b> en blijft dat. Maar in een Nederlandse groepenkast heeft elk aardlekblok vaak zijn <b>eigen kamrail</b>, en dan is één getal voor de hele verdeler te grof: het blok waar de laadpaal aan hangt kan zijn kam overbelasten terwijl het blok ernaast half leeg is. <code>kamb[]</code> legt dat per blok vast.</p>
+<table>
+  <tr><th>Veld</th><th>Type</th><th>Betekenis</th></tr>
+  <tr><td><code>al</code></td><td>getal</td><td>Volgnummer van de aardlek in het indelingsblok <code>ind</code> (<code>1</code> = de eerste aardlek in leesvolgorde), dezelfde nummering die <code>ind</code> zelf gebruikt om een automaat aan zijn aardlek te koppelen.</td></tr>
+  <tr><td><code>mm2</code></td><td>getal</td><td>Doorsnede van deze kam in mm², zoals in 4.3.</td></tr>
+  <tr><td><code>a</code></td><td>getal</td><td>Maximale stroom van deze kam in ampère, zoals in 4.3.</td></tr>
+</table>
+<p><b>Toetsregels.</b> Dezelfde als in 4.3, maar per blok: (1) de som van de <em>voedende</em> groepen op dit blok mag de kam van dit blok niet overschrijden, en (2) de gelijktijdige stroom van de <em>afgaande</em> groepen op dit blok evenmin. Een kam is bovendien zelf een geleider: hij draagt de som van zijn blok en dissipeert daarbij vermogen, dus hij telt mee in de warmtebalans van de kast.</p>
+<p><b>Zonder <code>ind</code> is <code>kamb[]</code> niet te plaatsen</b>: <code>al</code> verwijst naar de nummering van het indelingsblok, en dat staat alleen op de sticker als de kast is doorgemeten (zie 4.10). Een lezer zonder indeling kan de waarden wel tonen, maar niet zeggen bij wélk blok ze horen. Schrijf <code>kamb[]</code> daarom alleen als er ook een indeling op gaat, en laat <code>kam</code> altijd staan — een lezer die <code>kamb</code> niet kent, slaat het over (11.1) en houdt het verdelergetal.</p>
 
 <h3>4.4 Groepen <code>grp[]</code></h3>
 <table>

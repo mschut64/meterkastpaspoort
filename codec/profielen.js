@@ -50,6 +50,9 @@ export const MKP_PROFIEL_VELDEN = Object.freeze({
     "frq",
     // voorstel v0.4: het indelingsblok, als tekst (besluit 6)
     "ind",
+    // de kam per blok (28-11-2026): hoort bij de indeling, want `al` verwijst naar
+    // de nummering daarvan. Gaat de indeling eraf, dan gaat kamb[] mee — zie afkappen.js.
+    "kamb",
     // voorstel v0.4: de ontwerpintentie — reservering en grondslag (besluit Martin 25-11-2026)
     "res", "grond",
   ]),

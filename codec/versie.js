@@ -28,7 +28,7 @@ export const MKP_DATAMODELLEN = Object.freeze([1, 2, 3]);
 // ook de ontwerpintentie: de reservering `res[]` en haar grondslag `grond` (4.11).
 // De ENIGE plek met deze lijst.
 export const MKP_VELDEN = Object.freeze({
-  "":   Object.freeze(["v", "d", "pc", "nr", "ean", "ean2", "bj", "stl", "ha", "kam", "grp", "mat", "lb", "chk", "log", "vd", "voed", "ind", "frq", "mw", "res", "grond"]),
+  "":   Object.freeze(["v", "d", "pc", "nr", "ean", "ean2", "bj", "stl", "ha", "kam", "grp", "mat", "lb", "chk", "log", "vd", "voed", "ind", "frq", "mw", "res", "grond", "kamb"]),
   ha:   Object.freeze(["f", "a", "hs"]),
   kam:  Object.freeze(["mm2", "a"]),
   grp:  Object.freeze(["t", "rol", "kw", "f", "fn", "mat", "n", "vd"]),
@@ -50,6 +50,16 @@ export const MKP_VELDEN = Object.freeze({
   // verliesvermogensbudget van de kast in hele watt, `pr` wat daarvan over is.
   // Een lezer die ze niet kent slaat ze over (spec 11.1).
   grond: Object.freeze(["d", "ha", "kam", "gl", "rest", "door", "pb", "pr"]),
+  // De kam per blok, 28-11-2026. `kam` (4.3) is de ontwerpstroom van de VERDELER
+  // en blijft precies wat hij was; `kamb[]` zegt per aardlekblok welke kam daar
+  // ligt. In een Nederlandse kast heeft elk aardlekblok vaak zijn eigen kamrail,
+  // en dan is één getal voor de hele verdeler te grof: het blok met de laadpaal
+  // kan zijn kam overbelasten terwijl het blok ernaast half leeg is.
+  // `al` is het volgnummer van de aardlek in het indelingsblok (1 = de eerste),
+  // dezelfde nummering als `ind` die sinds blokversie 2 gebruikt — dus `kamb[]`
+  // is pas te plaatsen als `ind` er is. Een lezer die het veld niet kent, slaat
+  // het over (11.1).
+  kamb: Object.freeze(["al", "mm2", "a"]),
 });
 
 // Velden op het hoogste niveau die deze codec niet kent, in de volgorde van het paspoort.
