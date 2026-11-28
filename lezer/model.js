@@ -229,6 +229,21 @@ export function kastGegevens(p, m) {
   return { rijen, samenvatting, lb, chk };
 }
 
+// De warmteruimte uit de grondslag in woorden, of "" als zij er niet staat.
+// Indicatie, geen temperatuurverificatie: de lezer zegt dat erbij.
+function warmteZin(g) {
+  const b = Number(g && g.pb), r = Number(g && g.pr);
+  const heeftB = Number.isFinite(b) && b > 0;
+  const heeftR = Number.isFinite(r);
+  if (!heeftB && !heeftR) return "";
+  if (heeftR && r < 0)
+    return `Voor de warmte was er toen geen ruimte meer: het berekende verliesvermogen lag ${komma(Math.abs(r))} W boven wat deze kast kwijt kan${heeftB ? ` (${komma(b)} W)` : ""} — een indicatie, geen temperatuurverificatie.`;
+  if (heeftR && heeftB)
+    return `Voor de warmte bleef ${komma(r)} W over van de ${komma(b)} W die deze kast kwijt kan — een indicatie, geen temperatuurverificatie.`;
+  if (heeftR) return `Voor de warmte bleef ${komma(r)} W over — een indicatie, geen temperatuurverificatie.`;
+  return `Deze kast kan ${komma(b)} W aan warmte kwijt — een indicatie, geen temperatuurverificatie.`;
+}
+
 // ─── Voorbereid op: de reservering en haar grondslag (spec 4.11, 25-11-2026) ──
 // Wat de installateur die de kast bouwde, vrijhield of al klaarzette voor een
 // latere warmtepomp, laadpaal of thuisbatterij. Een intentie, geen garantie: de
@@ -269,6 +284,13 @@ export function reserveringen(p) {
     grond = [
       `Gebaseerd op${g.d ? ` de berekening van ${g.d}` : " een berekening"}${delen.length ? `: ${delen.join(", ")}` : ""}.`,
       Number(g.rest) >= 0 && g.rest !== undefined && g.rest !== null && g.rest !== "" ? `Toen bleef ${komma(g.rest)} A over op de zwaarst belaste fase.` : "",
+      // De warmtehuishouding (spec 4.11, velden pb/pr). `rest` zegt hoeveel
+      // ampère er over is; dat is de halve vraag. Een laadpunt, PV of een
+      // thuisbatterij is continu belast en past daarom lang niet altijd in de
+      // warmtebalans, ook niet als er modules vrij zijn en de hoofdzekering het
+      // aankan. Een negatieve `pr` betekent dat het berekende verlies er al
+      // boven zit — dat moet als zodanig gelezen worden, niet als "0 over".
+      warmteZin(g),
       g.door ? `Berekend door ${String(g.door)}.` : "",
     ].filter(Boolean).join(" ");
   }

@@ -145,6 +145,24 @@ console.log("▶ 15 · voorbereid op (spec 4.11)");
   eq(kastModel(p).onbekend, [], "15.6 res en grond zijn bekende velden");
 }
 
+console.log("▶ 16 · de warmtehuishouding in de grondslag (spec 4.11, pb/pr)");
+{
+  const p = await lees("met-reservering");
+  const metWarmte = (g) => reserveringen({ ...p, grond: { ...p.grond, ...g } }).grond;
+  // ⚓ Het punt van deze velden: `rest` zegt hoeveel ampère er over is, en dat is
+  // de halve vraag. Een laadpunt of thuisbatterij is continu belast en past
+  // daarom lang niet altijd in de warmte, ook niet als er ampère over is.
+  eq(/Voor de warmte bleef 4 W over van de 11 W die deze kast kwijt kan — een indicatie, geen temperatuurverificatie\./.test(metWarmte({ pb: 11, pr: 4 })), true, "16.1 budget en ruimte in woorden, met de indicatie erbij");
+  eq(/geen ruimte meer.*3 W boven wat deze kast kwijt kan \(11 W\)/.test(metWarmte({ pb: 11, pr: -3 })), true, "16.2 ⚓ een negatieve ruimte leest als 'erboven', niet als 'niets over'");
+  eq(/Voor de warmte bleef 4 W over —/.test(metWarmte({ pr: 4 })), true, "16.3 alleen de ruimte: ook bruikbaar");
+  eq(/Deze kast kan 11 W aan warmte kwijt/.test(metWarmte({ pb: 11 })), true, "16.4 alleen het budget: ook bruikbaar");
+  eq(reserveringen(p).grond.includes("Voor de warmte"), false, "16.5 zonder pb en pr zegt de lezer er niets over");
+  eq(kastModel({ ...p, grond: { ...p.grond, pb: 11, pr: 4 } }).onbekend, [], "16.6 pb en pr zijn bekende velden");
+  // De volgorde: eerst de ampère, dan de warmte, dan wie het deed.
+  const vol = metWarmte({ pb: 11, pr: 4 });
+  eq(vol.indexOf("A over op de zwaarst") < vol.indexOf("Voor de warmte") && vol.indexOf("Voor de warmte") < vol.indexOf("Berekend door"), true, "16.7 de warmte staat tussen de elektrische ruimte en de ondertekenaar");
+}
+
 console.log("\n" + "═".repeat(47));
 console.log(`RESULTAAT: ${passed} geslaagd · ${failed} mislukt · ${passed + failed} totaal`);
 console.log("═".repeat(47));

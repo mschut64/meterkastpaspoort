@@ -42,7 +42,14 @@ export const MKP_VELDEN = Object.freeze({
   mw:   Object.freeze(["s", "w", "g", "p", "d", "c"]),
   // Voorstel v0.4, besluit Martin 25-11-2026: de ontwerpintentie, op de sticker.
   res:   Object.freeze(["t", "pos", "mod", "f", "fn", "a", "kw", "n"]),
-  grond: Object.freeze(["d", "ha", "kam", "gl", "rest", "door"]),
+  // `pb` en `pr` erbij, 28-11-2026: de warmtehuishouding. `rest` zegt hoeveel
+  // ampère er elektrisch over is; dat is de halve vraag. Een uitbreiding met een
+  // laadpaal, PV of een thuisbatterij draagt gelijktijdigheidsfactor 1,0 — die is
+  // continu belast — en past daarom lang niet altijd in de warmtebalans, ook als
+  // er modules vrij zijn en de hoofdzekering het aankan. `pb` is het
+  // verliesvermogensbudget van de kast in hele watt, `pr` wat daarvan over is.
+  // Een lezer die ze niet kent slaat ze over (spec 11.1).
+  grond: Object.freeze(["d", "ha", "kam", "gl", "rest", "door", "pb", "pr"]),
 });
 
 // Velden op het hoogste niveau die deze codec niet kent, in de volgorde van het paspoort.

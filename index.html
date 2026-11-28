@@ -273,8 +273,11 @@
   <tr><td><code>kam</code></td><td>getal</td><td>Ontwerpstroom van de kam of verdeler, in ampère.</td></tr>
   <tr><td><code>gl</code></td><td>getal</td><td>Toegepaste gelijktijdigheidsfactor.</td></tr>
   <tr><td><code>rest</code></td><td>getal</td><td>Resterende ruimte op de zwaarst belaste fase, in ampère, mét de reserveringen meegerekend.</td></tr>
+  <tr><td><code>pb</code></td><td>getal</td><td>Verliesvermogensbudget van de kast, in hele watt: hoeveel warmte zij kwijt kan. <span class="opt">v0.4</span></td></tr>
+  <tr><td><code>pr</code></td><td>getal</td><td>Wat daarvan over is, in hele watt, mét de reserveringen meegerekend. Negatief betekent dat het berekende verlies er al boven zit. <span class="opt">v0.4</span></td></tr>
   <tr><td><code>door</code></td><td>tekst</td><td>Wie de berekening deed, als <code>uitgever:nummer</code> (zoals <code>log[].erk</code>).</td></tr>
 </table>
+<p><b>Waarom er twee soorten ruimte op de sticker staan.</b> <code>rest</code> zegt hoeveel ampère er elektrisch over is; dat is de halve vraag. Een uitbreiding met een laadpunt, PV of een thuisbatterij draagt gelijktijdigheidsfactor 1,0 — die is continu en gelijktijdig belast — en past daarom lang niet altijd in de warmtebalans, ook niet als er modules vrij zijn én de hoofdzekering het aankan. <code>pb</code> en <code>pr</code> zeggen dat tweede. Ze zijn een <b>indicatie</b> en geen temperatuurverificatie volgens NEN-EN-IEC 61439-1: welke rekenwijze en welke aannames erachter zitten, hoort de toepassing erbij te zeggen die ze schrijft. Een lezer die ze niet kent slaat ze over (11.1).</p>
 <p><b>Op de sticker, en nooit afgekapt</b> (besluit 25-11-2026; dit draait voor deze velden besluit 8 om). Gemeten (25-11-2026): één reservering met grondslag kost zo'n 110 tekens in de link, twee met een toelichting zo'n 190. Bij een grote kast die al op de grens van 105 modules zit, betekent dat: eerst wijkt het meetanker, dan de indeling — de reservering blijft. Schrijf daarom alleen wat de volgende installateur nodig heeft; <code>kw</code>, <code>fn</code> en <code>n</code> zijn optioneel. Wie een gereserveerde plek gebruikt, haalt die reservering weg en zegt dat in het logboek; zo blijft zichtbaar dat de ruimte is opgesoupeerd. Een toepassing die <code>res</code> niet begrijpt, geeft het door (paspoortbehoud).</p>
 
 <h2>5. Voorbeeld</h2>
